@@ -1,6 +1,7 @@
 Welcome to Boswell Research Group's repository page. ALl of our work is Open source and so, feel free to fork these projects.
 
 We used Eclipse IDE to work on these projects. The projects can be setup on your personal computer by following these steps:
+
 1. Download Java 8 SDK - http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 
 2. Install Maven build tool - http://maven.apache.org/download.cgi . There are installation steps at the bottom of the page.
