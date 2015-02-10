@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0" xmlns:jfx="http://javafx.com" href="Peak Finder GC FX.jnlp">
+  <information>
+    <title>Peak Finder GC FX</title>
+    <vendor></vendor>
+    <description>Sample JavaFX 2.0 application.</description>
+    <offline-allowed/>
+  </information>
+  <resources>
+    <jfx:javafx-runtime version="2.2+" href="http://javadl.sun.com/webapps/download/GetFile/javafx-latest/windows-i586/javafx2.jnlp"/>
+  </resources>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="libs/chardet.jar" size="30790" download="eager" />
+    <jar href="libs/commons-collections-3.2.1.jar" size="586541" download="eager" />
+    <jar href="libs/commons-io-2.4.jar" size="190722" download="eager" />
+    <jar href="libs/commons-logging-1.1.1.jar" size="65112" download="eager" />
+    <jar href="libs/commons-math-2.2.jar" size="1002420" download="eager" />
+    <jar href="libs/cpdetector_1.0.10.jar" size="65902" download="eager" />
+    <jar href="libs/log4j-api-2.0-beta3.jar" size="88387" download="eager" />
+    <jar href="libs/log4j-core-2.0-beta3.jar" size="415855" download="eager" />
+    <jar href="libs/log4j-jcl-2.0-beta3.jar" size="16155" download="eager" />
+    <jar href="libs/log4j12-api-2.0-beta3.jar" size="39548" download="eager" />
+    <jar href="libs/ncCore-4.2.jar" size="699542" download="eager" />
+    <jar href="libs/sgfilter_v1_2.jar" size="15170" download="eager" />
+  </resources>
+<security>
+  <all-permissions/>
+</security>
+  <applet-desc  width="600" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="Peak Finder GC FX" >
+    <param name="requiredFXVersion" value="2.2+"/>
+  </applet-desc>
+  <jfx:javafx-desc  width="600" height="600" main-class="org.retentionprediction.peakfindergcfx.Main"  name="Peak Finder GC FX" />
+  <update check="background"/>
+</jnlp>

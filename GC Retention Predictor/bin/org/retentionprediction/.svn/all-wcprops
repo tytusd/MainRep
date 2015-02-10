@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svnroot/gcrtnpredictor/!svn/ver/16/trunk/src/org/retentionprediction
+END
+Globals.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/gcrtnpredictor/!svn/ver/16/trunk/src/org/retentionprediction/Globals.java
+END
+AutoScaleEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/gcrtnpredictor/!svn/ver/2/trunk/src/org/retentionprediction/AutoScaleEvent.java
+END
+GraphControl.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/gcrtnpredictor/!svn/ver/17/trunk/src/org/retentionprediction/GraphControl.java
+END
+TopPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/gcrtnpredictor/!svn/ver/17/trunk/src/org/retentionprediction/TopPanel.java
+END
+AutoScaleListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/gcrtnpredictor/!svn/ver/2/trunk/src/org/retentionprediction/AutoScaleListener.java
+END
+InterpolationFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gcrtnpredictor/!svn/ver/2/trunk/src/org/retentionprediction/InterpolationFunction.java
+END
+RetentionPredictorApplet.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svnroot/gcrtnpredictor/!svn/ver/16/trunk/src/org/retentionprediction/RetentionPredictorApplet.java
+END
+LinearInterpolationFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svnroot/gcrtnpredictor/!svn/ver/2/trunk/src/org/retentionprediction/LinearInterpolationFunction.java
+END
+BackCalculationOptionsDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svnroot/gcrtnpredictor/!svn/ver/12/trunk/src/org/retentionprediction/BackCalculationOptionsDialog.java
+END
+AppletFrame.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/gcrtnpredictor/!svn/ver/2/trunk/src/org/retentionprediction/AppletFrame.java
+END
+TopPanel2.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/gcrtnpredictor/!svn/ver/17/trunk/src/org/retentionprediction/TopPanel2.java
+END
+PreloadedValuesDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svnroot/gcrtnpredictor/!svn/ver/2/trunk/src/org/retentionprediction/PreloadedValuesDialog.java
+END

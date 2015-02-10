@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svnroot/measureyourgrad/!svn/ver/4/trunk/src/org/measureyourgradient
+END
+Globals.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/measureyourgrad/!svn/ver/10/trunk/src/org/measureyourgradient/Globals.java
+END
+AutoScaleEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/measureyourgrad/!svn/ver/2/trunk/src/org/measureyourgradient/AutoScaleEvent.java
+END
+GraphControl.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/measureyourgrad/!svn/ver/5/trunk/src/org/measureyourgradient/GraphControl.java
+END
+TopPanel.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/measureyourgrad/!svn/ver/8/trunk/src/org/measureyourgradient/TopPanel.java
+END
+AutoScaleListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/measureyourgrad/!svn/ver/2/trunk/src/org/measureyourgradient/AutoScaleListener.java
+END
+InterpolationFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/measureyourgrad/!svn/ver/2/trunk/src/org/measureyourgradient/InterpolationFunction.java
+END
+MeasureYourGradientApplet.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svnroot/measureyourgrad/!svn/ver/9/trunk/src/org/measureyourgradient/MeasureYourGradientApplet.java
+END
+LinearInterpolationFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svnroot/measureyourgrad/!svn/ver/8/trunk/src/org/measureyourgradient/LinearInterpolationFunction.java
+END
+AppletFrame.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/measureyourgrad/!svn/ver/2/trunk/src/org/measureyourgradient/AppletFrame.java
+END
+TopPanel2.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/measureyourgrad/!svn/ver/5/trunk/src/org/measureyourgradient/TopPanel2.java
+END
+PreloadedValuesDialog.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svnroot/measureyourgrad/!svn/ver/2/trunk/src/org/measureyourgradient/PreloadedValuesDialog.java
+END
