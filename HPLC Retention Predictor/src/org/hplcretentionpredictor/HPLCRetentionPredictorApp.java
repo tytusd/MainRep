@@ -58,7 +58,6 @@ import boswell.graphcontrol.AutoScaleListener;
 import boswell.peakfinderlc.PeakFinderSettingsDialog;
 
 import org.hplcretentionpredictor.IsocraticCompound;
-import org.hplcretentionpredictor.TopPanel2.NoEditTableModel;
 
 class PredictedRetentionObject
 {
@@ -2089,6 +2088,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 							backup_database_file.delete();
 						}
 						
+						otherCompounds.clear();
 						//Update the prediction table
 						Utilities.parseCSV("isocratic_database.csv", otherCompounds);
 			    		// Fill in the table with the solutes that weren't selected
