@@ -1,6 +1,5 @@
 package org.hplcretentionpredictor;
 
-import IsocraticCompound;
 
 import java.io.File;
 import java.io.IOException;
@@ -650,64 +649,6 @@ public class Globals
 //		// The following is incorrect for curcumin
 //		{{ .9069281682, -.7165521618}, { .8024476487, -.4346436523}, { .7026600699, -.1458461689}, { .603097122, .1849818309}, { .5027039615, .59}, { .4028808372, 1.1163692501}}
 //	};
-	
-	public static void parseCSV(String fileName, ArrayList<IsocraticCompound> compounds)
-	{
-		File file = new File(fileName);
-		try 
-		{
-			CSVParser parser = CSVParser.parse(file, Charset.defaultCharset(), CSVFormat.RFC4180);
-			IsocraticCompound compound = null;
-			
-			for(CSVRecord record : parser)
-			{
-				String key = record.get(0);
-				key = key.toLowerCase();
-				
-				switch(key)
-				{
-					case "id":
-						compound = new IsocraticCompound();
-						break;
-					case "names":
-						compound.setId(record.get(1));
-						break;
-					case "concentration":
-						for(int i = 1; i < record.size(); i++)
-						{
-							if(record.get(i).equals(""))
-							{
-								break;
-							}
-							double concentrationValue = Double.parseDouble(record.get(i));
-							compound.getConcentrationList().add(concentrationValue);
-						}
-						break;
-					case "log k":
-						for(int i = 1; i < record.size(); i++)
-						{
-							if(record.get(i).equals(""))
-							{
-								break;
-							}
-							double logKValue = Double.parseDouble(record.get(i));
-							compound.getLogKList().add(logKValue);
-						}
-						break;
-					case "":
-						//System.out.println(compound.getId()+","+compound.getConcentrationList().toString()+","+compound.getLogKList().toString());
-						compounds.add(compound);
-						compound = null;
-					default:
-						continue;
-				}
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
 	
 	public static double roundToSignificantFigures(double num, int n) 
 	{

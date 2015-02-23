@@ -68,4 +68,19 @@ public class IsocraticCompound {
 		return getConcentrationList().set(index, value);
 	}
 	
+	/**
+	 * Converts a compound's log-k and solvent fraction lists into a 2-D array. 
+	 * @param compound
+	 * @return
+	 */
+	public double[][] convertListsTo2DArray(){
+		int size = this.getConcentrationList().size();
+		double[][] array = new double[size][2];
+		for(int i = 0; i < size; i++){
+			array[i][0] = this.getConcentrationValue(i);
+			array[i][1] = this.getlogKValue(i);
+		}
+		return array;
+	}
+	
 }

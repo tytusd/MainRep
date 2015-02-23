@@ -16,9 +16,17 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,12 +46,19 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.SwingWorker;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 
 import boswell.graphcontrol.AutoScaleEvent;
 import boswell.graphcontrol.AutoScaleListener;
 import boswell.peakfinderlc.PeakFinderSettingsDialog;
+
+import org.hplcretentionpredictor.IsocraticCompound;
+import org.hplcretentionpredictor.TopPanel2.NoEditTableModel;
 
 class PredictedRetentionObject
 {
@@ -93,6 +108,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     public double m_dVariance = 0;
     public boolean m_bNoFullBackcalculation = false;
     
+    public static String fileName = "isocratic_database.csv";
+    public static String fileURL = "http://www.retentionprediction.org/hplc/database/isocratic_database.csv";
     public String m_strFileName = "";
     
     public double[][] m_dIdealGradientProfileArray;
@@ -145,6 +162,9 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     public double m_dConfidenceInterval = 0.99;
 
 	public Vector<Compound> m_vectCompound = new Vector<Compound>();
+	private ArrayList<IsocraticCompound> otherCompounds = new ArrayList<IsocraticCompound>(1000);
+	public UpdateProgressDialog updateDialog = null;
+	public TaskUpdateDatabase taskUpdateDb = null;
 	
     // Start the app
     public static void main(String[] args) 
@@ -322,6 +342,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
         contentPane2.jbtnCalculate.addActionListener(this);
         contentPane2.jbtnPreviousStep.addActionListener(this);
         contentPane2.jbtnPredict.addActionListener(this);
+        contentPane2.jbtnUpdateIsocraticDatabase.addActionListener(this);
         contentPane2.jbtnHelp.addActionListener(this);
         contentPane2.jtxtWindowConfidence.addFocusListener(this);
         contentPane2.jtxtWindowConfidence.addKeyListener(this);
@@ -957,13 +978,14 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    	}
 	    	else if (m_iStage == 3)
 	    	{
+	    		Utilities.parseCSV("isocratic_database.csv", otherCompounds);
 	    		// Fill in the table with the solutes that weren't selected
 		    	contentPane2.tmPredictionModel.getDataVector().clear();
 		    	
 		    	//Add compounds to the prediction table
-		    	for (int i = 0; i < GlobalsDan.OtherCompoundsNameArray.length; i++)
+		    	for (int i = 0; i < otherCompounds.size(); i++)
 		    	{
-		    		Object[] newRow = {GlobalsDan.OtherCompoundsNameArray[i], null};
+		    		Object[] newRow = {otherCompounds.get(i).getId(), null};
 	    			contentPane2.tmPredictionModel.addRow(newRow);
 		    	}
 		    	
@@ -972,6 +994,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 		    	contentPane2.jpanelStep6.setVisible(true);
 		    	contentPane2.jbtnNextStep.setVisible(false);
 		    	contentPane2.jbtnPredict.setEnabled(true);
+		    	contentPane2.jbtnUpdateIsocraticDatabase.setEnabled(true);
 		    	contentPane2.jProgressBar2.setString("");
 		    	contentPane2.jProgressBar2.setIndeterminate(false);
 	    	}
@@ -1202,6 +1225,14 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    			}
 	    		}
 	    	}
+	    }
+	    else if(strActionCommand == "Update Database"){
+	    	//ToDo
+	    	Frame[] frame = Frame.getFrames();
+	    	taskUpdateDb = new TaskUpdateDatabase();
+	    	updateDialog = new UpdateProgressDialog(frame[0], taskUpdateDb);
+	    	updateDialog.setVisible(true);
+	    	
 	    }
 	}
     
@@ -1917,7 +1948,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
         @Override
         public Void doInBackground() 
         {
-    		int iNumCompounds = GlobalsDan.OtherCompoundsIsocraticDataArray.length;
+    		int iNumCompounds = otherCompounds.size();
         	
         	m_PredictedRetentionTimes = new PredictedRetentionObject[iNumCompounds];
     		contentPane2.jProgressBar2.setMinimum(0);
@@ -1932,8 +1963,16 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 				{
 					return null;
 				}
-
-				m_PredictedRetentionTimes[iCompound] = predictRetention(GlobalsDan.OtherCompoundsIsocraticDataArray[iCompound]);
+				IsocraticCompound iCompoundObject = otherCompounds.get(iCompound);
+//				
+//				//For testing where the program breaks. This checks if there is only one data point, then exclude this compound.
+//				if(iCompoundObject.getConcentrationList().size() <= 1){
+//					System.out.println(iCompound+","+iCompoundObject.getId());
+//					m_PredictedRetentionTimes[iCompound] = null;
+//					continue;
+//				}
+				
+				m_PredictedRetentionTimes[iCompound] = predictRetention(iCompoundObject.convertListsTo2DArray());
     		}
     		
     		updatePredictionsTable();
@@ -1958,6 +1997,132 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     		contentPane2.jbtnPredict.setText("Copy report to clipboard");
     		contentPane2.jbtnPredict.setEnabled(true);
         }
+    }
+    
+    class TaskUpdateDatabase extends SwingWorker<Void,Void>
+    {
+    	
+
+		@Override
+		protected Void doInBackground() throws Exception {
+			updateDialog.jProgressBar.setMinimum(0);
+			InputStream urlStream = null;
+			InputStream fileStream = null;
+			try 
+			{
+				urlStream = new URL(fileURL).openStream();
+				updateDialog.jLblStatus.setText("Connected to the web. Checking for updates ...");
+			} 
+			catch (IOException e) 
+			{
+				e.printStackTrace();
+			}
+			try 
+			{
+				fileStream = new FileInputStream(new File(fileName));
+			} 
+			catch (FileNotFoundException e) 
+			{
+				e.printStackTrace();
+			}
+			
+			boolean diff = Utilities.areDifferent(urlStream, fileStream);
+			if(!diff)
+			{
+				updateDialog.jLblStatus.setText("Your database is up-to-date. No updates needed.");
+				updateDialog.jBtnCancel.setText("Close");
+				updateDialog.jBtnCancel.setActionCommand("Close");
+			}
+			else
+			{
+				updateDialog.jLblStatus.setText("Update found. Starting the update!");
+				File isocratic_database_file = new File(fileName);
+				File backup_database_file = new File(fileName+".bak");
+	    		if(isocratic_database_file.exists()){
+	    			FileUtils.copyFile(isocratic_database_file, backup_database_file);
+	    		}
+	    		updateDialog.jLblStatus.setText("Current database backup done.");
+				try 
+				{
+					URL source = new URL(fileURL);
+					InputStream input = source.openStream();
+					FileOutputStream output = new FileOutputStream(isocratic_database_file);
+					byte[] buffer = new byte[4096];
+					long fileSize = Utilities.urlFileSize(fileURL);
+					updateDialog.jLblStatus.setText("Update database size: "+ fileSize + " bytes");
+					long count = 0;
+					int n = 0;
+					boolean isUpdated = false; 
+					
+					updateDialog.jProgressBar.setMinimum(0);
+					updateDialog.jProgressBar.setMaximum((int)fileSize);
+					
+					try
+					{
+						while(-1 != (n = input.read(buffer)))
+						{
+							output.write(buffer, 0, n);
+							count += n;
+							updateDialog.jLblStatus.setText((int)((count*100)/fileSize)+"% done.");
+							updateDialog.jProgressBar.setValue((int)count);
+						}
+						isUpdated = true;
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					
+					if(!isUpdated && backup_database_file.exists())
+					{
+						updateDialog.jLblStatus.setText("Update unsuccessful. Rolling back changes.");
+						if(isocratic_database_file.exists())
+						{
+							isocratic_database_file.delete();
+						}
+						FileUtils.moveFile(backup_database_file, isocratic_database_file);
+					}
+					else
+					{
+						updateDialog.jLblStatus.setText("Download complete!");
+						if(backup_database_file.exists()){
+							backup_database_file.delete();
+						}
+						
+						//Update the prediction table
+						Utilities.parseCSV("isocratic_database.csv", otherCompounds);
+			    		// Fill in the table with the solutes that weren't selected
+				    	contentPane2.tmPredictionModel.getDataVector().clear();
+				    	
+				    	//Add compounds to the prediction table
+				    	for (int i = 0; i < otherCompounds.size(); i++)
+				    	{
+				    		Object[] newRow = {otherCompounds.get(i).getId(), null};
+			    			contentPane2.tmPredictionModel.addRow(newRow);
+				    	}
+				    	
+					}
+					
+					if(output != null)
+					{
+						output.close();
+					}
+					if(input != null)
+					{
+						input.close();
+					}
+					
+				} 
+				catch (IOException e) 
+				{
+					e.printStackTrace();
+				}
+				
+			}
+			
+			return null;
+		}
+    	
     }
     
 	public void updatePredictionsTable()
@@ -3608,8 +3773,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     // Start by optimizing the entire dead time error profile.
 	public void backCalculate(Task task, boolean bDeadTimeProfileFirst)
 	{
-		//if (true)
-		//	return;
+//		if (true)
+//			return;
 		long starttime = System.currentTimeMillis();
 		m_bNoFullBackcalculation = false;
 		
@@ -4064,6 +4229,5 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
  	{
 		
 	}
-
 
 }
