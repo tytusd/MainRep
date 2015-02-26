@@ -252,13 +252,13 @@ public class GraphControl extends GLCanvas implements GLEventListener, MouseList
 		m_drectView.bottom = -800 * MILLIUNITS;
 		
         Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Image imgOpenHand = toolkit.getImage(getClass().getResource("/boswell/graphcontrol/images/openhand.gif"));
+        Image imgOpenHand = toolkit.getImage(getClass().getResource("/images/openhand.gif"));
         m_curOpenHand = toolkit.createCustomCursor(imgOpenHand, new Point(7,7), "openhand");
-        Image imgClosedHand = toolkit.getImage(getClass().getResource("/boswell/graphcontrol/images/closedhand.gif"));
+        Image imgClosedHand = toolkit.getImage(getClass().getResource("/images/closedhand.gif"));
         m_curClosedHand = toolkit.createCustomCursor(imgClosedHand, new Point(7,7), "closedhand");
-        Image imgZoomIn = toolkit.getImage(getClass().getResource("/boswell/graphcontrol/images/zoomin.gif"));
+        Image imgZoomIn = toolkit.getImage(getClass().getResource("/images/zoomin.gif"));
         m_curZoomIn = toolkit.createCustomCursor(imgZoomIn, new Point(0,0), "zoomin");
-        Image imgZoomOut = toolkit.getImage(getClass().getResource("/boswell/graphcontrol/images/zoomout.gif"));
+        Image imgZoomOut = toolkit.getImage(getClass().getResource("/images/zoomout.gif"));
         m_curZoomOut = toolkit.createCustomCursor(imgZoomOut, new Point(5,5), "zoomout");
         
         if (m_bControlsEnabled)
