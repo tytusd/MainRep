@@ -173,12 +173,12 @@ public class PeakFinderSettingsDialog extends JDialog implements FocusListener, 
         	int iPositiveSpectraCount;
         	int iNegativeSpectraCount;
         	double[][][] mzData = null;
-//        	double[] dRetentionTimes = null;
+        	double[] dRetentionTimes = null;
         	
-        	//Vector<Double> mzDataMassList = new Vector<Double>();
+        	Vector<Double> mzDataMassList = new Vector<Double>();
         	
         	// Create an m/z array that contains all the values we need EICs of
-        	/*for (int i = 0; i < m_dStandardCompoundsMZArray.length; i++)
+        	for (int i = 0; i < m_dStandardCompoundsMZArray.length; i++)
         	{
         		for (int j = 0; j < m_dStandardCompoundsMZArray[i].length; j++)
         		{
@@ -199,7 +199,7 @@ public class PeakFinderSettingsDialog extends JDialog implements FocusListener, 
         				mzDataMassList.add(thisMZ);
         			}
         		}
-        	}*/
+        	}
         	
     		try 
     		{
@@ -641,7 +641,7 @@ public class PeakFinderSettingsDialog extends JDialog implements FocusListener, 
     			}
     			// Parse CDF file
     			else if (fileExtension.toUpperCase().equals("CDF"))
-    			{/*
+    			{
     				// Launch the progress dialog in a separate thread
     	        	//runProgressDialogTask = new RunProgressDialogTask(owner);
     	        	progressDialog.jProgressBar.setIndeterminate(true);
@@ -705,8 +705,13 @@ public class PeakFinderSettingsDialog extends JDialog implements FocusListener, 
            	        	
            	        	iSpectraCount = (int)scanIndexArray.getSize();
      		           
-           	        	mzData = new double[iSpectraCount][][];
+           	        	mzData = new double[m_dStandardCompoundsMZArray.length][][];
            	        	dRetentionTimes = new double[iSpectraCount];
+           	        	
+           	        	for(int i = 0; i < mzData.length; i++)
+           	        	{
+           	        		mzData[i] = new double[iSpectraCount][2];
+           	        	}
            	        	
            	        	for (int iSpectrum = 0; iSpectrum < iSpectraCount; iSpectrum++)
            	        	{
@@ -718,37 +723,37 @@ public class PeakFinderSettingsDialog extends JDialog implements FocusListener, 
                         		return null;
                         	}
 
-           	        		// Create the new array for the spectrum
-              	        	mzData[iSpectrum] = new double[mzDataMassList.size()][2];
               	        	
-              	        	for (int i = 0; i < mzData[iSpectrum].length; i++)
-            	        	{
-            	        		mzData[iSpectrum][i][0] = mzDataMassList.get(i);
-            	        		mzData[iSpectrum][i][1] = 0;
-            	        	}
               	        	
               	        	// Now pull the m/z values and intensities for this spectrum
               	        	int[] shape = {pointCountArray.get(iSpectrum)};
         		           	int[] origin = {scanIndexArray.get(iSpectrum)};
-        		           	
-              	        	ArrayFloat.D1 massDataArray = (ArrayFloat.D1)massValuesDataVar.read(origin, shape);
+        		           	ArrayFloat.D1 massDataArray = (ArrayFloat.D1)massValuesDataVar.read(origin, shape);
               	        	ArrayFloat.D1 intensityDataArray = (ArrayFloat.D1)intensityValuesDataVar.read(origin, shape);
         			    	
+        		           	// Now pull the retention time for this spectrum
+              	        	shape[0] = 1;
+              	        	origin[0] = iSpectrum;
+              	        	ArrayDouble.D1 timeDataArray = (ArrayDouble.D1)timeValuesDataVar.read(origin, shape);
+              	        
+              	        	
+              	        	for (int i = 0; i < mzData.length; i++)
+            	        	{
+            	        		mzData[i][iSpectrum][0] = timeDataArray.get(0);
+            	        		mzData[i][iSpectrum][1] = 0;
+            	        	}
+        		           	
+              	        	
               	        	for (int j = 0; j < massDataArray.getSize(); j++) 
             	        	{
             	        		for (int i = 0; i < mzDataMassList.size(); i++)
             	        		{
             	        			if (massDataArray.get(j) <= mzDataMassList.get(i) + 0.5 && massDataArray.get(j) >= mzDataMassList.get(i) - 0.5)
-            	        				mzData[iSpectrum][i][1] += intensityDataArray.get(j);
+            	        				mzData[i][iSpectrum][1] += intensityDataArray.get(j);
             	        		}
             	        	}
 
-              	        	// Now pull the retention time for this spectrum
-              	        	shape[0] = 1;
-              	        	origin[0] = iSpectrum;
-              	        	ArrayDouble.D1 timeDataArray = (ArrayDouble.D1)timeValuesDataVar.read(origin, shape);
               	        	
-              	        	dRetentionTimes[iSpectrum] = timeDataArray.get(0);
            	        	}
 
     			       // The file is closed no matter what by putting inside a try/catch block.
@@ -773,7 +778,7 @@ public class PeakFinderSettingsDialog extends JDialog implements FocusListener, 
     			        {
     			        	ioe.printStackTrace();
     			        }
-    			    }*/
+    			    }
     			}
     			else
     			{

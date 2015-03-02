@@ -22,6 +22,96 @@
           <target>1.6</target>
         </configuration>
       </plugin>
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <executions>
+          <execution>
+          	<id>sgfilter</id>
+            <phase>initialize</phase>
+            <goals>
+            	<goal>install-file</goal>
+            </goals>
+            <configuration>
+           		<groupId>sgfilter</groupId>
+  				<artifactId>sgfilter</artifactId>
+  				<version>1.2</version>
+  				<packaging>jar</packaging>
+  				<file>${basedir}\..\Javalibs\sgfilter_v1_2.jar</file>
+            </configuration>
+          </execution>
+          <execution>
+          	<id>jmzreader</id>
+            <phase>initialize</phase>
+            <goals>
+            	<goal>install-file</goal>
+            </goals>
+            <configuration>
+           		<groupId>jmzreader</groupId>
+  				<artifactId>jmzreader</artifactId>
+  				<version>1.2.0</version>
+  				<packaging>jar</packaging>
+  				<file>${basedir}\..\Javalibs\jmzreader-1.2.0.jar</file>
+            </configuration>
+          </execution>
+          <execution>
+          	<id>swingx</id>
+            <phase>initialize</phase>
+            <goals>
+            	<goal>install-file</goal>
+            </goals>
+            <configuration>
+           		<groupId>swingx</groupId>
+  				<artifactId>swingx</artifactId>
+  				<version>1.6.2</version>
+  				<packaging>jar</packaging>
+  				<file>${basedir}\..\Javalibs\swingx-core-1.6.2.jar</file>
+            </configuration>
+          </execution>
+          <execution>
+          	<id>mzxml-parser</id>
+            <phase>initialize</phase>
+            <goals>
+            	<goal>install-file</goal>
+            </goals>
+            <configuration>
+           		<groupId>mzxml-parser</groupId>
+  				<artifactId>mzxml-parser</artifactId>
+  				<version>1.3.2</version>
+  				<packaging>jar</packaging>
+  				<file>${basedir}\..\Javalibs\mzxml-parser-1.3.2.jar</file>
+            </configuration>
+          </execution>
+          <execution>
+          	<id>jmzml</id>
+            <phase>initialize</phase>
+            <goals>
+            	<goal>install-file</goal>
+            </goals>
+            <configuration>
+           		<groupId>uk.ac.ebi.jmzml</groupId>
+  				<artifactId>jmzml</artifactId>
+  				<version>1.6.8</version>
+  				<packaging>jar</packaging>
+  				<file>${basedir}\..\Javalibs\jmzml-1.6.8-SNAPSHOT.jar</file>
+            </configuration>
+          </execution>
+          <execution>
+          	<id>graphcontrol</id>
+            <phase>initialize</phase>
+            <goals>
+            	<goal>install-file</goal>
+            </goals>
+            <configuration>
+           		<groupId>GraphControl</groupId>
+  				<artifactId>GraphControl</artifactId>
+  				<version>0.0.1-SNAPSHOT</version>
+  				<packaging>jar</packaging>
+  				<file>${basedir}\..\Javalibs\graphcontrol.jar</file>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
@@ -66,11 +156,41 @@
   		<version>1.6.8</version>
   	</dependency>
   </dependencies>
-  <repositories>
+    <repositories>
     <repository>
-        <id>ebi-repo</id>
-        <name>The EBI internal repository</name>
-        <url>http://www.ebi.ac.uk/~maven/m2repo</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>ebi-repo</id>
+      <name>The EBI internal repository</name>
+      <url>http://www.ebi.ac.uk/~maven/m2repo</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>ebi-snapshot-repo</id>
+      <name>The EBI internal snapshot repository</name>
+      <url>http://www.ebi.ac.uk/~maven/m2repo_snapshots</url>
+    </repository>
+    <repository>
+      <id>JBoss</id>
+      <name>JBoss repository</name>
+      <url>https://repository.jboss.org/nexus/content/repositories/releases/</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>http://repo.maven.apache.org/maven2</url>
     </repository>
   </repositories>
 </project>
