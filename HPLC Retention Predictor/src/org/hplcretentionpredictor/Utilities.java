@@ -32,45 +32,41 @@ public class Utilities {
 				String key = record.get(0);
 				key = key.toLowerCase();
 				
-				switch(key)
-				{
-					case "id":
-						compound = new IsocraticCompound();
-						break;
-					case "names":
-						compound.setId(record.get(1));
-						break;
-					case "concentration":
-						for(int i = 1; i < record.size(); i++)
-						{
-							if(record.get(i).equals(""))
-							{
-								break;
-							}
-							double concentrationValue = Double.parseDouble(record.get(i));
-							compound.getConcentrationList().add(concentrationValue);
-						}
-						break;
-					case "log k":
-						for(int i = 1; i < record.size(); i++)
-						{
-							if(record.get(i).equals(""))
-							{
-								break;
-							}
-							double logKValue = Double.parseDouble(record.get(i));
-							compound.getLogKList().add(logKValue);
-						}
-						break;
-					case "":
-						//System.out.println(compound.getId()+","+compound.getConcentrationList().toString()+","+compound.getLogKList().toString());
-						if(compound.getConcentrationList().size() > 1){
-							compounds.add(compound);	
-						}
-						compound = null;
-					default:
-						continue;
+				if(key.equals("id")){
+					compound = new IsocraticCompound();
 				}
+				else if(key.equals("names")){
+					compound.setId(record.get(1));
+				}
+				else if(key.equals("concentration")){
+					for(int i = 1; i < record.size(); i++)
+					{
+						if(record.get(i).equals(""))
+						{
+							break;
+						}
+						double concentrationValue = Double.parseDouble(record.get(i));
+						compound.getConcentrationList().add(concentrationValue);
+					}
+				}
+				else if(key.equals("log k")){
+					for(int i = 1; i < record.size(); i++)
+					{
+						if(record.get(i).equals(""))
+						{
+							break;
+						}
+						double logKValue = Double.parseDouble(record.get(i));
+						compound.getLogKList().add(logKValue);
+					}
+				}
+				else if(key.equals("")){
+					if(compound.getConcentrationList().size() > 1){
+						compounds.add(compound);	
+					}
+					compound = null;
+				}
+				
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -168,7 +164,7 @@ public class Utilities {
 			HttpURLConnection conn = (HttpURLConnection) urlFile.openConnection();
 			conn.setRequestMethod("HEAD");
 			conn.getInputStream();
-			fileSize = conn.getContentLengthLong();
+			fileSize = conn.getContentLength();
 		} 
 		catch (MalformedURLException e) 
 		{

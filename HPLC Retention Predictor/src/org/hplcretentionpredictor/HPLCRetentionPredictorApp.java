@@ -207,7 +207,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
         //Instantiate the controlling class.
         HPLCRetentionPredictorApp frame = new HPLCRetentionPredictorApp("HPLC Retention Predictor");
         
-		//java.net.URL url1 = ClassLoader.getSystemResource("org/hplcsimulator/images/icon.png");
+		//java.net.URL url1 = ClassLoader.getSystemResource("/images/icon.png");
 		Toolkit kit = Toolkit.getDefaultToolkit();
 	    Image img = kit.createImage(frame.getClass().getResource("/org/hplcretentionpredictor/images/icon.png"));
 	    frame.setIconImage(img);
