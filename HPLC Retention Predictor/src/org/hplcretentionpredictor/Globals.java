@@ -16,19 +16,19 @@ public class Globals
 	public static double dRefColumnLength = 5;
 	public static double dRefFlowRate = 0.8;
 
-	// For a 2.1 x 50 mm column at 800 uL/min
+	// For a 2.1 x 150 mm column at 400 uL/min
 	public static double[][] dDeadTimeArray = {
-		 { 0.05, 0.146},
-		 { 0.1, 0.146},
-		 { 0.2, 0.146},
-		 { 0.3, 0.146},
-		 { 0.4, 0.146},
-		 { 0.5, 0.146},
-		 { 0.6, 0.146},
-		 { 0.7, 0.146},
-		 { 0.8, 0.146},
-		 { 0.90, 0.146},
-		 { 0.95, 0.146}
+		 { 0.05, 0.906333333},
+		 { 0.1, 0.876},
+		 { 0.2, 0.876},
+		 { 0.3, 0.805},
+		 { 0.4, 0.784666667},
+		 { 0.5, 0.77},
+		 { 0.6, 0.763333333},
+		 { 0.7, 0.769},
+		 { 0.8, 0.772333333},
+		 { 0.90, 0.772666667},
+		 { 0.95, 0.779666667},
 	};
 	
 	// Add a string here to describe the method in words
