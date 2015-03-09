@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane hgap="12.0" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-padding: 0.5em; -fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boswell.fxoptionpane.MessageDialogController">
+  <columnConstraints>
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" />
+    <ColumnConstraints hgrow="SOMETIMES" />
+  </columnConstraints>
+  <rowConstraints>
+      <RowConstraints valignment="BOTTOM" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" valignment="CENTER" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <Label fx:id="labelMessage" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="500.0" text="Message goes here. This is what needs to be said to the user when this message dialog pops up. It could be a single line or it could be multiple lines. Don't know." wrapText="true" GridPane.columnIndex="1" />
+      <ImageView fx:id="imagePic" fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true" GridPane.valignment="TOP" />
+      <HBox alignment="BOTTOM_RIGHT" fillHeight="false" maxHeight="-Infinity" spacing="12.0" GridPane.columnSpan="2" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+         <children>
+            <Button fx:id="button2" mnemonicParsing="false" prefWidth="140.0" text="Button2" />
+            <Button fx:id="button1" defaultButton="true" mnemonicParsing="false" prefWidth="140.0" text="Button1" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+   </padding>
+</GridPane>

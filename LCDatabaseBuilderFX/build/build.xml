@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<project name="GCDatabaseBuilderFX" default="do-deploy" basedir="."  xmlns:fx="javafx:com.sun.javafx.tools.ant">
+	<target name="init-fx-tasks">
+		<path id="fxant">
+			<filelist>
+				<file name="${java.home}\..\lib\ant-javafx.jar"/>
+				<file name="${java.home}\lib\jfxrt.jar"/>
+			</filelist>
+		</path>
+	
+		<taskdef resource="com/sun/javafx/tools/ant/antlib.xml"      
+			uri="javafx:com.sun.javafx.tools.ant"
+			classpathref="fxant"/>
+	</target>
+	<target name="setup-staging-area">
+		<delete dir="externalLibs" />
+		<delete dir="project" />
+		<delete dir="projectRefs" />
+		
+		<mkdir dir="externalLibs" />
+		
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\commons-math3-3.2">
+				<filename name="commons-math3-3.2.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\apache-log4j-2.0-beta3-bin">
+				<filename name="log4j12-api-2.0-beta3.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\apache-log4j-2.0-beta3-bin">
+				<filename name="log4j-jcl-2.0-beta3.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\commons-math-2.2">
+				<filename name="commons-math-2.2.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\netCDF">
+				<filename name="ncCore-4.2.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\commons-io-2.4">
+				<filename name="commons-io-2.4.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\jchardet-1.1\dist\lib">
+				<filename name="chardet.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\commons-logging-1.1.1">
+				<filename name="commons-logging-1.1.1.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\cpdetector_1.0.10_binary">
+				<filename name="cpdetector_1.0.10.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\sgfilter_v1_2_src">
+				<filename name="sgfilter_v1_2.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\apache-log4j-2.0-beta3-bin">
+				<filename name="log4j-api-2.0-beta3.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\apache-log4j-2.0-beta3-bin">
+				<filename name="log4j-core-2.0-beta3.jar"/>	
+			</fileset>
+		</copy>
+		<copy todir="externalLibs">
+			<fileset dir="C:\Program Files\Java\commons-collections-3.2.1">
+				<filename name="commons-collections-3.2.1.jar"/>	
+			</fileset>
+		</copy>
+		
+		<mkdir dir="project" />
+		<copy todir="project">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces\GCDatabaseBuilderFX">
+				<include name="src/**" />
+			</fileset>
+		</copy>
+		
+		<mkdir dir="projectRefs" />
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="mzxml-parser\src\main\java/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="Peak Finder GC FX\src/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="GraphControl FX\src/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="FXOptionPane\src/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="jmzml\src\main\java/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="jmzml\src\main\resources/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="jmzreader\src\main\java/**" />
+			</fileset>
+		</copy>
+		<copy todir="projectRefs">
+			<fileset dir="C:\Users\Paul\Desktop\Eclipse Workspaces">
+				<include name="xxindex\src\main\java/**" />
+			</fileset>
+		</copy>
+	</target>
+	<target name='do-compile'>
+		<delete dir="build" />
+		<mkdir dir="build/src" />
+		<mkdir dir="build/libs" />
+		<mkdir dir="build/classes" />
+	
+		<!-- Copy project-libs references -->
+		<copy todir="build/libs">
+			<fileset dir="externalLibs">
+				<include name="chardet.jar"/>
+				<include name="commons-collections-3.2.1.jar"/>
+				<include name="log4j12-api-2.0-beta3.jar"/>
+				<include name="log4j-core-2.0-beta3.jar"/>
+				<include name="log4j-jcl-2.0-beta3.jar"/>
+				<include name="sgfilter_v1_2.jar"/>
+				<include name="commons-math3-3.2.jar"/>
+				<include name="commons-io-2.4.jar"/>
+				<include name="log4j-api-2.0-beta3.jar"/>
+				<include name="commons-math-2.2.jar"/>
+				<include name="commons-logging-1.1.1.jar"/>
+				<include name="cpdetector_1.0.10.jar"/>
+				<include name="ncCore-4.2.jar"/>
+			</fileset>
+		</copy>
+	
+		<!-- Copy project references -->
+		<copy todir="build/src">
+			<fileset dir="projectRefs/jmzml/src/main/java">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/mzxml-parser/src/main/java">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/jmzreader/src/main/java">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/Peak Finder GC FX/src">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/FXOptionPane/src">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/GraphControl FX/src">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/xxindex/src/main/java">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+		<copy todir="build/src">
+			<fileset dir="projectRefs/jmzml/src/main/resources">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+	
+		<!-- Copy project sources itself -->
+		<copy todir="build/src">
+			<fileset dir="project/src">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+	
+		<javac includeantruntime="false" source="1.7" target="1.7" srcdir="build/src" destdir="build/classes" encoding="Cp1252">
+			<classpath>
+				<fileset dir="build/libs">
+					<include name="*"/>
+				</fileset>
+				<filelist>
+					<file name="C:\Program Files\Java\jre7\lib\jfxrt.jar"/>
+				</filelist>
+			</classpath>
+		</javac>
+		
+		<!-- Copy over none Java-Files -->
+		<copy todir="build/classes">
+		<fileset dir="project/src">
+			<exclude name="**/*.java"/>
+		</fileset>
+		</copy>
+	
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/jmzml/src/main/java">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/mzxml-parser/src/main/java">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/jmzreader/src/main/java">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/Peak Finder GC FX/src">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/FXOptionPane/src">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/GraphControl FX/src">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/xxindex/src/main/java">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		<copy todir="build/classes">
+			<fileset dir="projectRefs/jmzml/src/main/resources">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+	
+	</target>
+	<target name="do-deploy" depends="setup-staging-area, do-compile, init-fx-tasks">
+		<delete file="dist"/>
+		<delete file="deploy" />
+		
+		<mkdir dir="dist" />
+		<mkdir dir="dist/libs" />
+		
+		<copy todir="dist/libs">
+			<fileset dir="externalLibs">
+				<include name="*" />
+			</fileset>
+		</copy>
+		
+		
+		<fx:resources id="appRes">
+			<fx:fileset dir="dist" includes="GCDatabaseBuilderFX.jar"/>
+			<fx:fileset dir="dist" includes="libs/*"/>
+		</fx:resources> 
+		
+		<fx:application id="fxApplication"
+			name="GC Retention Database Builder"
+			mainClass="org.retentionprediction.gcdatabasebuilderfx.Main"
+			toolkit="fx"
+		/>
+	
+		<mkdir dir="build/classes/META-INF" />
+		
+		
+		
+		<fx:jar destfile="dist/GCDatabaseBuilderFX.jar">
+			<fx:application refid="fxApplication"/>
+			<fileset dir="build/classes">
+			</fileset>
+			<fx:resources refid="appRes"/>
+			
+			<manifest>
+				<attribute name="Implementation-Vendor" value="Boswell Research Group"/>
+				<attribute name="Implementation-Title" value="GC Retention Database Builder"/>
+				<attribute name="Implementation-Version" value="1.0"/>
+				<attribute name="Permissions" value="all-permissions"/>
+				<attribute name="JavaFX-Feature-Proxy" value="None"/>
+			</manifest>
+		</fx:jar>
+		
+		<!-- Need to use ${basedir} because somehow the ant task is calculating the directory differently -->
+		<fx:signjar 
+			keystore="C:\Users\Paul\Desktop\Eclipse Workspaces\keystore.jks" 
+			alias="hplcsimulator" 
+			keypass="v2incepp" 
+			storepass="][PLCsim123" 
+			destDir="${basedir}/dist">
+			<fileset dir='dist'>
+				<include name='**/*.jar' />
+			</fileset>
+		</fx:signjar>
+	
+		<mkdir dir="deploy" />
+		<!-- Need to use ${basedir} because somehow the ant task is calculating the directory differently -->
+		<fx:deploy
+			embedJNLP="false"
+			extension="false"
+			width="600" height="600" 
+			includeDT="false"
+			offlineAllowed="true"
+			outdir="${basedir}/deploy"
+			outfile="GCDatabaseBuilderFX" nativeBundles="none"
+			updatemode="background" >
+	
+			<fx:info title="GCDatabaseBuilderFX" vendor="Boswell Research Group"/>
+			<fx:application refId="fxApplication"/>
+			<fx:resources refid="appRes"/>
+			<fx:permissions elevated="true"/>
+		</fx:deploy>
+		
+		
+	</target>
+</project>

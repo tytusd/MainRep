@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<ScrollPane fx:id="measuredretentiontimespage" fitToHeight="true" fitToWidth="true" prefHeight="965.0" prefWidth="2237.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.MeasuredRetentionTimesController">
+   <content>
+      <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" spacing="12.0" style="-fx-padding: 0.5em; -fx-spacing: 0.5em;">
+         <children>
+            <GridPane hgap="12.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0">
+               <children>
+                  <TitledPane fx:id="requirementsPane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Requirements for Program A">
+                     <content>
+                        <AnchorPane style="-fx-padding: 0.5em;">
+                           <children>
+                              <GridPane hgap="12.0" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <Label text="Initial solvent composition: " />
+                                    <Label text="Final solvent composition:" GridPane.rowIndex="1" />
+                                    <Label text="Gradient time:" GridPane.rowIndex="2" />
+                                    <Label text="Hold time:" GridPane.rowIndex="3" />
+                                    <Label fx:id="requiredInitialTemperature" style="-fx-font-weight: bold;" text="0 %B" GridPane.columnIndex="1" />
+                                    <Label fx:id="requiredInitialHoldTime" style="-fx-font-weight: bold;" text="0 %B" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <Label fx:id="requiredRampRate" style="-fx-font-weight: bold;" text="0 min" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Label fx:id="requiredFinalTemperature" style="-fx-font-weight: bold;" text="0 min" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                 </children>
+                                 <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="60.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="40.0" prefWidth="100.0" />
+                                 </columnConstraints>
+                                 <rowConstraints>
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                 </rowConstraints>
+                              </GridPane>
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </AnchorPane>
+                     </content>
+                     <GridPane.margin>
+                        <Insets />
+                     </GridPane.margin>
+                  </TitledPane>
+                  <TitledPane animated="false" collapsible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" text="Step #1: Enter optional parameters" GridPane.columnIndex="1">
+                     <content>
+                        <AnchorPane style="-fx-padding: 0.5em;">
+                           <children>
+                              <GridPane hgap="12.0" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <Label text="Choose your stationary phase:" GridPane.columnSpan="2147483647" />
+                                    <ComboBox fx:id="comboStationaryPhase" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Agilent HP-5MS UI" GridPane.columnSpan="3" GridPane.rowIndex="1" />
+                                    <Label text="Column length:" GridPane.rowIndex="2" />
+                                    <TextField fx:id="textFieldColumnLength" onAction="#actionPerformValidation" prefWidth="50.0" text="30" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Label text="m" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                                    <Label text="Inner diameter:" GridPane.rowIndex="3" />
+                                    <TextField fx:id="textFieldInnerDiameter" onAction="#actionPerformValidation" prefWidth="50.0" text="0.25" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <Label text="mm" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+                                    <Label fx:id="labelFlowRate" text="Flow rate:" GridPane.rowIndex="4">
+                                       <GridPane.margin>
+                                          <Insets />
+                                       </GridPane.margin>
+                                    </Label>
+                                    <TextField fx:id="textFieldFlowRate" onAction="#actionPerformValidation" prefWidth="50.0" text="1.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                    <Label fx:id="labelFlowRateUnits" text="mL/min" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+                                    <Label fx:id="labelFlowRate1" text="Instrument dead time:" GridPane.rowIndex="5" />
+                                    <TextField fx:id="textFieldFlowRate1" onAction="#actionPerformValidation" prefWidth="50.0" text="1.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                    <Label fx:id="labelFlowRateUnits1" text="min" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+                                 </children>
+                                 <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" minWidth="10.0" percentWidth="60.0" prefWidth="10.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" minWidth="10.0" percentWidth="20.0" prefWidth="10.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" minWidth="10.0" percentWidth="20.0" prefWidth="10.0" />
+                                 </columnConstraints>
+                                 <rowConstraints>
+                                    <RowConstraints vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                 </rowConstraints>
+                              </GridPane>
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </AnchorPane>
+                     </content>
+                  </TitledPane>
+                  <TitledPane animated="false" collapsible="false" focusTraversable="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Step #2: Enter n-alkane retention times" GridPane.columnIndex="2">
+                     <content>
+                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
+                           <children>
+                              <VBox layoutX="91.0" layoutY="98.0" spacing="12.0" style="-fx-spacing: 0.5em;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <TableView fx:id="tableMeasuredRetentionTimes" editable="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="9999999.0">
+                                       <columns>
+                                          <TableColumn fx:id="columnUse" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" sortable="false" text="Use" />
+                                          <TableColumn fx:id="columnCompound" editable="false" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="151.0" sortable="false" text="Compound" />
+                                          <TableColumn fx:id="columnMZ" editable="false" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="100.0" sortable="false" text="m/z" />
+                                          <TableColumn fx:id="columnRetentionTime" maxWidth="1.7976931348623157E308" minWidth="100.0" onEditCommit="#commitRetentionTime" prefWidth="200.0" sortable="false" text="tR (min)" />
+                                       </columns>
+                                       <VBox.margin>
+                                          <Insets />
+                                       </VBox.margin>
+                                       <columnResizePolicy>
+                                          <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                                       </columnResizePolicy>
+                                    </TableView>
+                                    <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onFindRetentionTimesAutomatically" text="Find retention times automatically..." />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </AnchorPane>
+                     </content>
+                  </TitledPane>
+               </children>
+               <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="33.3" prefWidth="100.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="33.3" prefWidth="100.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="10.0" percentWidth="33.4" prefWidth="100.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints maxHeight="1.7976931348623157E308" prefHeight="999999.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+            </GridPane>
+            <HBox alignment="BOTTOM_RIGHT">
+               <children>
+                  <Button fx:id="buttonNextStep" mnemonicParsing="false" onAction="#onNextStepAction" text="Next Step" />
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
+      </VBox>
+   </content>
+</ScrollPane>

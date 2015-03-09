@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<TitledPane fx:id="step4pane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" prefHeight="397.0" prefWidth="351.0" text="Step #4: Check system suitability" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.StepFourPaneController">
+   <content>
+      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
+         <children>
+            <VBox layoutX="91.0" layoutY="98.0" spacing="12.0" style="-fx-spacing: 0.5em;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <TableView fx:id="tableTestCompounds" editable="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="9.9999999E7">
+                     <columns>
+                        <TableColumn fx:id="columnName" editable="false" maxWidth="1.7976931348623157E308" minWidth="250.0" prefWidth="-1.0" sortable="false" text="Compound" />
+                        <TableColumn fx:id="columnMZ" editable="false" maxWidth="1.7976931348623157E308" minWidth="150.0" prefWidth="117.0" sortable="false" text="m/z" />
+                        <TableColumn fx:id="columnExperimentalRetentionTime" maxWidth="1.7976931348623157E308" minWidth="150.0" onEditCommit="#onCommitRetentionTime" prefWidth="189.0" sortable="false" text="Expt. tR (min)" />
+                        <TableColumn fx:id="columnCalculatedRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="150.0" prefWidth="191.0" sortable="false" text="Calc. tR (min)" />
+                        <TableColumn fx:id="columnDifference" editable="false" maxWidth="1.7976931348623157E308" minWidth="150.0" prefWidth="200.0" sortable="false" text="Error (min)" />
+                     </columns>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </TableView>
+                  <Button fx:id="buttonFindRetentionTimesAutomatically" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Find retention times automatically..." />
+                  <GridPane hgap="12.0" minHeight="-Infinity" minWidth="-Infinity" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0">
+                     <children>
+                        <Label minHeight="-Infinity" minWidth="-Infinity" text="Your overall prediction error:" />
+                        <Label minHeight="-Infinity" minWidth="-Infinity" text="Most likely error for a new column:" GridPane.rowIndex="1" />
+                        <Label minHeight="-Infinity" minWidth="-Infinity" text="Your column's rating:" GridPane.rowIndex="2" />
+                        <Label fx:id="labelOverallPredictionError" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" text="-" GridPane.columnIndex="1" />
+                        <Label fx:id="labelMostLikelyError" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" text="-" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Label fx:id="labelColumnRating" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" text="-" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                     </children>
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="-Infinity" />
+                        <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                  </GridPane>
+                  <AnchorPane fx:id="anchorPaneSuitabilityControl" minHeight="-Infinity" prefWidth="200.0" style="-fx-padding: 0.5em;">
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <padding>
+                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                     </padding></AnchorPane>
+               </children>
+            </VBox>
+         </children>
+         <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
+      </AnchorPane>
+   </content>
+</TitledPane>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane hgap="12.0" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-hgap: 12; -fx-vgap: 12; -fx-padding: 12;" vgap="12.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.peakfindergcfx.ProgressDialogController">
+  <columnConstraints>
+    <ColumnConstraints hgrow="SOMETIMES" />
+  </columnConstraints>
+  <rowConstraints>
+      <RowConstraints valignment="BOTTOM" vgrow="SOMETIMES" />
+    <RowConstraints vgrow="SOMETIMES" />
+    <RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <Button fx:id="buttonCancel" mnemonicParsing="false" onAction="#onCancelAction" text="Cancel" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
+      <ProgressBar fx:id="progressBar" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="200.0" progress="0.0" GridPane.rowIndex="1" />
+      <Label fx:id="labelProgress" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Loading peak finder..." />
+   </children>
+   <padding>
+      <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+   </padding>
+</GridPane>
