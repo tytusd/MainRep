@@ -1,4 +1,4 @@
-package org.retentionprediction.lcdatabasebuilderfx;
+package org.retentionprediction.lcdatabasebuilderfx.ui;
 
 public interface ParentPaneControllerListener {
 

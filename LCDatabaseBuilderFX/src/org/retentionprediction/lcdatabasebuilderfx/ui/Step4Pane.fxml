@@ -5,7 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<TitledPane fx:id="step4pane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" prefHeight="397.0" prefWidth="351.0" text="Step #4: Check system suitability" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.StepFourPaneController">
+<TitledPane fx:id="step4pane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" prefHeight="397.0" prefWidth="351.0" text="Step #4: Check system suitability" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.StepFourPaneController">
    <content>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
          <children>

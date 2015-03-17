@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.MainController">
+   <top>
+      <Label text="HPLC Database Builder" textFill="#6c6c6c" BorderPane.alignment="CENTER">
+         <font>
+            <Font name="Times New Roman Bold" size="32.0" />
+         </font>
+         <BorderPane.margin>
+            <Insets bottom="10.0" top="10.0" />
+         </BorderPane.margin>
+      </Label>
+   </top>
+   <bottom>
+      <HBox prefHeight="68.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="okBtn" mnemonicParsing="false" onAction="#onOkBtnClick" text="OK">
+               <font>
+                  <Font size="16.0" />
+               </font>
+               <HBox.margin>
+                  <Insets left="200.0" top="15.0" />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="exitBtn" cancelButton="true" mnemonicParsing="false" onAction="#onExitBtnClick" text="Exit">
+               <font>
+                  <Font size="16.0" />
+               </font>
+               <HBox.margin>
+                  <Insets left="80.0" top="15.0" />
+               </HBox.margin>
+            </Button>
+         </children>
+      </HBox>
+   </bottom>
+   <center>
+      <VBox prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: rgb(243,243,243);" BorderPane.alignment="CENTER">
+         <children>
+            <Label alignment="TOP_LEFT" text="Choose the mode of operation:" textFill="#000000cf">
+               <font>
+                  <Font name="Trebuchet MS" size="16.0" />
+               </font>
+               <VBox.margin>
+                  <Insets left="100.0" top="20.0" />
+               </VBox.margin>
+            </Label>
+            <RadioButton fx:id="eightGradientsRadio" mnemonicParsing="false" text="Eight gradients">
+               <VBox.margin>
+                  <Insets left="100.0" top="10.0" />
+               </VBox.margin>
+            </RadioButton>
+            <Label text="This is the description for Eight gradients. Please choose this option if you want to build the database for eight gradients. blah blah blah" wrapText="true">
+               <VBox.margin>
+                  <Insets left="121.0" right="100.0" />
+               </VBox.margin>
+            </Label>
+            <RadioButton fx:id="singleGradientRadio" mnemonicParsing="false" text="Single gradient with multiple injections">
+               <VBox.margin>
+                  <Insets left="100.0" top="10.0" />
+               </VBox.margin>
+            </RadioButton>
+            <Label text="This is the description for single gradient with multiple injections. Please choose this option if you want to build the database for single gradients with multiple injections. blah blah blah" wrapText="true">
+               <VBox.margin>
+                  <Insets left="121.0" right="100.0" />
+               </VBox.margin>
+            </Label>
+         </children>
+      </VBox>
+   </center>
+</BorderPane>

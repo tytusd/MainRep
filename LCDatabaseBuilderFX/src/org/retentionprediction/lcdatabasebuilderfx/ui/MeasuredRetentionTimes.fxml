@@ -6,13 +6,13 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<ScrollPane fx:id="measuredretentiontimespage" fitToHeight="true" fitToWidth="true" prefHeight="965.0" prefWidth="2237.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.MeasuredRetentionTimesController">
+<ScrollPane fx:id="measuredretentiontimespage" fitToHeight="true" fitToWidth="true" prefHeight="965.0" prefWidth="2237.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController">
    <content>
       <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" spacing="12.0" style="-fx-padding: 0.5em; -fx-spacing: 0.5em;">
          <children>
             <GridPane hgap="12.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0">
                <children>
-                  <TitledPane fx:id="requirementsPane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Requirements for Program A">
+                  <TitledPane fx:id="requirementsPane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Requirements for Gradient A">
                      <content>
                         <AnchorPane style="-fx-padding: 0.5em;">
                            <children>
@@ -22,10 +22,10 @@
                                     <Label text="Final solvent composition:" GridPane.rowIndex="1" />
                                     <Label text="Gradient time:" GridPane.rowIndex="2" />
                                     <Label text="Hold time:" GridPane.rowIndex="3" />
-                                    <Label fx:id="requiredInitialTemperature" style="-fx-font-weight: bold;" text="0 %B" GridPane.columnIndex="1" />
-                                    <Label fx:id="requiredInitialHoldTime" style="-fx-font-weight: bold;" text="0 %B" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <Label fx:id="requiredRampRate" style="-fx-font-weight: bold;" text="0 min" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <Label fx:id="requiredFinalTemperature" style="-fx-font-weight: bold;" text="0 min" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <Label fx:id="initialSolventComposition" style="-fx-font-weight: bold;" text="0 %B" GridPane.columnIndex="1" />
+                                    <Label fx:id="finalSolventComposition" style="-fx-font-weight: bold;" text="0 %B" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <Label fx:id="gradientTime" style="-fx-font-weight: bold;" text="0 min" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Label fx:id="holdTime" style="-fx-font-weight: bold;" text="0 min" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                  </children>
                                  <columnConstraints>
                                     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="60.0" />
@@ -58,20 +58,20 @@
                                     <ComboBox fx:id="comboStationaryPhase" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Agilent HP-5MS UI" GridPane.columnSpan="3" GridPane.rowIndex="1" />
                                     <Label text="Column length:" GridPane.rowIndex="2" />
                                     <TextField fx:id="textFieldColumnLength" onAction="#actionPerformValidation" prefWidth="50.0" text="30" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <Label text="m" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                                    <Label fx:id="labelColumnLength" text="m" GridPane.columnIndex="2" GridPane.rowIndex="2" />
                                     <Label text="Inner diameter:" GridPane.rowIndex="3" />
                                     <TextField fx:id="textFieldInnerDiameter" onAction="#actionPerformValidation" prefWidth="50.0" text="0.25" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                    <Label text="mm" GridPane.columnIndex="2" GridPane.rowIndex="3" />
-                                    <Label fx:id="labelFlowRate" text="Flow rate:" GridPane.rowIndex="4">
+                                    <Label fx:id="labelInnerDiameter" text="mm" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+                                    <Label text="Flow rate:" GridPane.rowIndex="4">
                                        <GridPane.margin>
                                           <Insets />
                                        </GridPane.margin>
                                     </Label>
                                     <TextField fx:id="textFieldFlowRate" onAction="#actionPerformValidation" prefWidth="50.0" text="1.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                     <Label fx:id="labelFlowRateUnits" text="mL/min" GridPane.columnIndex="2" GridPane.rowIndex="4" />
-                                    <Label fx:id="labelFlowRate1" text="Instrument dead time:" GridPane.rowIndex="5" />
-                                    <TextField fx:id="textFieldFlowRate1" onAction="#actionPerformValidation" prefWidth="50.0" text="1.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                                    <Label fx:id="labelFlowRateUnits1" text="min" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+                                    <Label text="Instrument dead time:" GridPane.rowIndex="5" />
+                                    <TextField fx:id="textFieldInstrumentDeadTime" onAction="#actionPerformValidation" prefWidth="50.0" text="1.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                    <Label fx:id="labelInstrumentDeadTime" text="min" GridPane.columnIndex="2" GridPane.rowIndex="5" />
                                  </children>
                                  <columnConstraints>
                                     <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" minWidth="10.0" percentWidth="60.0" prefWidth="10.0" />

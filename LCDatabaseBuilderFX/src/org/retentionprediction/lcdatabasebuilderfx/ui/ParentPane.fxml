@@ -9,7 +9,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1399.0" prefWidth="2192.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ParentPaneController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1399.0" prefWidth="2192.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.ParentPaneController">
    <children>
       <MenuBar>
          <menus>
@@ -105,10 +105,10 @@
                   <Label fx:id="gradientCLabel" style="-fx-font-weight: bold;" text="Gradient C:" GridPane.rowIndex="2" />
                   <Label fx:id="gradientBLabel" style="-fx-font-weight: bold;" text="Gradient B:" GridPane.rowIndex="1" />
                   <Label fx:id="finalFitLabel" text="Final Fit" GridPane.columnIndex="4" GridPane.rowIndex="2" GridPane.rowSpan="2" />
-                  <Label fx:id="gradientGLabel" layoutX="10.0" layoutY="98.0" style="-fx-font-weight: bold;" text="Gradient G:" GridPane.rowIndex="6" />
-                  <Label fx:id="gradientHLabel" layoutX="10.0" layoutY="149.0" style="-fx-font-weight: bold;" text="Gradient H:" GridPane.rowIndex="7" />
-                  <Label fx:id="enterTimesHLabel" layoutX="421.0" layoutY="98.0" text="Enter retention times" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                  <Label fx:id="enterTimesGLabel" layoutX="10.0" layoutY="10.0" text="Enter retention times" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                  <Label fx:id="gradientGLabel" style="-fx-font-weight: bold;" text="Gradient G:" GridPane.rowIndex="6" />
+                  <Label fx:id="gradientHLabel" style="-fx-font-weight: bold;" text="Gradient H:" GridPane.rowIndex="7" />
+                  <Label fx:id="enterTimesHLabel" text="Enter retention times" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                  <Label fx:id="enterTimesGLabel" text="Enter retention times" GridPane.columnIndex="1" GridPane.rowIndex="6" />
                   <Label fx:id="backCalculateHLabel" text="Back-calculate profiles" GridPane.columnIndex="2" GridPane.rowIndex="7" />
                   <Label fx:id="backCalculateGLabel" text="Back-calculate profiles" GridPane.columnIndex="2" GridPane.rowIndex="6" />
                   <Label fx:id="checkSystemSuitabilityHLabel" text="Check system suitability" GridPane.columnIndex="3" GridPane.rowIndex="7" />
@@ -135,6 +135,7 @@
                   <Insets bottom="24.0" left="12.0" right="12.0" top="12.0" />
                </VBox.margin>
             </GridPane>
+			<Pane fx:id="drawPane" prefHeight="200.0" prefWidth="200.0" />
          </children>
          <padding>
             <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
@@ -180,7 +181,7 @@
                   <AnchorPane fx:id="gradientGanchor" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
                </content>
             </Tab>
-            <Tab fx:id="gradientHTab" onSelectionChanged="#tabSelectionChanged" text="Gradient H">
+            <Tab fx:id="gradientHtab" onSelectionChanged="#tabSelectionChanged" text="Gradient H">
                <content>
                   <AnchorPane fx:id="gradientHanchor" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
                </content>
