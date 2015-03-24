@@ -46,7 +46,8 @@ public class MainController implements Initializable, ParentPaneControllerListen
     	FXMLLoader fxmlLoader = new FXMLLoader();
     	try {
     		VBox root = null;
-    		if(toggleGroup.getSelectedToggle().equals(eightGradientsRadio)){
+    		boolean isEightGradientsRadio = toggleGroup.getSelectedToggle().equals(eightGradientsRadio);
+    		if(isEightGradientsRadio){
     			InputStream stream = getClass().getResource("ParentPane.fxml").openStream();
     			root = fxmlLoader.load(stream);
     			parentPaneController = fxmlLoader.getController();
@@ -55,14 +56,14 @@ public class MainController implements Initializable, ParentPaneControllerListen
     		else{
     			//Singlegradientpane
     		}
-			
+			primaryStage.hide();
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getBounds();
 			Scene scene = new Scene(root, primaryScreenBounds.getWidth()*0.8, primaryScreenBounds.getHeight()*0.9);
 			String css = this.getClass().getResource("application.css").toExternalForm();
 			scene.getStylesheets().add(css);
 			
 			primaryStage.setScene(scene);
-			//primaryStage.setMaximized(true);
+			primaryStage.setMaximized(true);
 			primaryStage.show();
 			
 		} catch (IOException e) {
@@ -83,6 +84,7 @@ public class MainController implements Initializable, ParentPaneControllerListen
 		eightGradientsRadio.setToggleGroup(toggleGroup);
 		singleGradientRadio.setToggleGroup(toggleGroup);
 		toggleGroup.selectToggle(eightGradientsRadio);
+		singleGradientRadio.setDisable(true);
 		
 	}
 

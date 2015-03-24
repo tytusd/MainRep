@@ -5,10 +5,14 @@ import java.util.ResourceBundle;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -18,6 +22,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import javafx.util.Callback;
 
 public class StepThreePaneController implements Initializable{
@@ -192,6 +197,58 @@ public class StepThreePaneController implements Initializable{
 
 	public void setStandardCompoundList(ObservableList<StandardCompound> standardCompoundList) {
 		this.standardCompoundList = standardCompoundList;
+	}
+	
+
+	public StringProperty iterationLabelProperty()
+	{
+		return labelIteration.textProperty();
+	}
+	
+	public StringProperty lastIterationVarianceLabelProperty()
+	{
+		return labelLastIterationVariance.textProperty();
+	}
+	
+	public StringProperty percentImprovementLabelProperty()
+	{
+		return labelPercentImprovement.textProperty();
+	}
+	
+	public StringProperty varianceLabelProperty()
+	{
+		return labelVariance.textProperty();
+	}
+	
+	public StringProperty timeElapsedLabelProperty()
+	{
+		return labelTimeElapsed.textProperty();
+	}
+	
+	public DoubleProperty progressBarProperty()
+	{
+		return progressBar.progressProperty();
+	}
+	
+	public StringProperty statusLabelProperty()
+	{
+		return labelStatus.textProperty();
+	}
+	
+	public ObjectProperty<EventHandler<? super MouseEvent>> backCalculateOnMouseClickedProperty()
+	{
+		return buttonBackCalculate.onMouseClickedProperty();
+	}
+
+	
+	public void setBackCalculationButtonDisable(boolean value)
+	{
+		this.buttonBackCalculate.setDisable(value);
+	}
+
+	public boolean isBackCalculationButtonDisabled()
+	{
+		return this.buttonBackCalculate.isDisabled();
 	}
 
 }

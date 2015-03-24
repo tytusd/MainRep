@@ -306,27 +306,27 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     
     
     @FXML void onNewAction(ActionEvent event) {
-
+    	this.parentPaneControllerListener.onNew();
     }
 
     @FXML void onOpenAction(ActionEvent event) {
-
+    	this.parentPaneControllerListener.onOpen();
     }
 
     @FXML void onSaveAction(ActionEvent event) {
-
+    	this.parentPaneControllerListener.onSave();
     }
 
     @FXML void onSaveAsAction(ActionEvent event) {
-
+    	this.parentPaneControllerListener.onSaveAs();
     }
 
     @FXML void onCloseAction(ActionEvent event) {
-
+    	this.parentPaneControllerListener.onClose();
     }
 
     @FXML void onAboutAction(ActionEvent event) {
-
+    	this.parentPaneControllerListener.onAbout();
     }
 
     @FXML void tabSelectionChanged(Event event) {
@@ -336,11 +336,11 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     }
 
     @FXML void onCommitRetentionTime(ActionEvent event) {
-    	
+    	//TODO:Implement this
     }
 
     @FXML void onSolveForRetentionParameters(ActionEvent event) {
-
+    	//TODO:Implement this
     }
     
     @FXML void actionPerformValidation(ActionEvent event){
