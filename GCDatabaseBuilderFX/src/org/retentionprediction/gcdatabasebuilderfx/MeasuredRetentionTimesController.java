@@ -128,7 +128,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		
 		// Load the measured retention times table with the correct values
 		List<StandardCompound> data = new ArrayList<StandardCompound>();
-
+		
 		for (int i = 0; i < Globals.AlkaneNameArray.length; i++)
 		{
 			StandardCompound newItem = new StandardCompound();
