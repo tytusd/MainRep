@@ -1,4 +1,4 @@
-Welcome to Boswell Research Group's repository page. ALl of our work is Open source and so, feel free to fork these projects.
+Welcome to Boswell Research Group's repository page. All of our work is open source, so feel free to fork these projects.
 
 We used Eclipse IDE to work on these projects. The projects can be setup on your personal computer by following these steps:
 
