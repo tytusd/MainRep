@@ -3773,8 +3773,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     // Start by optimizing the entire dead time error profile.
 	public void backCalculate(Task task, boolean bDeadTimeProfileFirst)
 	{
-//		if (true)
-//			return;
+		if (true)
+			return;
 		long starttime = System.currentTimeMillis();
 		m_bNoFullBackcalculation = false;
 		
