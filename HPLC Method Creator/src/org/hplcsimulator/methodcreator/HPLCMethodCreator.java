@@ -46,6 +46,7 @@ import java.util.Vector;
 
 
 
+
 //import javax.help.CSH;
 //import javax.help.HelpSet;
 import javax.swing.JDialog;
@@ -3598,9 +3599,9 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 		
 		for (int i = 0; i < dRetentionAndSigma.length; i++)
 		{
-			addRemoveList[i * 2][0] = dRetentionAndSigma[i][0] - (2 * dRetentionAndSigma[i][1]);
+			addRemoveList[i * 2][0] = dRetentionAndSigma[i][0] - (2 * dRetentionAndSigma[i][1]/60);
 			addRemoveList[i * 2][1] = 1;
-			addRemoveList[(i * 2) + 1][0] = dRetentionAndSigma[i][0] + (2 * dRetentionAndSigma[i][1]);
+			addRemoveList[(i * 2) + 1][0] = dRetentionAndSigma[i][0] + (2 * dRetentionAndSigma[i][1]/60);
 			addRemoveList[(i * 2) + 1][1] = -1;
 		}
 		
@@ -3636,7 +3637,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 	}
 	
  	public double goldenSectioningSearchGradientProfile(int iIndex, double dtstep, double dStep, double dPrecision, double dMaxChangeAtOnce, double dAngleErrorMultiplier)
- 	{
+	{
 		double dRetentionError = 1;
 		double x1;
 		double x2;
@@ -3676,7 +3677,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 			dRetentionErrorX2 = calcScore(lifGradient);
 			//dAngleErrorX2 = calcAngleDifferenceGradient(iIndex);
 			
-
+	
 			while (dRetentionErrorX2 * Math.pow(dAngleErrorX2, dAngleErrorMultiplier) < dRetentionErrorX3 * Math.pow(dAngleErrorX3, dAngleErrorMultiplier) && x2 < dLastTempGuess + dMaxChangeAtOnce)
 			{
 				x1 = x3;
@@ -3707,7 +3708,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 			lifGradient = new LinearInterpolationFunction(m_optGradient);
 			dRetentionErrorX1 = calcScore(lifGradient);
 			//dAngleErrorX1 = calcAngleDifferenceGradient(iIndex);
-
+	
 			while (dRetentionErrorX1 * Math.pow(dAngleErrorX1, dAngleErrorMultiplier) < dRetentionErrorX3 * Math.pow(dAngleErrorX3, dAngleErrorMultiplier) && x1 > dLastTempGuess - dMaxChangeAtOnce)
 			{
 				x2 = x3;
@@ -3716,7 +3717,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 				x3 = x1;
 				dRetentionErrorX3 = dRetentionErrorX1;
 				dAngleErrorX3 = dAngleErrorX1;
-
+	
 				x1 = x3 - (x2 - x3) * this.m_dGoldenRatio;
 				
 				m_optGradient[iIndex][1] = x1;
@@ -3736,7 +3737,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 			
 			lifGradient = new LinearInterpolationFunction(m_optGradient);
 			dRetentionError = calcScore(lifGradient);
-
+	
 			return dRetentionError;
 		}
 		
@@ -3771,7 +3772,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 				// x1 and x3, so x4 must be placed between them
 				x4 = x3 - (2 - this.m_dGoldenRatio) * (x3 - x1);
 			}
-
+	
 			
 			m_optGradient[iIndex][1] = x4;
 			lifGradient = new LinearInterpolationFunction(m_optGradient);
@@ -3843,10 +3844,10 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 			lifGradient = new LinearInterpolationFunction(m_optGradient);
 			dRetentionError = dRetentionErrorX3;			
 		}
- 		
- 		return dRetentionError;
- 	}
- 	
+		
+		return dRetentionError;
+	}
+
 	public double[][] calcRetentionTimes(LinearInterpolationFunction lifGradient)
 	{
 		double dtstep = (m_dEndTime - m_dStartTime) / 1000;
@@ -3881,7 +3882,7 @@ public class HPLCMethodCreator extends JFrame implements ActionListener, ChangeL
 			while (bIsEluted == false)// (double t = 0; t <= (Double) m_vectCompound.get(m_vectCompound.size() - 1)[1] * 1.5; t += dtstep)
 			{
 				t += dtstep;
-				dPhiC = lifGradient.getAt((dTotalTime - dIntegral) / 60) / 100;
+				dPhiC = lifGradient.getAt((dTotalTime - dIntegral)) / 100;
 				// Calculate k'
 				
 		    	kprime = Math.pow(10, m_vectCompound.get(iCompound).interpolatedLogkvsPhi.getAt(dPhiC));
