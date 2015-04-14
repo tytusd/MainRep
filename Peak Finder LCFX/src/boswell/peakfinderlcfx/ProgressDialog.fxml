@@ -5,7 +5,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane hgap="12.0" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-hgap: 12; -fx-vgap: 12; -fx-padding: 12;" vgap="12.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.peakfindergcfx.ProgressDialogController">
+<GridPane hgap="12.0" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-hgap: 12; -fx-vgap: 12; -fx-padding: 12;" vgap="12.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boswell.peakfinderlcfx.ProgressDialogController">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" />
   </columnConstraints>

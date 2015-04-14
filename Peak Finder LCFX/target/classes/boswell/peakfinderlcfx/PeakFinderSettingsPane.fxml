@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.*?>
+<?import javafx.scene.shape.*?>
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="997.0" prefWidth="1529.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.peakfindergc.PeakFinderSettingsPaneController">
+<ScrollPane fitToHeight="true" fitToWidth="true" minHeight="550" minWidth="750" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="boswell.peakfinderlcfx.PeakFinderSettingsPaneController">
   <content>
+  	<fx:define>
+  		<Rectangle fx:id="s" width="13" height="13"/>
+	</fx:define>
     <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
          <children>
             <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" vgap="12.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -45,7 +49,7 @@
                         </AnchorPane>
                      </content>
                   </TitledPane>
-                  <TitledPane animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Enter approximate LC conditions" GridPane.rowIndex="1">
+                  <TitledPane fx:id="titledPaneEnterLCConditions" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Enter approximate LC conditions" GridPane.rowIndex="1">
                      <content>
                         <AnchorPane>
                            <children>
@@ -68,7 +72,7 @@
                                           </Label>
                                           <TextField fx:id="textFieldFlowRate" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#actionPerformValidation" prefWidth="50.0" text="1.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                           <Label fx:id="labelFlowRateUnits" minHeight="-Infinity" minWidth="-Infinity" text="mL/min" GridPane.columnIndex="2" GridPane.rowIndex="4" />
-                                          <Label fx:id="labelInletPressure" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" text="Gradient delay volume:" GridPane.rowIndex="5" />
+                                          <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" text="Gradient delay volume:" GridPane.rowIndex="5" />
                                           <Label minHeight="-Infinity" minWidth="-Infinity" text="Mixing volume:" GridPane.columnSpan="2147483647" GridPane.rowIndex="6" />
                                           <GridPane GridPane.rowIndex="7">
                                              <rowConstraints>
@@ -107,13 +111,13 @@
                                           <GridPane hgap="12.0" minHeight="-Infinity" vgap="12.0">
                                              <children>
                                                 <Label text="Gradient program:" />
-                                                <TableView GridPane.columnSpan="2147483647" GridPane.rowIndex="1">
+                                                <TableView fx:id="tableViewGradientProgram" GridPane.columnSpan="2147483647" GridPane.rowIndex="1"  editable="true" prefHeight="240.0">
                                                    <columnResizePolicy>
                                                       <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                                    </columnResizePolicy>
                                                    <columns>
-                                                      <TableColumn minWidth="-1.0" prefWidth="212.0" text="Time (min)" />
-                                                      <TableColumn minWidth="-1.0" prefWidth="274.00006103515625" text="\% B" />
+                                                      <TableColumn fx:id="columnTime" minWidth="-1.0" prefWidth="212.0" text="Time (min)" />
+                                                      <TableColumn fx:id="columnSolventComposition" minWidth="-1.0" prefWidth="274.00006103515625" text="\% B" />
                                                    </columns>
                                                 </TableView>
                                              </children>
@@ -129,9 +133,9 @@
                                           </GridPane>
                                           <GridPane hgap="12.0" minHeight="-Infinity" vgap="12.0">
                                              <children>
-                                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Insert" />
-                                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Add" GridPane.columnIndex="1" />
-                                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Remove" GridPane.columnIndex="2" />
+                                                <Button fx:id="buttonInsert" onAction="#onInsertAction" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Insert" />
+                                                <Button fx:id="buttonAdd" onAction="#onAddAction" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Add" GridPane.columnIndex="1" />
+                                                <Button fx:id="buttonRemove" onAction="#onRemoveAction" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" text="Remove" GridPane.columnIndex="2" />
                                              </children>
                                              <columnConstraints>
                                                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -162,8 +166,8 @@
                   </TitledPane>
                   <HBox alignment="TOP_RIGHT" maxHeight="-Infinity" spacing="12.0" GridPane.rowIndex="2">
                      <children>
-                        <Button mnemonicParsing="false" text="OK" />
-                        <Button mnemonicParsing="false" text="Cancel" />
+                        <Button fx:id="buttonCancel" cancelButton="true" maxWidth="1.7976931348623157E308" prefWidth="${8 * s.width}" mnemonicParsing="false" onAction="#onCancelAction" text="Cancel" GridPane.columnIndex="2" />
+                 		 <Button fx:id="buttonOK" defaultButton="true" maxWidth="1.7976931348623157E308" prefWidth="${8 * s.width}" mnemonicParsing="false" onAction="#onOKAction" text="OK" GridPane.columnIndex="1" />
                      </children>
                   </HBox>
                </children>

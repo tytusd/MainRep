@@ -17,7 +17,7 @@ public class Globals
 		{0.10, 0.2249333},
 		{0.05, 0.2598667}
 	};*/
-	/*public static double[][] dDeadTimeArray = {
+	public static double[][] dDeadTimeArray = {
 	{0.95, 0.514333333},
 	{0.90, 0.462333333},
 	{0.80, 0.462},
@@ -29,12 +29,12 @@ public class Globals
 	{0.20, 0.509333333},
 	{0.10, 0.562333333},
 	{0.05, 0.649666667}
-	};*/
+	};
 	
 	public static String[] StationaryPhaseArray = {
 		"Agilent Eclipse Plus C18 (3.5 \u00b5m particle size)"
 	};
-	/*
+	
 	public static String[] StandardCompoundsNameArray = {
 		//"Uracil",
 		"N-methylacetamide",
@@ -105,5 +105,69 @@ public class Globals
 		{{ .95, 0.4379744413}, { .9, 0.664307041}, { .8, 1.050887840}, { .7, 1.456118403}, { .6, 1.907192399}},
 		{{ .95, 0.5537304762}, { .9, 0.792825797}, { .8, 1.207397692}, { .7, 1.635741217}, { .6, 2.110442778}},
 		{{ .95, 0.6667290251}, { .9, 0.923652598}, { .8, 1.364877075}, { .7, 1.815512014}}
-	};*/
+	};
+
+	public static double[][] convertGradientProgramInConventionalFormToRegularForm(
+			double[][] gradientProgramInConventionalProgram,
+			double initialTime, double initialSolventComposition) {
+		
+    	double[][] newGradientProgram = new double[gradientProgramInConventionalProgram.length + 2][2];
+    	int iPointCount = 0;
+
+    	newGradientProgram[iPointCount][0] = 0.0;
+    	newGradientProgram[iPointCount][1] = gradientProgramInConventionalProgram[0][1];
+    	double dLastTime = 0;
+		iPointCount++;
+		
+    	// Go through the gradient program table and create an array that contains solvent composition vs. time
+		for (int i = 0; i < gradientProgramInConventionalProgram.length; i++)
+		{
+    		if (initialTime > dLastTime)
+    		{
+    			double dTime = initialTime;
+    			double dFractionB = initialSolventComposition;
+    			
+				newGradientProgram[iPointCount][0] = dTime;
+				newGradientProgram[iPointCount][1] = dFractionB;
+    	    	iPointCount++;
+    		
+    	    	dLastTime = dTime;
+    		}
+		}
+		
+		// Add another point past the end of the gradient to make it flatten out and go forever.
+		newGradientProgram[iPointCount][0] = newGradientProgram[iPointCount - 1][0] * 2;
+		newGradientProgram[iPointCount][1] = gradientProgramInConventionalProgram[gradientProgramInConventionalProgram.length - 1][1];
+    	iPointCount++;
+
+		// Ideal series finished
+		// Now cut it down to the correct size
+		double tempArray[][] = new double[iPointCount][2];
+		for (int i = 0; i < iPointCount; i++)
+		{
+			tempArray[i][0] = newGradientProgram[i][0];
+			tempArray[i][1] = newGradientProgram[i][1];
+		}
+		
+		return tempArray;
+		
+		
+	}
+
+	
+	public static double roundToSignificantFigures(double num, int n) 
+	{
+	    if (num == 0) 
+	    {
+	        return 0;
+	    }
+
+	    final double d = Math.ceil(Math.log10(num < 0 ? -num: num));
+	    final int power = n - (int) d;
+
+	    final double magnitude = Math.pow(10, power);
+	    final long shifted = Math.round(num * magnitude);
+	    
+	    return shifted / magnitude;
+	}
 }

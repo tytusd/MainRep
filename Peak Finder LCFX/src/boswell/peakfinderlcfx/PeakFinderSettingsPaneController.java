@@ -36,6 +36,10 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	@FXML private Rectangle s;
     @FXML private ComboBox<String> comboStationaryPhase;
     @FXML private Label labelGradientDelayVolume;
+    @FXML private Label labelFlowRate;
+    @FXML private Label labelFlowRateUnits;
+    @FXML private Label labelMixingVolume;
+    @FXML private Label labelNonMixingVolume;
     
     @FXML private TextField textFieldDataFile;
     @FXML private TextField textFieldMixingVolume;
@@ -43,15 +47,17 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
     @FXML private TextField textFieldColumnLength;
     @FXML private TextField textFieldFlowRate;
     @FXML private TextField textFieldNonMixingVolume;
+    @FXML private TableView<GradientProgramStep> tableViewGradientProgram;
     @FXML private TableColumn<GradientProgramStep, Double> columnTime; 
     @FXML private TableColumn<GradientProgramStep, Double> columnSolventComposition;
-    @FXML private TableView<GradientProgramStep> tableViewGradientProgram;
     @FXML private TitledPane titledPaneEnterLCConditions;
     
     @FXML private Button buttonBrowse;
 	@FXML private Button buttonAdd;
 	@FXML private Button buttonInsert;
 	@FXML private Button buttonRemove;
+	@FXML private Button buttonOK;
+	@FXML private Button buttonCancel;
 	
 	private Stage thisStage;
 	private ObservableList<GradientProgramStep> gradientProgramList;
@@ -68,7 +74,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	private double nonMixingVolume = 0.001;
 	private boolean okPressed = false;
 	private String fileName;
-
+	private double[][] gradientProgram;
     
 
 
@@ -341,6 +347,53 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	public double getInnerDiameter()
 	{
 		return this.innerDiameter;
+	}
+
+	public double getMixingVolume() {
+		return mixingVolume;
+	}
+
+	public void setMixingVolume(double mixingVolume) {
+		this.mixingVolume = mixingVolume;
+		this.textFieldMixingVolume.setText(Float.toString((float)mixingVolume));
+	}
+
+	public double getNonMixingVolume() {
+		return nonMixingVolume;
+	}
+
+	public void setNonMixingVolume(double nonMixingVolume) {
+		this.nonMixingVolume = nonMixingVolume;
+		this.textFieldNonMixingVolume.setText(Float.toString((float)nonMixingVolume));
+	}
+
+	public double[][] getGradientProgram() {
+		double[][] gradientProgramInConventionalForm = new double[gradientProgramList.size()][3];
+		for (int i = 0; i < gradientProgramList.size(); i++)
+		{
+			gradientProgramInConventionalForm[i][0] = gradientProgramList.get(i).getTime();
+			gradientProgramInConventionalForm[i][1] = gradientProgramList.get(i).getSolventComposition();
+		}
+		
+		return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
+	}
+
+	public void setGradientProgram(double[][] gradientProgram) {
+		this.gradientProgram = gradientProgram;
+	}
+
+	public void setGradientProgramInConventionalForm(
+			double[][] gradientProgramInConventionalForm, double initialTime,
+			double initialSolventComposition) {
+		
+		gradientProgramList.clear();
+		for(int i = 0; i < gradientProgramInConventionalForm.length; i++){
+			GradientProgramStep step = new GradientProgramStep(gradientProgramInConventionalForm[i][0], gradientProgramInConventionalForm[i][1]);
+			gradientProgramList.add(step);
+		}
+		this.initialTime = initialTime;
+		this.initialSolventComposition = initialSolventComposition;
+		gradientProgram = Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
 	}
 
 }

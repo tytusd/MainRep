@@ -12,6 +12,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.stage.Stage;
 
+import javax.swing.JOptionPane;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.DatatypeFactory;
@@ -48,6 +49,8 @@ class OpenMzXMLFileTask extends Task
 	private Vector<Double> mzArray = new Vector<Double>();
 	
 	private Stage primaryStage;
+	private int iPositiveSpectraCount;
+	private int iNegativeSpectraCount;
 
 
 	OpenMzXMLFileTask(Stage parentWindow)
@@ -187,82 +190,170 @@ class OpenMzXMLFileTask extends Task
         
 		// Find how many spectra have MS level 1
 		iSpectraCount = 0;
+		iPositiveSpectraCount = 0;
+		iNegativeSpectraCount = 0;
+		
         Iterator<Spectrum> iterator = inputParser.getSpectrumIterator();
         while(iterator.hasNext()) 
         {
-        	Spectrum spectrum = iterator.next();	        
+        	Spectrum spectrum = iterator.next();
         	
-        	if (spectrum.getMsLevel() == 1)
-        		iSpectraCount++;
+        	if (spectrum.getMsLevel() == 1)//2)
+        	{
+        		ParamGroup paramGroup = spectrum.getAdditional();
+        		List<CvParam> cvParamList = paramGroup.getCvParams();
+        		boolean bPosPolarity = true;
+        		for (int j = 0; j < cvParamList.size(); j++)
+				{
+					CvParam thisParam = cvParamList.get(j);
+					if (thisParam.getName().equals("scan polarity"))
+					{
+						if (thisParam.getValue().equals("+") || thisParam.getValue().equals("any"))
+						{
+							bPosPolarity = true;
+							break;
+						}
+						else
+						{
+							bPosPolarity = false;
+							break;
+						}
+					}
+				}
+        		if (bPosPolarity)
+        			iPositiveSpectraCount++;
+        		else
+        			iNegativeSpectraCount++;
+        	}      	        	
         }
+        iSpectraCount = iPositiveSpectraCount + iNegativeSpectraCount;
         
-        mzData = new double[iSpectraCount][][];
-        dRetentionTimes = new double[iSpectraCount];
-        
+        if (iSpectraCount == 0)
+        {
+			FXOptionPane.showMessageDialog(null, "There is no MS level 1 data in the file.", "No MS Spectra in File", JOptionPane.ERROR_MESSAGE); 
+  	  		return false;
+        }
+
+		// Create the mzData array to be the right size for each ion
+		mzData = new double[standardCompoundsMZArray.length][][];
+        for (int j = 0; j < mzData.length; j++)
+        {
+        	if (standardCompoundsMZArray[j][0] > 0)
+        		mzData[j] = new double[iPositiveSpectraCount][2];
+        	else
+        		mzData[j] = new double[iNegativeSpectraCount][2];
+        }
+   
         // use the iterator to access all spectra in the file
         iterator = inputParser.getSpectrumIterator();
         
     	updateProgress(0, 1);
         
-        int iSpectrum = 0;
-        while(iterator.hasNext() && iSpectrum < iSpectraCount) 
+    	int iSpectrum = 0;
+		int iPositiveSpectrum = 0;
+		int iNegativeSpectrum = 0;
+		dRetentionTimes = new double[iSpectraCount];
+		
+		// Walk through each of the spectra in the file
+		while(iterator.hasNext() && iSpectrum < iSpectraCount) 
         {
         	updateMessage("Loading spectrum " + ((Integer)iSpectrum).toString() + " of " + ((Integer)iSpectraCount).toString() + "...");
         	updateProgress((double)iSpectrum, (double)iSpectraCount);
-
+        	
         	if (this.isCancelled())
-        		return false;
-        	
-        	Spectrum spectrum = iterator.next();	        
-        	
-        	if (spectrum.getMsLevel() == 1)
         	{
-	        	// retrieve the spectrum's peak list
-	        	Map<Double, Double> peakList = spectrum.getPeakList();
-	        	
-	        	int iPeakCount = peakList.size();
-	        	mzData[iSpectrum] = new double[mzArray.size()][2];
-	        	
-	        	// initialize all values to 0
-	        	for (int i = 0; i < mzData[iSpectrum].length; i++)
-	        	{
-	        		mzData[iSpectrum][i][0] = mzArray.get(i);
-	        		mzData[iSpectrum][i][1] = 0;
-	        	}
-	        	
-	        	// process all peaks by iterating over the m/z values
-	        	for (Double mz : peakList.keySet()) 
-	        	{
-	        		for (int i = 0; i < mzArray.size(); i++)
-	        		{
-	        			if (mz <= mzArray.get(i) + 0.5 && mz >= mzArray.get(i) - 0.5)
-	        				mzData[iSpectrum][i][1] += peakList.get(mz);
-	        		}
-	        	}
-
-	        	ParamGroup x = spectrum.getAdditional();
-	        	List<CvParam> paramList = x.getCvParams();
-
-	        	Duration dur = null;
-	        	for (int i = 0; i < paramList.size(); i++)
-	        	{
-	        		CvParam cvParam = paramList.get(i);
-	        		// process the additional information
-	        		if (cvParam.getName() == "retention time" && dfactory != null)
-	        			dur = dfactory.newDuration(cvParam.getValue());
-	        	}
-
-	    		BigDecimal dSeconds = (BigDecimal)dur.getField(DatatypeConstants.SECONDS);
-	        	// process the peak
-	        	if (dur != null)
-	        	{
-	        		dRetentionTimes[iSpectrum] = dSeconds.doubleValue();
-	        	}
-	        	
-	        	iSpectrum++;
+        		return false;
         	}
-        }
-        
+        	
+        	// Get the next spectrum
+        	Spectrum spectrum = iterator.next();	        
+			
+        	// Only continue if MS level is 1
+        	if (spectrum.getMsLevel() != 1)//2)
+        		continue;
+        	
+        	// Get the retention time and scan polarity
+        	List<CvParam> cvParamList = spectrum.getAdditional().getCvParams();
+			double dRetentionTime = 0;
+			boolean bPositivePolarity = true;
+			for (int j = 0; j < cvParamList.size(); j++)
+			{
+				CvParam thisParam = cvParamList.get(j);
+				if (thisParam.getName().equals("retention time") && dfactory != null)
+				{
+        			Duration dur = dfactory.newDuration(thisParam.getValue());
+    	        	if (dur != null)
+    	        	{
+        	    		BigDecimal dSeconds = (BigDecimal)dur.getField(DatatypeConstants.SECONDS);
+    	        		dRetentionTime = dSeconds.doubleValue();
+    	        	}
+					continue;
+				}
+				else if (thisParam.getName().equals("scan polarity") && dfactory != null)
+				{
+					if (thisParam.getValue().equals("+") || thisParam.getValue().equals("any"))
+					{
+						bPositivePolarity = true;
+						continue;
+					}
+					else
+					{
+						bPositivePolarity = false;
+						continue;
+					}
+				}
+			}
+
+			// Now get the mass spectra out of the file
+	        
+	        // Initialize the intensities to 0 and set the retention time
+			for (int j = 0; j < mzData.length; j++)
+			{
+				if (bPositivePolarity && standardCompoundsMZArray[j][0] > 0)
+				{
+					mzData[j][iPositiveSpectrum][0] = dRetentionTime;
+					mzData[j][iPositiveSpectrum][1] = 0;
+				}
+				else if (!bPositivePolarity && standardCompoundsMZArray[j][0] < 0)
+				{
+					mzData[j][iNegativeSpectrum][0] = dRetentionTime;
+					mzData[j][iNegativeSpectrum][1] = 0;
+				}
+			}
+	        dRetentionTimes[iSpectrum] = dRetentionTime;
+			
+			// Retrieve the spectrum's peak list
+	        Map<Double, Double> peakList = spectrum.getPeakList();
+
+	        // Fill in mzData with the intensities at each mass
+        	for (Double mz : peakList.keySet()) 
+        	{
+        		for (int i = 0; i < standardCompoundsMZArray.length; i++)
+        		{
+        			for (int massnum = 0; massnum < standardCompoundsMZArray[i].length; massnum++)
+        			{
+	        			if (bPositivePolarity)
+	        			{
+	        				if (mz <= standardCompoundsMZArray[i][massnum] + 0.5 && mz >= standardCompoundsMZArray[i][massnum] - 0.5)
+	        					mzData[i][iPositiveSpectrum][1] += peakList.get(mz);
+	        			}
+	        			else
+	        			{
+	         				if (mz <= (-standardCompoundsMZArray[i][massnum]) + 0.5 && mz >= (-standardCompoundsMZArray[i][massnum]) - 0.5)
+	        					mzData[i][iNegativeSpectrum][1] += peakList.get(mz);
+	        			}
+        			}
+        		}
+        	}
+
+
+        	if (bPositivePolarity)
+        		iPositiveSpectrum++;
+        	else
+        		iNegativeSpectrum++;
+        	
+			iSpectrum++;
+        }        
         return true;
 	}
 	
@@ -281,95 +372,218 @@ class OpenMzXMLFileTask extends Task
         mzData = new double[iSpectraCount][][];
         dRetentionTimes = new double[iSpectraCount];
         
-		//dealing with element collections
-		MzMLObjectIterator<uk.ac.ebi.jmzml.model.mzml.Spectrum> spectrumIterator = unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", uk.ac.ebi.jmzml.model.mzml.Spectrum.class);
+     // Count the number of positive and negative ion spectra that are MS level 1
+		//iSpectraCount = unmarshaller.getObjectCountForXpath("/run/spectrumList/spectrum");
+
+        iPositiveSpectraCount = 0;
+		iNegativeSpectraCount = 0;
+    	MzMLObjectIterator<uk.ac.ebi.jmzml.model.mzml.Spectrum> spectrumIterator = unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", uk.ac.ebi.jmzml.model.mzml.Spectrum.class);
+		while (spectrumIterator.hasNext())
+		{	
+			uk.ac.ebi.jmzml.model.mzml.Spectrum spectrum = spectrumIterator.next();	        
+			List<CVParam> cvParamList = spectrum.getCvParam();
+			int iMSLevel = 1;
+			boolean bPositivePolarity = true;
+			for (int j = 0; j < cvParamList.size(); j++)
+			{
+				CVParam thisParam = cvParamList.get(j);
+				if (thisParam.getName().equals("ms level"))
+				{
+					iMSLevel = Integer.valueOf(thisParam.getValue());
+					continue;
+				}
+				if (thisParam.getName().equals("negative scan"))
+				{
+					bPositivePolarity = false;
+					continue;
+				}
+			}
+			    					
+			// Only count it if it's MS level 1
+        	
+			if (iMSLevel == 1)
+			{
+				if (bPositivePolarity)
+	        		iPositiveSpectraCount++;
+				else
+					iNegativeSpectraCount++;
+			}
+		}
+
+		// iSpectraCount is the total number of spectra
+		iSpectraCount = iPositiveSpectraCount + iNegativeSpectraCount;
+		
+        if (iSpectraCount == 0)
+        {
+			JOptionPane.showMessageDialog(null, "There is no MS level 1 data in the file.", "No MS Spectra in File", JOptionPane.ERROR_MESSAGE); 
+  	  		return false;
+        }
+
+		//mzData[m/z][
+		
+		// Create the mzData array to be the right size for each ion
+		mzData = new double[standardCompoundsMZArray.length][][];
+        for (int j = 0; j < mzData.length; j++)
+        {
+        	if (standardCompoundsMZArray[j][0] > 0)
+        		mzData[j] = new double[iPositiveSpectraCount][2];
+        	else
+        		mzData[j] = new double[iNegativeSpectraCount][2];
+        }
+
+        updateProgress(0, 1);
+        
+      //dealing with element collections
+		spectrumIterator = unmarshaller.unmarshalCollectionFromXpath("/run/spectrumList/spectrum", uk.ac.ebi.jmzml.model.mzml.Spectrum.class);
 		int iSpectrum = 0;
+		int iPositiveSpectrum = 0;
+		int iNegativeSpectrum = 0;
+		// Walk through each of the spectra in the file
 		while (spectrumIterator.hasNext())
 		{
     		updateMessage("Loading spectrum " + ((Integer)iSpectrum).toString() + " of " + ((Integer)iSpectraCount).toString() + "...");
-        	updateProgress(iSpectrum, iSpectraCount);
-
-        	if (isCancelled())
+    		updateProgress((double)iSpectrum, (double)iSpectraCount);
+    		
+        	if (this.isCancelled())
+        	{
         		return false;
-        	
+        	}
+
 			//read next spectrum from XML file
 			uk.ac.ebi.jmzml.model.mzml.Spectrum spectrum = spectrumIterator.next();
 			
-			// get the retention time out of it
+			// Get the retention time
 			List<Scan> scanList = spectrum.getScanList().getScan();
 			Scan thisScan = scanList.get(0);
 			List<CVParam> cvParamList = thisScan.getCvParam();
+			double dRetentionTime = 0;
 			for (int j = 0; j < cvParamList.size(); j++)
 			{
 				CVParam thisParam = cvParamList.get(j);
 				if (thisParam.getName().equals("scan start time"))
 				{
-					dRetentionTimes[iSpectrum] = Double.valueOf(thisParam.getValue());
+					dRetentionTime = Double.valueOf(thisParam.getValue());
 					if (thisParam.getUnitName().equals("minute"))
-						dRetentionTimes[iSpectrum] *= 60;
+						dRetentionTime *= 60;
 					break;
 				}
 			}
 			
-			// now get the spectral data out of it
-			BinaryDataArrayList binaryDataArrayList = spectrum.getBinaryDataArrayList();
-			List<BinaryDataArray> binaryDataArray = binaryDataArrayList.getBinaryDataArray();
-
-	        	mzData[iSpectrum] = new double[mzArray.size()][2];
-	        double thisSpectrum[][] = null;
-
-			for (int j = 0; j < binaryDataArray.size(); j++)
+			// Get the polarity and MS level
+			boolean bPositivePolarity = true;
+			int iMSLevel = 1;
+			cvParamList = spectrum.getCvParam();
+			for (int j = 0; j < cvParamList.size(); j++)
 			{
-				Number[] binaryData = (Number[])binaryDataArray.get(j).getBinaryDataAsNumberArray();
-	        	//if (mzData[iSpectrum] == null)
-	        	//	mzData[iSpectrum] = new double[binaryData.length][2];
-	        	
-	        	// initialize all values to 0
-	        	for (int i = 0; i < mzData[iSpectrum].length; i++)
-	        	{
-	        		mzData[iSpectrum][i][0] = mzArray.get(i);
-	        		mzData[iSpectrum][i][1] = 0;
-	        	}
-	        	
-	        	if (thisSpectrum == null)
-	        		thisSpectrum = new double[binaryData.length][2];
-	        	
-				List<CVParam> cvParamListDataArray = binaryDataArray.get(j).getCvParam();
-				
-				for (int k = 0; k < cvParamListDataArray.size(); k++)
+				CVParam thisParam = cvParamList.get(j);
+				if (thisParam.getName().equals("ms level"))
 				{
-					CVParam cvParam = cvParamListDataArray.get(k);
-					if (cvParam.getName().equals("m/z array"))
-					{
-						for (int peak = 0; peak < binaryData.length; peak++)
-						{
-							thisSpectrum[peak][0] = binaryData[peak].doubleValue();
-						}
-						break;
-					}
-					else if (cvParam.getName().equals("intensity array"))
-					{
-						for (int peak = 0; peak < binaryData.length; peak++)
-						{
-							thisSpectrum[peak][1] = binaryData[peak].doubleValue();
-						}
-						break;
-					}
+					iMSLevel = Integer.valueOf(thisParam.getValue());
+					continue;
+				}
+				if (thisParam.getName().equals("negative scan"))
+				{
+					bPositivePolarity = false;
+					continue;
 				}
 			}
 			
-        	for (int j = 0; j < thisSpectrum.length; j++) 
-        	{
-        		for (int i = 0; i < mzArray.size(); i++)
-        		{
-        			if (thisSpectrum[j][0] <= mzArray.get(i) + 0.5 && thisSpectrum[j][0] >= mzArray.get(i) - 0.5)
-        				mzData[iSpectrum][i][1] += thisSpectrum[j][1];
-        		}
-        	}
+			if (iMSLevel == 1)
+			{
+				// Now get the mass spectra out of the file
+				BinaryDataArrayList binaryDataArrayList = spectrum.getBinaryDataArrayList();
+				List<BinaryDataArray> binaryDataArray = binaryDataArrayList.getBinaryDataArray();
 
-			iSpectrum++;
+				// Put the spectrum into thisSpectrum[][]
+  	        	double thisSpectrum[][] = null;
+    	        
+    	        // thisSpectrum[Spectrum#][0] = m/z
+    	        // thisSpectrum[Spectrum#][1] = intensity
+    	        
+				for (int j = 0; j < binaryDataArray.size(); j++)
+				{
+					Number[] binaryData = (Number[])binaryDataArray.get(j).getBinaryDataAsNumberArray();
+    	        	//if (mzData[iSpectrum] == null)
+    	        	//	mzData[iSpectrum] = new double[binaryData.length][2];
+    	        	
+    	        	// initialize intensity to 0 - we just add to it each time we find an intensity at the mass
+    	        	//for (int i = 0; i < mzData[iSpectrum].length; i++)
+    	        	//{
+    	        	//	mzData[iSpectrum][i][0] = mzDataMassList.get(i);
+    	        	//	mzData[iSpectrum][i][1] = 0;
+    	        	//}
+    	        	
+    	        	if (thisSpectrum == null)
+    	        		thisSpectrum = new double[binaryData.length][2];
+    	        	
+					List<CVParam> cvParamListDataArray = binaryDataArray.get(j).getCvParam();
+					
+					for (int k = 0; k < cvParamListDataArray.size(); k++)
+					{
+						CVParam cvParam = cvParamListDataArray.get(k);
+						if (cvParam.getName().equals("m/z array"))
+						{
+							for (int peak = 0; peak < binaryData.length; peak++)
+							{
+								thisSpectrum[peak][0] = binaryData[peak].doubleValue();
+							}
+							break;
+						}
+						else if (cvParam.getName().equals("intensity array"))
+						{
+							for (int peak = 0; peak < binaryData.length; peak++)
+							{
+								thisSpectrum[peak][1] = binaryData[peak].doubleValue();
+							}
+							break;
+						}
+					}
+				}
+				
+				// Initialize the intensities to 0 and set the retention time
+				for (int j = 0; j < mzData.length; j++)
+				{
+					if (bPositivePolarity && standardCompoundsMZArray[j][0] > 0)
+					{
+						mzData[j][iPositiveSpectrum][0] = dRetentionTime;
+						mzData[j][iPositiveSpectrum][1] = 0;
+					}
+					else if (!bPositivePolarity && standardCompoundsMZArray[j][0] < 0)
+					{
+						mzData[j][iNegativeSpectrum][0] = dRetentionTime;
+						mzData[j][iNegativeSpectrum][1] = 0;
+					}
+				}
+				
+				// Fill in mzData with the intensities at each mass
+	        	for (int j = 0; j < thisSpectrum.length; j++) 
+	        	{
+	        		for (int i = 0; i < standardCompoundsMZArray.length; i++)
+	        		{
+	        			for (int massnum = 0; massnum < standardCompoundsMZArray[i].length; massnum++)
+	        			{
+    	        			if (bPositivePolarity)
+    	        			{
+    	        				if (thisSpectrum[j][0] <= standardCompoundsMZArray[i][massnum] + 0.5 && thisSpectrum[j][0] >= standardCompoundsMZArray[i][massnum] - 0.5)
+    	        					mzData[i][iPositiveSpectrum][1] += thisSpectrum[j][1];
+    	        			}
+    	        			else
+    	        			{
+    	         				if (thisSpectrum[j][0] <= (-standardCompoundsMZArray[i][massnum]) + 0.5 && thisSpectrum[j][0] >= (-standardCompoundsMZArray[i][massnum]) - 0.5)
+    	        					mzData[i][iNegativeSpectrum][1] += thisSpectrum[j][1];
+    	        			}
+	        			}
+	        		}
+	        	}
+	        	
+	        	if (bPositivePolarity)
+	        		iPositiveSpectrum++;
+	        	else
+	        		iNegativeSpectrum++;
+	        	
+				iSpectrum++;
+			}
 		}
-		
 		return true;
 	}
 	
@@ -382,10 +596,10 @@ class OpenMzXMLFileTask extends Task
 		
 		NetcdfFile dataFile = null;
 	    
-	    // Open the file.
-	    try 
+		try 
 	    {
-	    	dataFile = NetcdfFile.open(fileName);
+	    	String file = fileName;
+	    	dataFile = NetcdfFile.open(file);
 	    	
 	    	// Retrieve the variable named "scan_index"
 	    	// Contains the index of the start of each scan
@@ -431,48 +645,55 @@ class OpenMzXMLFileTask extends Task
 	        	
 	        	iSpectraCount = (int)scanIndexArray.getSize();
 	           
-	        	mzData = new double[iSpectraCount][][];
+	        	mzData = new double[standardCompoundsMZArray.length][][];
 	        	dRetentionTimes = new double[iSpectraCount];
+	        	
+	        	for(int i = 0; i < mzData.length; i++)
+	        	{
+	        		mzData[i] = new double[iSpectraCount][2];
+	        	}
 	        	
 	        	for (int iSpectrum = 0; iSpectrum < iSpectraCount; iSpectrum++)
 	        	{
 	    		updateMessage("Loading spectrum " + ((Integer)iSpectrum).toString() + " of " + ((Integer)iSpectraCount).toString() + "...");
-            	updateProgress(iSpectrum, iSpectraCount);
-
-            	if (isCancelled())
+	    		updateProgress((double)iSpectrum, (double)iSpectraCount);
+	    		
+            	if (this.isCancelled())
+            	{
             		return false;
+            	}
 
-	        		// Create the new array for the spectrum
-  	        	mzData[iSpectrum] = new double[mzArray.size()][2];
   	        	
-  	        	for (int i = 0; i < mzData[iSpectrum].length; i++)
-	        	{
-	        		mzData[iSpectrum][i][0] = mzArray.get(i);
-	        		mzData[iSpectrum][i][1] = 0;
-	        	}
   	        	
   	        	// Now pull the m/z values and intensities for this spectrum
   	        	int[] shape = {pointCountArray.get(iSpectrum)};
 	           	int[] origin = {scanIndexArray.get(iSpectrum)};
-	           	
-  	        	ArrayFloat.D1 massDataArray = (ArrayFloat.D1)massValuesDataVar.read(origin, shape);
+	           	ArrayFloat.D1 massDataArray = (ArrayFloat.D1)massValuesDataVar.read(origin, shape);
   	        	ArrayFloat.D1 intensityDataArray = (ArrayFloat.D1)intensityValuesDataVar.read(origin, shape);
 		    	
+	           	// Now pull the retention time for this spectrum
+  	        	shape[0] = 1;
+  	        	origin[0] = iSpectrum;
+  	        	ArrayDouble.D1 timeDataArray = (ArrayDouble.D1)timeValuesDataVar.read(origin, shape);
+  	        
+  	        	
+  	        	for (int i = 0; i < mzData.length; i++)
+	        	{
+	        		mzData[i][iSpectrum][0] = timeDataArray.get(0);
+	        		mzData[i][iSpectrum][1] = 0;
+	        	}
+	           	
+  	        	
   	        	for (int j = 0; j < massDataArray.getSize(); j++) 
 	        	{
 	        		for (int i = 0; i < mzArray.size(); i++)
 	        		{
 	        			if (massDataArray.get(j) <= mzArray.get(i) + 0.5 && massDataArray.get(j) >= mzArray.get(i) - 0.5)
-	        				mzData[iSpectrum][i][1] += intensityDataArray.get(j);
+	        				mzData[i][iSpectrum][1] += intensityDataArray.get(j);
 	        		}
 	        	}
 
-  	        	// Now pull the retention time for this spectrum
-  	        	shape[0] = 1;
-  	        	origin[0] = iSpectrum;
-  	        	ArrayDouble.D1 timeDataArray = (ArrayDouble.D1)timeValuesDataVar.read(origin, shape);
   	        	
-  	        	dRetentionTimes[iSpectrum] = timeDataArray.get(0);
 	        	}
 
 	       // The file is closed no matter what by putting inside a try/catch block.
@@ -480,12 +701,11 @@ class OpenMzXMLFileTask extends Task
 	    catch (java.io.IOException e) 
 	    {
             e.printStackTrace();
-            return false;
+            //return;
 	    }  
 	    catch (InvalidRangeException e) 
 	    {
 	        e.printStackTrace();
-	        return false;
 	    } 
 	    finally 
 	    {
@@ -499,8 +719,8 @@ class OpenMzXMLFileTask extends Task
 	        	ioe.printStackTrace();
 	        }
 	    }
-	    
-	    return true;
+		
+		return true;
 	}
 
 }
