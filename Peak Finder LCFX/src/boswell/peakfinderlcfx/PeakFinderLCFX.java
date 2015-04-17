@@ -33,15 +33,15 @@ public class PeakFinderLCFX
 	private double[] smoothEIC = null;
 	private double[] maxIntensities;
 	
-	private double columnLength = 30; // in m
-	private double innerDiameter = 0.25; // in mm
-	private double flowRate = 1; // in mL/min=
-	private double mixingVolume = 100.0;
-	private double nonMixingVolume = 200.0;
-	private double initialTime = 5.0;
+	private double columnLength = 100; // in m
+	private double innerDiameter = 2.1; // in mm
+	private double flowRate = 0.4; // in mL/min=
+	private double mixingVolume = 0.1;
+	private double nonMixingVolume = 0.2;
+	private double initialTime = 0.0;
 	private double initialSolventComposition = 5.0;
     private double theoreticalPlatesPerMeter = 4433;
-    private double theoreticalPlates = theoreticalPlatesPerMeter * columnLength;
+    private double theoreticalPlates = 10000;
     private double tStep = 0;
 
 	private double[] retentionTimes = null;
@@ -51,7 +51,7 @@ public class PeakFinderLCFX
 	public  double[][] simpleGradientArray;	
 	private double[][] standardCompoundsMZArray = null;
 	private double[][] gradientProgram;
-	private double[][] gradientProgramInConventionalForm = {{5, 95}};
+	private double[][] gradientProgramInConventionalForm = {{0,5},{5, 95}};
 	private double[][][] mzData = null;
 	private double[][][] isocraticDataArray = null;
 
@@ -112,6 +112,8 @@ public class PeakFinderLCFX
 			// Set the dialog to the be editable or not
 			peakFinderSettingsPaneController.setEditable(editable);
 
+			peakFinderSettingsPaneController.performValidations();
+			
 			// Create the scene
 			Scene scene = new Scene(root, 60*rem, 43*rem);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
@@ -139,7 +141,6 @@ public class PeakFinderLCFX
 			innerDiameter = peakFinderSettingsPaneController.getInnerDiameter();
 			mixingVolume = peakFinderSettingsPaneController.getMixingVolume();
 			nonMixingVolume = peakFinderSettingsPaneController.getNonMixingVolume();
-			gradientProgram = peakFinderSettingsPaneController.getGradientProgram();
 			
 			//TODO: add gradientProfile
 			
@@ -177,7 +178,8 @@ public class PeakFinderLCFX
 				        	// The file was successfully loaded. Grab the data out of it.
 				        	mzData = openMZFileTask.getMzData();
 				        	retentionTimes = openMZFileTask.getRetentionTimes();
-
+				        	gradientProgram = peakFinderSettingsPaneController.getGradientProgram(retentionTimes);
+				        	
 				        	// Run the FindPeaksTask
 				        	findPeaksTask = new FindPeaksTask();
 				        	progressDialogController.progressProperty().unbind();
@@ -414,7 +416,6 @@ public class PeakFinderLCFX
 				double kprime = 1;
 				double dt0 = 1;
 				
-				//right now it is in an infinite loop because t = 0 and dtimelimit = 0 and dtstep = 0
 				for (double t = 0; t <= dTimeLimit; t += dtstep)
 				{
 					dPhiC = interpolatedGradientProfile.getAt(dTotalTime - dIntegral) / 100;
@@ -456,6 +457,8 @@ public class PeakFinderLCFX
 					}
 					
 					dXPosition += dXMovement;
+					//pw.write(("Compound No: "+iCompound+", t="+Math.round(t*1000)/1000.0d+", dtstep="+Math.round(dtstep*1000)/1000.0d+", dPhiC="+Math.round(dPhiC*1000)/1000.0d+", dCurVal="+Math.round(dCurVal*1000)/1000.0d+", dD="+Math.round(dD*1000)/1000.d+", dIntegral="+Math.round(dIntegral*1000)/1000.d+", kprime="+Math.round(kprime*1000)/1000.0d+", dt0="+Math.round(dt0*1000)/1000.0d+", totaldeadtime="+Math.round(dTotalDeadTime*1000)/1000.0d+", dtRFinal="+Math.round(dtRFinal*1000)/1000.d+", dTotalTime="+Math.round(dTotalTime*1000)/1000.d+", dXMovement="+Math.round(dXMovement*1000)/1000.0d+", dXPosition="+Math.round(dXPosition*1000)/1000.0d+", dLastXPosition="+Arrays.toString(dLastXPosition)+", dLastKo="+Arrays.toString(dLastko)+"\n"));
+					
 				}
 				
 				if (bIsEluted)
@@ -554,18 +557,28 @@ public class PeakFinderLCFX
 			LinearInterpolationFunction interpolatedGradientProfile) {
 		this.interpolatedGradientProfile = interpolatedGradientProfile;
 	}
-	
-	//not used i think
-	public void setGradientProgramInConventionalForm(double[][] gradientProgramInConventionalProgram, double initialTime, double initialSolventComposition){
-		this.gradientProgramInConventionalForm = gradientProgramInConventionalProgram;
-		this.initialTime = initialTime;
-		this.initialSolventComposition = initialSolventComposition;
-		this.gradientProgram = Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalProgram, initialTime, initialSolventComposition);
-	}
+//	
+//	//not used i think
+//	public void setGradientProgramInConventionalForm(double[][] gradientProgramInConventionalProgram, double initialTime, double initialSolventComposition){
+//		this.gradientProgramInConventionalForm = gradientProgramInConventionalProgram;
+//		this.initialTime = initialTime;
+//		this.initialSolventComposition = initialSolventComposition;
+//		this.gradientProgram = Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalProgram, initialTime, initialSolventComposition);
+//	}
 
-	public void setInterpolatedDeadTimeProfile(
-			LinearInterpolationFunction interpolatedDeadTimeProfile) {
-		this.interpolatedDeadTimeProfile = interpolatedDeadTimeProfile;
+	public void setInterpolatedDeadTime() {
+		// Create dead time array
+        double[][] initialDeadTimeArray = new double[GlobalsDan.dDeadTimeArray.length][2];
+        
+        for (int i = 0; i < GlobalsDan.dDeadTimeArray.length; i++)
+        {
+        	double dVolumeInRefColumn = Math.PI * Math.pow(GlobalsDan.dRefColumnID / 2, 2) * GlobalsDan.dRefColumnLength;
+        	double dDeadVolPerVol = (GlobalsDan.dDeadTimeArray[i][1] * GlobalsDan.dRefFlowRate) / dVolumeInRefColumn;
+        	double dNewDeadVol = dDeadVolPerVol * Math.PI * Math.pow((this.innerDiameter / 2) / 10, 2) * this.columnLength / 10;
+        	initialDeadTimeArray[i][0] = GlobalsDan.dDeadTimeArray[i][0];
+        	initialDeadTimeArray[i][1] = (dNewDeadVol / this.flowRate) * 60;
+        }
+        this.interpolatedDeadTimeProfile = new LinearInterpolationFunction(initialDeadTimeArray);
 	}
 
 }

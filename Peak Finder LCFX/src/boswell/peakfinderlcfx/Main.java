@@ -183,10 +183,10 @@ public class Main extends Application
 	public void start(Stage primaryStage) {
 		
 		PeakFinderLCFX peakFinderGC = new PeakFinderLCFX(primaryStage, StationaryPhaseArray, true);
-		peakFinderGC.setStandardCompoundMZData(Globals.StandardCompoundsMZArray);
-		peakFinderGC.setStandardCompoundNames(Globals.StandardCompoundsNameArray);
-		peakFinderGC.setIsocraticDataArray(Globals.StandardCompoundsIsocraticDataArray);
-		peakFinderGC.setInterpolatedDeadTimeProfile(new LinearInterpolationFunction(Globals.dDeadTimeArray));
+		peakFinderGC.setStandardCompoundMZData(GlobalsDan.StandardCompoundsMZArray);
+		peakFinderGC.setStandardCompoundNames(GlobalsDan.StandardCompoundsNameArray);
+		peakFinderGC.setIsocraticDataArray(GlobalsDan.StandardIsocraticDataArray);
+		peakFinderGC.setInterpolatedDeadTime();
 		peakFinderGC.run();		
 
 	}

@@ -65,13 +65,13 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	
 	// For sizing
     private final double rem = javafx.scene.text.Font.getDefault().getSize();
-	private double initialSolventComposition;
-	private double columnLength = 30.0; // in m
-	private double innerDiameter = 0.25; // in mm
+	private double initialSolventComposition = 5.0;
+	private double columnLength = 100.0; // in m
+	private double innerDiameter = 2.1; // in mm
 	private double flowRate = 1.0; // in mL/min
-	private double initialTime = 5.0; // in min
-	private double mixingVolume = 0.001;
-	private double nonMixingVolume = 0.001;
+	private double initialTime = 0.0; // in min
+	private double mixingVolume = 100;
+	private double nonMixingVolume = 200;
 	private boolean okPressed = false;
 	private String fileName;
 	private double[][] gradientProgram;
@@ -278,7 +278,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	}
 	
 	
-	private void performValidations()	{
+	public void performValidations()	{
 		validateParameters(textFieldColumnLength, 0.1, 10000, this.columnLength);
 		validateParameters(textFieldInnerDiameter, 0.01, 10000, this.innerDiameter);
 		validateParameters(textFieldFlowRate, 0.000000001, 10000, this.flowRate);
@@ -288,7 +288,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 		//TODO: Check if we need any more validations. Compare with PeakFinderLC
 	}
 	
-	private void validateParameters(TextField textField, double dTemp1, double dTemp2, double valueToSet){
+	public void validateParameters(TextField textField, double dTemp1, double dTemp2, double valueToSet){
     	double dTemp = 0;
     	try
     	{
@@ -367,7 +367,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 		this.textFieldNonMixingVolume.setText(Float.toString((float)nonMixingVolume));
 	}
 
-	public double[][] getGradientProgram() {
+	public double[][] getGradientProgram(double[] retentionTimes) {
 		double[][] gradientProgramInConventionalForm = new double[gradientProgramList.size()][3];
 		for (int i = 0; i < gradientProgramList.size(); i++)
 		{
@@ -375,7 +375,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 			gradientProgramInConventionalForm[i][1] = gradientProgramList.get(i).getSolventComposition();
 		}
 		
-		return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
+		return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition, retentionTimes);
 	}
 
 	public void setGradientProgram(double[][] gradientProgram) {
@@ -391,9 +391,9 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 			GradientProgramStep step = new GradientProgramStep(gradientProgramInConventionalForm[i][0], gradientProgramInConventionalForm[i][1]);
 			gradientProgramList.add(step);
 		}
-		this.initialTime = initialTime;
-		this.initialSolventComposition = initialSolventComposition;
-		gradientProgram = Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
+//		this.initialTime = initialTime;
+//		this.initialSolventComposition = initialSolventComposition;
+//		gradientProgram = Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
 	}
 
 }

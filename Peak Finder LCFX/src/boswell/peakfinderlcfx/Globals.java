@@ -109,23 +109,23 @@ public class Globals
 
 	public static double[][] convertGradientProgramInConventionalFormToRegularForm(
 			double[][] gradientProgramInConventionalProgram,
-			double initialTime, double initialSolventComposition) {
-		
-    	double[][] newGradientProgram = new double[gradientProgramInConventionalProgram.length + 2][2];
+			double initialTime, double initialSolventComposition, double[] retentionTimes) {
+		double[][] newGradientProgram = new double[gradientProgramInConventionalProgram.length + 2][2];
     	int iPointCount = 0;
+    	
 
     	newGradientProgram[iPointCount][0] = 0.0;
-    	newGradientProgram[iPointCount][1] = gradientProgramInConventionalProgram[0][1];
+    	newGradientProgram[iPointCount][1] = (Double)gradientProgramInConventionalProgram[0][1];
     	double dLastTime = 0;
 		iPointCount++;
 		
     	// Go through the gradient program table and create an array that contains solvent composition vs. time
 		for (int i = 0; i < gradientProgramInConventionalProgram.length; i++)
 		{
-    		if (initialTime > dLastTime)
+    		if ((Double)gradientProgramInConventionalProgram[i][0] > dLastTime)
     		{
-    			double dTime = initialTime;
-    			double dFractionB = initialSolventComposition;
+    			double dTime = (Double)gradientProgramInConventionalProgram[i][0];
+    			double dFractionB = (Double)gradientProgramInConventionalProgram[i][1];
     			
 				newGradientProgram[iPointCount][0] = dTime;
 				newGradientProgram[iPointCount][1] = dFractionB;
@@ -137,7 +137,7 @@ public class Globals
 		
 		// Add another point past the end of the gradient to make it flatten out and go forever.
 		newGradientProgram[iPointCount][0] = newGradientProgram[iPointCount - 1][0] * 2;
-		newGradientProgram[iPointCount][1] = gradientProgramInConventionalProgram[gradientProgramInConventionalProgram.length - 1][1];
+		newGradientProgram[iPointCount][1] = (Double)gradientProgramInConventionalProgram[gradientProgramInConventionalProgram.length-1][1];
     	iPointCount++;
 
 		// Ideal series finished
@@ -148,9 +148,8 @@ public class Globals
 			tempArray[i][0] = newGradientProgram[i][0];
 			tempArray[i][1] = newGradientProgram[i][1];
 		}
-		
+
 		return tempArray;
-		
 		
 	}
 
