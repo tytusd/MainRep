@@ -87,8 +87,8 @@
                                           </GridPane>
                                           <TextField fx:id="textFieldNonMixingVolume" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#actionPerformValidation" prefWidth="50.0" text="200.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
                                           <TextField fx:id="textFieldMixingVolume" onAction="#actionPerformValidation" text="100.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                                          <Label fx:id="labelMixingVolume" text="Label" GridPane.columnIndex="2" GridPane.rowIndex="6" />
-                                          <Label fx:id="labelNonMixingVolume" text="µL" GridPane.columnIndex="2" GridPane.rowIndex="7" />
+                                          <Label fx:id="labelMixingVolume" text="mL" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+                                          <Label fx:id="labelNonMixingVolume" text="mL" GridPane.columnIndex="2" GridPane.rowIndex="7" />
                                        </children>
                                        <columnConstraints>
                                           <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" percentWidth="60.0" />

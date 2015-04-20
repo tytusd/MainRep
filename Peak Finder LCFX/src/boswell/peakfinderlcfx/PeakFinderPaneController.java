@@ -97,6 +97,7 @@ public class PeakFinderPaneController implements Initializable{
     private double[] predictedPeakWidths;
     private Vector<Vector<double[]>> peaks = new Vector<Vector<double[]>>();
     
+    
     @FXML private AnchorPane anchorPaneExtractedIonChromatogram;
     @FXML private AnchorPane anchorPanePeak;
     private GraphControlFX extractedIonChromatogramGraph;

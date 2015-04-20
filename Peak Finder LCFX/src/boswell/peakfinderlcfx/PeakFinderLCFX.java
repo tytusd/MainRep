@@ -35,7 +35,7 @@ public class PeakFinderLCFX
 	
 	private double columnLength = 100; // in m
 	private double innerDiameter = 2.1; // in mm
-	private double flowRate = 0.4; // in mL/min=
+	private double flowRate = 1; // in mL/min=
 	private double mixingVolume = 0.1;
 	private double nonMixingVolume = 0.2;
 	private double initialTime = 0.0;
@@ -112,7 +112,7 @@ public class PeakFinderLCFX
 			// Set the dialog to the be editable or not
 			peakFinderSettingsPaneController.setEditable(editable);
 
-			peakFinderSettingsPaneController.performValidations();
+			
 			
 			// Create the scene
 			Scene scene = new Scene(root, 60*rem, 43*rem);
@@ -135,6 +135,7 @@ public class PeakFinderLCFX
 			}
 			
 			// OK button was pressed, so first grab all the data out of that dialog.
+			peakFinderSettingsPaneController.performValidations();
 			fileName = peakFinderSettingsPaneController.getFileName();
 			flowRate = peakFinderSettingsPaneController.getFlowRate();
 			columnLength = peakFinderSettingsPaneController.getColumnLength();

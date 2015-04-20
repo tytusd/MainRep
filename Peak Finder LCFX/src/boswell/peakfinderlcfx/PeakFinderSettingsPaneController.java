@@ -70,8 +70,8 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	private double innerDiameter = 2.1; // in mm
 	private double flowRate = 1.0; // in mL/min
 	private double initialTime = 0.0; // in min
-	private double mixingVolume = 100;
-	private double nonMixingVolume = 200;
+	private double mixingVolume = 0.1;
+	private double nonMixingVolume = 0.2;
 	private boolean okPressed = false;
 	private String fileName;
 	private double[][] gradientProgram;
@@ -144,8 +144,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 		tableViewGradientProgram.getSelectionModel().getSelectedIndices().addListener(new ListChangeListener<Integer>(){
 
 			@Override
-			public void onChanged(
-					javafx.collections.ListChangeListener.Change<? extends Integer> change) {
+			public void onChanged(Change<? extends Integer> change) {
 				if (change.getList().size() >= 1)
 	            {
 	            	buttonInsert.setDisable(false);
@@ -211,7 +210,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
     		rowValue2 = initialSolventComposition ;
     	}
     	else    	{
-    		rowValue1 = 10.0; // default time
+    		rowValue1 = gradientProgramList.get(lastRowIndex).getTime(); // default time
     		rowValue2 = gradientProgramList.get(lastRowIndex).getSolventComposition();
     	}
     	
@@ -279,16 +278,16 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	
 	
 	public void performValidations()	{
-		validateParameters(textFieldColumnLength, 0.1, 10000, this.columnLength);
-		validateParameters(textFieldInnerDiameter, 0.01, 10000, this.innerDiameter);
-		validateParameters(textFieldFlowRate, 0.000000001, 10000, this.flowRate);
-		validateParameters(textFieldMixingVolume, 0.001, 100000, this.mixingVolume);
-		validateParameters(textFieldNonMixingVolume, 0.001, 100000, this.nonMixingVolume);
+		this.columnLength = validateParameters(textFieldColumnLength, 0.1, 10000, this.columnLength);
+		this.innerDiameter = validateParameters(textFieldInnerDiameter, 0.01, 10000, this.innerDiameter);
+		this.flowRate = validateParameters(textFieldFlowRate, 0.000000001, 10000, this.flowRate);
+		this.mixingVolume = validateParameters(textFieldMixingVolume, 0.001, 100000, this.mixingVolume);
+		this.nonMixingVolume = validateParameters(textFieldNonMixingVolume, 0.001, 100000, this.nonMixingVolume);
 		setFileName(this.textFieldDataFile.getText());
 		//TODO: Check if we need any more validations. Compare with PeakFinderLC
 	}
 	
-	public void validateParameters(TextField textField, double dTemp1, double dTemp2, double valueToSet){
+	public double validateParameters(TextField textField, double dTemp1, double dTemp2, double valueToSet){
     	double dTemp = 0;
     	try
     	{
@@ -305,6 +304,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 			dTemp = dTemp2;
 		valueToSet = dTemp;
 		textField.setText(Float.toString((float)valueToSet));    
+		return valueToSet;
 	}
 
 	public String getFileName() {
