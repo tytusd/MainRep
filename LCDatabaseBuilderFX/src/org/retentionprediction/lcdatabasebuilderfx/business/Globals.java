@@ -4,7 +4,7 @@ public class Globals
 {
 	public static final boolean MEASUREKDATA = false;
 	
-	public static double[][][] requiredTemperaturePrograms = {
+	public static double[][][] requiredGradientPrograms = {
 		{
 			{40, 5.0},
 			{4.3, 270, 40}
@@ -31,7 +31,7 @@ public class Globals
 		}		
 	};
 	
-	public static String[] requiredTemperatureProgramNames = {
+	public static String[] requiredGradientProgramNames = {
 		"Program A",
 		"Program B",
 		"Program C",
@@ -40,7 +40,7 @@ public class Globals
 		"Program F"		
 	};
 	
-	public static double[][][] dTemperaturePrograms = {
+	public static double[][][] dGradientPrograms = {
 		{ // Vitha method a
 			{1, 50.0, 0, 0, 30.0, 0.25, 0.25},
 			{60, 5.0},
@@ -2939,45 +2939,45 @@ public class Globals
 	    return shifted / magnitude;
 	}
 	
-	public static double[][] convertTemperatureProgramInConventionalFormToRegularForm(double[][] dTemperatureProgramInConventionalForm, double initialTemperature, double initialTime)
+	public static double[][] convertGradientProgramInConventionalFormToRegularForm(double[][] dGradientProgramInConventionalForm, double initialGradient, double initialTime)
 	{
-		double[][] newTemperatureProgram = new double[(dTemperatureProgramInConventionalForm.length * 2) + 2][2];
+		double[][] newGradientProgram = new double[(dGradientProgramInConventionalForm.length * 2) + 2][2];
 		int iPointCount = 0;
 
-		newTemperatureProgram[iPointCount][0] = 0.0;
-		newTemperatureProgram[iPointCount][1] = initialTemperature;
+		newGradientProgram[iPointCount][0] = 0.0;
+		newGradientProgram[iPointCount][1] = initialGradient;
 		iPointCount++;
 				
-		newTemperatureProgram[iPointCount][0] = initialTime;
-		newTemperatureProgram[iPointCount][1] = initialTemperature;
+		newGradientProgram[iPointCount][0] = initialTime;
+		newGradientProgram[iPointCount][1] = initialGradient;
 		iPointCount++;
 
 		double dTotalTime = initialTime;
-		double dLastTemp = initialTemperature;
-		double dFinalTemp = initialTemperature;
+		double dLastTemp = initialGradient;
+		double dFinalTemp = initialGradient;
 		    	
-		// Go through the temperature program table and create an array that contains temp vs. time
-		for (int i = 0; i < dTemperatureProgramInConventionalForm.length; i++)
+		// Go through the Gradient program table and create an array that contains temp vs. time
+		for (int i = 0; i < dGradientProgramInConventionalForm.length; i++)
 		{
-			double dRamp = dTemperatureProgramInConventionalForm[i][0];
-			dFinalTemp = dTemperatureProgramInConventionalForm[i][1];
-			double dFinalTime = dTemperatureProgramInConventionalForm[i][2];
+			double dRamp = dGradientProgramInConventionalForm[i][0];
+			dFinalTemp = dGradientProgramInConventionalForm[i][1];
+			double dFinalTime = dGradientProgramInConventionalForm[i][2];
 
 			if (dRamp != 0)
 			{
 				dTotalTime += (dFinalTemp - dLastTemp) / dRamp;
-				newTemperatureProgram[iPointCount][0] = dTotalTime;
-				newTemperatureProgram[iPointCount][1] = dFinalTemp;
+				newGradientProgram[iPointCount][0] = dTotalTime;
+				newGradientProgram[iPointCount][1] = dFinalTemp;
 				iPointCount++;
 			}
 					
 			if (dFinalTime != 0)
 			{
-				if (i < dTemperatureProgramInConventionalForm.length - 1)
+				if (i < dGradientProgramInConventionalForm.length - 1)
 				{
 					dTotalTime += dFinalTime;
-					newTemperatureProgram[iPointCount][0] = dTotalTime;
-					newTemperatureProgram[iPointCount][1] = dFinalTemp;
+					newGradientProgram[iPointCount][0] = dTotalTime;
+					newGradientProgram[iPointCount][1] = dFinalTemp;
 					iPointCount++;						
 				}
 			}
@@ -2985,8 +2985,8 @@ public class Globals
 			dLastTemp = dFinalTemp;
 		}
 				
-		newTemperatureProgram[iPointCount][0] = newTemperatureProgram[iPointCount - 1][0] * 2;
-		newTemperatureProgram[iPointCount][1] = dFinalTemp;
+		newGradientProgram[iPointCount][0] = newGradientProgram[iPointCount - 1][0] * 2;
+		newGradientProgram[iPointCount][1] = dFinalTemp;
 		iPointCount++;
 
 		// Ideal series finished
@@ -2994,8 +2994,8 @@ public class Globals
 		double tempArray[][] = new double[iPointCount][2];
 		for (int i = 0; i < iPointCount; i++)
 		{
-			tempArray[i][0] = newTemperatureProgram[i][0];
-			tempArray[i][1] = newTemperatureProgram[i][1];
+			tempArray[i][0] = newGradientProgram[i][0];
+			tempArray[i][1] = newGradientProgram[i][1];
 		}
 		
 		return tempArray;

@@ -33,9 +33,10 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Callback;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
+import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.BackCalculateControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController.MeasuredRetentionTimesControllerListener;
 
-public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener {
+public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener {
 
 	private ParentPaneControllerListener parentPaneControllerListener;
 	
@@ -162,6 +163,15 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @Override
 	public void initialize(URL location, ResourceBundle resources) {
 		try{
+			
+			for (int i = 0; i < iCurrentStep.length; i++)
+			{
+				FXMLLoader fxmlLoader = new FXMLLoader();
+				backCalculatePane[i] = (ScrollPane)fxmlLoader.load(getClass().getResource("Backcalculate.fxml").openStream());
+				backcalculateController[i] = fxmlLoader.getController();
+				backcalculateController[i].setBackCalculateControllerListener(this);
+			}
+			
 			for(int i = 0; i < iCurrentStep.length; i++){
 				FXMLLoader fxmlLoader = new FXMLLoader();
 				measuredRetentionTimes[i] = fxmlLoader.load(getClass().getResource("MeasuredRetentionTimes.fxml").openStream());
@@ -335,8 +345,24 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		updateFinalFitProgress();
     }
 
-    @FXML void onCommitRetentionTime(ActionEvent event) {
+    @FXML void onCommitRetentionTime(TableColumn.CellEditEvent<StandardCompound,String> t) {
     	//TODO:Implement this
+    	Double dNewRetentionTime = 0.0;
+		try
+		{
+			// TODO: More sophisticated?
+			dNewRetentionTime = Double.valueOf(t.getNewValue());
+		}
+		catch (NumberFormatException e)
+		{
+			dNewRetentionTime = 0.0;
+		}
+		
+		// Get the current item that was changed
+		StandardCompound currentItem = (StandardCompound)t.getTableView().getItems().get(t.getTablePosition().getRow());
+
+		// Commit the new retention time
+		currentItem.setMeasuredRetentionTime(dNewRetentionTime);
     }
 
     @FXML void onSolveForRetentionParameters(ActionEvent event) {
@@ -361,8 +387,244 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	@Override
 	public void onNextStepPressed(
 			MeasuredRetentionTimesController thisController) {
-		// TODO Auto-generated method stub
-		
+		if (thisController == this.measuredRetentionTimesController[0])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[0], backcalculateController[0]);
+			gradientAtab.setContent(backCalculatePane[0]);
+			this.iCurrentStep[0]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[1])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[1], backcalculateController[1]);
+			gradientBtab.setContent(backCalculatePane[1]);
+			this.iCurrentStep[1]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[2])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[2], backcalculateController[2]);
+			gradientCtab.setContent(backCalculatePane[2]);
+			this.iCurrentStep[2]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[3])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[3], backcalculateController[3]);
+			gradientDtab.setContent(backCalculatePane[3]);
+			this.iCurrentStep[3]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[4])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[4], backcalculateController[4]);
+			gradientEtab.setContent(backCalculatePane[4]);
+			this.iCurrentStep[4]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[5])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[5], backcalculateController[5]);
+			gradientFtab.setContent(backCalculatePane[5]);
+			this.iCurrentStep[5]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[6])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[6], backcalculateController[6]);
+			gradientFtab.setContent(backCalculatePane[6]);
+			this.iCurrentStep[6]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.measuredRetentionTimesController[7])
+		{
+			switchToBackCalculatePane(measuredRetentionTimesController[7], backcalculateController[7]);
+			gradientFtab.setContent(backCalculatePane[7]);
+			this.iCurrentStep[7]++;
+			updateRoadMap();
+		}
+	}
+	
+	public void onNextStepPressed(BackcalculateController thisController) {
+		if (thisController == this.backcalculateController[0])
+		{
+			backcalculateController[0].switchToStep4();
+			this.iCurrentStep[0]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[1])
+		{
+			backcalculateController[1].switchToStep4();
+			this.iCurrentStep[1]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[2])
+		{
+			backcalculateController[2].switchToStep4();
+			this.iCurrentStep[2]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[3])
+		{
+			backcalculateController[3].switchToStep4();
+			this.iCurrentStep[3]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[4])
+		{
+			backcalculateController[4].switchToStep4();
+			this.iCurrentStep[4]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[5])
+		{
+			backcalculateController[5].switchToStep4();
+			this.iCurrentStep[5]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[6])
+		{
+			backcalculateController[6].switchToStep4();
+			this.iCurrentStep[6]++;
+			updateRoadMap();
+		}
+		else if (thisController == this.backcalculateController[7])
+		{
+			backcalculateController[7].switchToStep4();
+			this.iCurrentStep[7]++;
+			updateRoadMap();
+		}
+	}
+	
+	public void onPreviousStepPressed(BackcalculateController thisController) {
+		if (thisController == this.backcalculateController[0])
+		{
+			int i = 0;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientAtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
+		else if (thisController == this.backcalculateController[1])
+		{
+			int i = 1;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientBtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
+		else if (thisController == this.backcalculateController[2])
+		{
+			int i = 2;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientCtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
+		else if (thisController == this.backcalculateController[3])
+		{
+			int i = 3;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientDtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
+		else if (thisController == this.backcalculateController[4])
+		{
+			int i = 4;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientEtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
+		else if (thisController == this.backcalculateController[5])
+		{
+			int i = 5;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientFtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}		
+		else if (thisController == this.backcalculateController[6])
+		{
+			int i = 6;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientFtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
+		else if (thisController == this.backcalculateController[7])
+		{
+			int i = 7;
+			if (this.iCurrentStep[i] == 2)
+			{
+				backcalculateController[i].switchToStep3();
+			}
+			else if (this.iCurrentStep[i] == 1)
+			{
+				gradientFtab.setContent(measuredRetentionTimes[i]);
+				measuredRetentionTimes[i].setVisible(true);
+			}
+			this.iCurrentStep[i]--;
+			updateRoadMap();
+			updateFinalFitProgress();
+		}
 	}
 	
 	private void performValidations()
@@ -582,6 +844,19 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 				checkSystemSuitabilityHLabel.setFont(Font.font(null, FontWeight.BOLD, checkSystemSuitabilityHLabel.getFont().getSize()));
 			}
 		}
+	}
+	
+	private void switchToBackCalculatePane(MeasuredRetentionTimesController measuredRetentionTimesController, BackcalculateController backCalculateController)
+	{
+		//TODO: Uncomment these
+//		backCalculateController.resetValues();
+//		backCalculateController.setInnerDiameter(measuredRetentionTimesController.getInnerDiameter());
+//		backCalculateController.setFlowRate(measuredRetentionTimesController.getFlowRate());
+//		backCalculateController.setColumnLength(measuredRetentionTimesController.getColumnLength());
+//		backCalculateController.setTemperatureProgram(measuredRetentionTimesController.getGradientProgram());
+//		backCalculateController.setTemperatureProgramInConventionalForm(measuredRetentionTimesController.getInitialTemperature(), measuredRetentionTimesController.getInitialHoldTime(), measuredRetentionTimesController.getTemperatureProgramInConventionalForm());
+//		backCalculateController.setStandardsList(measuredRetentionTimesController.getStandardsList());
+//		backCalculateController.setFileName(measuredRetentionTimesController.getFileName());
 	}
 	
 	public void updateFinalFitProgress(){

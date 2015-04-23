@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.StringTokenizer;
 
-class InterpolationFunction
+public class InterpolationFunction
 {
 	public double[][] dInterpolationParameters; // Contains an, bn, cn, dn for each 3rd order polynomial
 	public double[] dRanges;					// Contains the range of x to use for each polynomial

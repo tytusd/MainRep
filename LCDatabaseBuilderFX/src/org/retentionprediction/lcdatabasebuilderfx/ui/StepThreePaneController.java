@@ -27,10 +27,10 @@ import javafx.util.Callback;
 
 public class StepThreePaneController implements Initializable{
 	
-
+    @FXML private TitledPane step3pane;
+	@FXML private TableView<StandardCompound> tableStandards;
     @FXML private TableColumn<StandardCompound, String> columnExperimentalRetentionTime;
     @FXML private TableColumn<StandardCompound, String> columnDifference;
-    @FXML private TableView<StandardCompound> tableStandards;
     @FXML private TableColumn<StandardCompound, String> columnName;
     @FXML private TableColumn<StandardCompound, String> columnCalculatedRetentionTime;
     
@@ -41,8 +41,6 @@ public class StepThreePaneController implements Initializable{
     @FXML private Label labelLastIterationVariance;
     @FXML private Label labelTimeElapsed;
     @FXML private Label labelVariance;
-    
-    @FXML private TitledPane step3pane;
 
     @FXML private ProgressBar progressBar;
     

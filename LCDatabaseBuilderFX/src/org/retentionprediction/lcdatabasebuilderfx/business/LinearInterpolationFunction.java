@@ -3,7 +3,7 @@ package org.retentionprediction.lcdatabasebuilderfx.business;
 import java.util.Arrays;
 import java.util.Comparator;
 
-class LinearInterpolationFunction
+public class LinearInterpolationFunction
 {
 	public double[][] dDataArray;
 	
