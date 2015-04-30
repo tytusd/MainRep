@@ -195,6 +195,7 @@ public class StepThreePaneController implements Initializable{
 
 	public void setStandardCompoundList(ObservableList<StandardCompound> standardCompoundList) {
 		this.standardCompoundList = standardCompoundList;
+		tableStandards.setItems(this.standardCompoundList);
 	}
 	
 

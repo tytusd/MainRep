@@ -1,6 +1,7 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import javafx.beans.value.ChangeListener;
@@ -15,12 +16,14 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
@@ -28,11 +31,10 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.util.Callback;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
+import org.retentionprediction.lcdatabasebuilderfx.business.UIComponents;
 import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.BackCalculateControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController.MeasuredRetentionTimesControllerListener;
 
@@ -160,6 +162,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     private ObservableList<StandardCompound> programList = FXCollections.observableArrayList();
     private boolean finalFitComplete = false;
     
+    
     @Override
 	public void initialize(URL location, ResourceBundle resources) {
 		try{
@@ -275,46 +278,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	    
 	    tableRetentionTimes.setItems(programList);
 	}
-    
-    /**
-     * Draws line from one label to another (This is a part of progress feature available on top of the main screen).
-     * @param startBinderLabel
-     * @param endBinderLabel
-     * @return
-     */
-    public Line drawLine(Label startBinderLabel, Label endBinderLabel){
-    	Line line = new Line();
-    	line.startXProperty().bind(startBinderLabel.layoutXProperty().add(startBinderLabel.widthProperty().add(12.0)));
-		line.startYProperty().bind(startBinderLabel.layoutYProperty().add(startBinderLabel.heightProperty().divide(2.0)));
-		line.endXProperty().bind(endBinderLabel.layoutXProperty().subtract(12.0));
-		line.endYProperty().bind(endBinderLabel.layoutYProperty().add(endBinderLabel.heightProperty().divide(2.0)));
-		return line;
-    }
-    
-    /**
-     * Draws an arrow at the end of a line.
-     * @param line
-     * @return
-     */
-    public Polygon drawPolygon(Line line){
-    	Polygon polygon = new Polygon(new double[]{0, -6.0, 0, 6.0, 8, 0});
-		polygon.layoutXProperty().bind(line.endXProperty());
-		polygon.layoutYProperty().bind(line.endYProperty());
-		return polygon;
-    }
-    
-    public Line drawLineForFinalFit(Label startLabel){
-    	Line line = new Line();
-		line.startXProperty().bind(startLabel.layoutXProperty().add(startLabel.widthProperty().add(12.0)));
-		line.startYProperty().bind(startLabel.layoutYProperty().add(startLabel.heightProperty().divide(2.0)));
-		line.endXProperty().bind(finalFitLabel.layoutXProperty().subtract(line.startXProperty()).multiply(2.0/3.0).add(line.startXProperty()));
-		line.endYProperty().bind(finalFitLabel.layoutYProperty().add(finalFitLabel.heightProperty().divide(2.0)));
-		return line;
-    }
-    
 
-    
-    
     @FXML void onNewAction(ActionEvent event) {
     	this.parentPaneControllerListener.onNew();
     }
@@ -346,11 +310,9 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     }
 
     @FXML void onCommitRetentionTime(TableColumn.CellEditEvent<StandardCompound,String> t) {
-    	//TODO:Implement this
     	Double dNewRetentionTime = 0.0;
 		try
 		{
-			// TODO: More sophisticated?
 			dNewRetentionTime = Double.valueOf(t.getNewValue());
 		}
 		catch (NumberFormatException e)
@@ -373,126 +335,67 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     	performValidations();
     }
 
-	
-
-	public ParentPaneControllerListener getParentPaneControllerListener() {
-		return parentPaneControllerListener;
-	}
-
-	public void setParentPaneControllerListener(
-			ParentPaneControllerListener parentPaneControllerListener) {
-		this.parentPaneControllerListener = parentPaneControllerListener;
-	}
-
 	@Override
 	public void onNextStepPressed(
 			MeasuredRetentionTimesController thisController) {
+		int i = 0;
 		if (thisController == this.measuredRetentionTimesController[0])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[0], backcalculateController[0]);
+			i = 0;
 			gradientAtab.setContent(backCalculatePane[0]);
-			this.iCurrentStep[0]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[1])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[1], backcalculateController[1]);
+			i = 1;
 			gradientBtab.setContent(backCalculatePane[1]);
-			this.iCurrentStep[1]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[2])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[2], backcalculateController[2]);
+			i = 2;
 			gradientCtab.setContent(backCalculatePane[2]);
-			this.iCurrentStep[2]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[3])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[3], backcalculateController[3]);
+			i = 3;
 			gradientDtab.setContent(backCalculatePane[3]);
-			this.iCurrentStep[3]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[4])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[4], backcalculateController[4]);
+			i = 4;
 			gradientEtab.setContent(backCalculatePane[4]);
-			this.iCurrentStep[4]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[5])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[5], backcalculateController[5]);
+			i = 5;
 			gradientFtab.setContent(backCalculatePane[5]);
-			this.iCurrentStep[5]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[6])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[6], backcalculateController[6]);
+			i = 6;
 			gradientFtab.setContent(backCalculatePane[6]);
-			this.iCurrentStep[6]++;
-			updateRoadMap();
 		}
 		else if (thisController == this.measuredRetentionTimesController[7])
 		{
-			switchToBackCalculatePane(measuredRetentionTimesController[7], backcalculateController[7]);
+			i = 7;
 			gradientFtab.setContent(backCalculatePane[7]);
-			this.iCurrentStep[7]++;
+		}
+		
+		if(thisController == this.measuredRetentionTimesController[i]){
+			switchToBackCalculatePane(measuredRetentionTimesController[i], backcalculateController[i]);
+			this.iCurrentStep[i]++;
 			updateRoadMap();
 		}
 	}
 	
 	public void onNextStepPressed(BackcalculateController thisController) {
-		if (thisController == this.backcalculateController[0])
-		{
-			backcalculateController[0].switchToStep4();
-			this.iCurrentStep[0]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[1])
-		{
-			backcalculateController[1].switchToStep4();
-			this.iCurrentStep[1]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[2])
-		{
-			backcalculateController[2].switchToStep4();
-			this.iCurrentStep[2]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[3])
-		{
-			backcalculateController[3].switchToStep4();
-			this.iCurrentStep[3]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[4])
-		{
-			backcalculateController[4].switchToStep4();
-			this.iCurrentStep[4]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[5])
-		{
-			backcalculateController[5].switchToStep4();
-			this.iCurrentStep[5]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[6])
-		{
-			backcalculateController[6].switchToStep4();
-			this.iCurrentStep[6]++;
-			updateRoadMap();
-		}
-		else if (thisController == this.backcalculateController[7])
-		{
-			backcalculateController[7].switchToStep4();
-			this.iCurrentStep[7]++;
-			updateRoadMap();
+		for(int i = 0; i < 8; i++){
+			if (thisController == this.backcalculateController[i])
+			{
+				backcalculateController[i].switchToStep4();
+				this.iCurrentStep[i]++;
+				updateRoadMap();
+				break;
+			}
 		}
 	}
 	
@@ -627,6 +530,22 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		}
 	}
 	
+	private void switchToBackCalculatePane(MeasuredRetentionTimesController measuredRetentionTimesController, BackcalculateController backCalculateController)
+	{
+		backCalculateController.resetValues();
+		backCalculateController.setInnerDiameter(measuredRetentionTimesController.getInnerDiameter());
+		backCalculateController.setFlowRate(measuredRetentionTimesController.getFlowRate());
+		backCalculateController.setColumnLength(measuredRetentionTimesController.getColumnLength());
+		backCalculateController.setGradientProgram(measuredRetentionTimesController.getGradientProgram());
+//		backCalculateController.setTemperatureProgramInConventionalForm(measuredRetentionTimesController.getInitialTemperature(), measuredRetentionTimesController.getInitialHoldTime(), measuredRetentionTimesController.getTemperatureProgramInConventionalForm());
+		backCalculateController.setStandardsList(measuredRetentionTimesController.getStandardsList());
+		backCalculateController.setFileName(measuredRetentionTimesController.getFileName());
+	}
+	
+	public void updateFinalFitProgress(){
+		//TODO: IMPLEMENT THIS
+	}
+	
 	private void performValidations()
 	{
 		validateMeasuredRetentionTime(textRetentionTimeA, 0);
@@ -653,6 +572,58 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 				this.buttonSolve.setDisable(true);
 		}
 	}
+	
+	/**
+	 * This method validates the retention times.
+	 * @param textRetentionTime This parameter is the text field for variables such as textRetentionTimeA
+	 * @param programListIndex
+	 */
+	private void validateMeasuredRetentionTime(TextField textRetentionTime, int programListIndex){
+		if (textRetentionTime == null)
+			return;
+		
+		double dTemp = 0;
+    	try
+    	{
+    		dTemp = (double)Float.valueOf(textRetentionTime.getText());
+    	}
+    	catch (NumberFormatException e)
+    	{
+    		dTemp = 0.0;
+    	}
+		
+    	if (dTemp < 0)
+			dTemp = 0;
+		if (dTemp > 1000000)
+			dTemp = 1000000;
+		
+		if (dTemp == 0)
+			textRetentionTime.setText("");
+		else
+			textRetentionTime.setText(Float.toString((float)dTemp));
+		
+		if (programList.size() > 0)
+			programList.get(programListIndex).setMeasuredRetentionTime(dTemp);
+	}
+	
+	/*
+	 * Getters and setters
+	 */
+	
+	public ParentPaneControllerListener getParentPaneControllerListener() {
+		return parentPaneControllerListener;
+	}
+
+	public void setParentPaneControllerListener(
+			ParentPaneControllerListener parentPaneControllerListener) {
+		this.parentPaneControllerListener = parentPaneControllerListener;
+	}
+	
+	
+	
+	/*
+	 * Everything below this is UI stuff
+	 */
 	
 	private void updateRoadMap()
 	{
@@ -846,189 +817,50 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		}
 	}
 	
-	private void switchToBackCalculatePane(MeasuredRetentionTimesController measuredRetentionTimesController, BackcalculateController backCalculateController)
-	{
-		//TODO: Uncomment these
-//		backCalculateController.resetValues();
-//		backCalculateController.setInnerDiameter(measuredRetentionTimesController.getInnerDiameter());
-//		backCalculateController.setFlowRate(measuredRetentionTimesController.getFlowRate());
-//		backCalculateController.setColumnLength(measuredRetentionTimesController.getColumnLength());
-//		backCalculateController.setTemperatureProgram(measuredRetentionTimesController.getGradientProgram());
-//		backCalculateController.setTemperatureProgramInConventionalForm(measuredRetentionTimesController.getInitialTemperature(), measuredRetentionTimesController.getInitialHoldTime(), measuredRetentionTimesController.getTemperatureProgramInConventionalForm());
-//		backCalculateController.setStandardsList(measuredRetentionTimesController.getStandardsList());
-//		backCalculateController.setFileName(measuredRetentionTimesController.getFileName());
-	}
-	
-	public void updateFinalFitProgress(){
-		//TODO: IMPLEMENT THIS
-	}
-	
-	
-	/**
-	 * This method validates the retention times.
-	 * @param textRetentionTime This parameter is the text field for variables such as textRetentionTimeA
-	 * @param programListIndex
-	 */
-	private void validateMeasuredRetentionTime(TextField textRetentionTime, int programListIndex){
-		if (textRetentionTime == null)
-			return;
-		
-		double dTemp = 0;
-    	try
-    	{
-    		dTemp = (double)Float.valueOf(textRetentionTime.getText());
-    	}
-    	catch (NumberFormatException e)
-    	{
-    		dTemp = 0.0;
-    	}
-		
-    	if (dTemp < 0)
-			dTemp = 0;
-		if (dTemp > 1000000)
-			dTemp = 1000000;
-		
-		if (dTemp == 0)
-			textRetentionTime.setText("");
-		else
-			textRetentionTime.setText(Float.toString((float)dTemp));
-		
-		if (programList.size() > 0)
-			programList.get(programListIndex).setMeasuredRetentionTime(dTemp);
-	}
-	
 	/**
 	 * This method sets up the progress feature of the program where all the required lines are drawn to show users
 	 * which steps they need to finish.
 	 */
     public void setupAllLinesInDrawPane(){
-    	Line line1A = drawLine(gradientALabel, enterTimesALabel);
-		Line line1B = drawLine(gradientBLabel, enterTimesBLabel);
-		Line line1C = drawLine(gradientCLabel, enterTimesCLabel);
-		Line line1D = drawLine(gradientDLabel, enterTimesDLabel);
-		Line line1E = drawLine(gradientELabel, enterTimesELabel);
-		Line line1F = drawLine(gradientFLabel, enterTimesFLabel);
-		Line line1G = drawLine(gradientGLabel, enterTimesGLabel);
-		Line line1H = drawLine(gradientHLabel, enterTimesHLabel);
-		Line line2A = drawLine(enterTimesALabel, backCalculateALabel);
-		Line line2B = drawLine(enterTimesBLabel, backCalculateBLabel);
-		Line line2C = drawLine(enterTimesCLabel, backCalculateCLabel);
-		Line line2D = drawLine(enterTimesDLabel, backCalculateDLabel);
-		Line line2E = drawLine(enterTimesELabel, backCalculateELabel);
-		Line line2F = drawLine(enterTimesFLabel, backCalculateFLabel);
-		Line line2G = drawLine(enterTimesGLabel, backCalculateGLabel);
-		Line line2H = drawLine(enterTimesHLabel, backCalculateHLabel);
-		Line line3A = drawLine(backCalculateALabel, checkSystemSuitabilityALabel);
-		Line line3B = drawLine(backCalculateBLabel, checkSystemSuitabilityBLabel);
-		Line line3C = drawLine(backCalculateCLabel, checkSystemSuitabilityCLabel);
-		Line line3D = drawLine(backCalculateDLabel, checkSystemSuitabilityDLabel);
-		Line line3E = drawLine(backCalculateELabel, checkSystemSuitabilityELabel);
-		Line line3F = drawLine(backCalculateFLabel, checkSystemSuitabilityFLabel);
-		Line line3G = drawLine(backCalculateGLabel, checkSystemSuitabilityGLabel);
-		Line line3H = drawLine(backCalculateHLabel, checkSystemSuitabilityHLabel);
-		Line line4A = drawLineForFinalFit(checkSystemSuitabilityALabel);
-		Line line4B = drawLineForFinalFit(checkSystemSuitabilityBLabel);
-		Line line4C = drawLineForFinalFit(checkSystemSuitabilityCLabel);
-		Line line4D = drawLineForFinalFit(checkSystemSuitabilityDLabel);
-		Line line4E = drawLineForFinalFit(checkSystemSuitabilityELabel);
-		Line line4F = drawLineForFinalFit(checkSystemSuitabilityFLabel);
-		Line line4G = drawLineForFinalFit(checkSystemSuitabilityGLabel);
-		Line line4H = drawLineForFinalFit(checkSystemSuitabilityHLabel);
+    	ArrayList<Line> lines = new ArrayList<Line>(32);
+    	lines.add(UIComponents.drawLine(gradientALabel, enterTimesALabel));
+    	lines.add(UIComponents.drawLine(gradientBLabel, enterTimesBLabel));
+    	lines.add(UIComponents.drawLine(gradientCLabel, enterTimesCLabel));
+    	lines.add(UIComponents.drawLine(gradientDLabel, enterTimesDLabel));
+    	lines.add(UIComponents.drawLine(gradientELabel, enterTimesELabel));
+    	lines.add(UIComponents.drawLine(gradientFLabel, enterTimesFLabel));
+    	lines.add(UIComponents.drawLine(gradientGLabel, enterTimesGLabel));
+    	lines.add(UIComponents.drawLine(gradientHLabel, enterTimesHLabel));
+    	lines.add(UIComponents.drawLine(enterTimesALabel, backCalculateALabel));
+    	lines.add(UIComponents.drawLine(enterTimesBLabel, backCalculateBLabel));
+    	lines.add(UIComponents.drawLine(enterTimesCLabel, backCalculateCLabel));
+    	lines.add(UIComponents.drawLine(enterTimesDLabel, backCalculateDLabel));
+    	lines.add(UIComponents.drawLine(enterTimesELabel, backCalculateELabel));
+    	lines.add(UIComponents.drawLine(enterTimesFLabel, backCalculateFLabel));
+    	lines.add(UIComponents.drawLine(enterTimesGLabel, backCalculateGLabel));
+    	lines.add(UIComponents.drawLine(enterTimesHLabel, backCalculateHLabel));
+    	lines.add(UIComponents.drawLine(backCalculateALabel, checkSystemSuitabilityALabel));
+    	lines.add(UIComponents.drawLine(backCalculateBLabel, checkSystemSuitabilityBLabel));
+    	lines.add(UIComponents.drawLine(backCalculateCLabel, checkSystemSuitabilityCLabel));
+		lines.add(UIComponents.drawLine(backCalculateDLabel, checkSystemSuitabilityDLabel));
+		lines.add(UIComponents.drawLine(backCalculateELabel, checkSystemSuitabilityELabel));
+		lines.add(UIComponents.drawLine(backCalculateFLabel, checkSystemSuitabilityFLabel));
+		lines.add(UIComponents.drawLine(backCalculateGLabel, checkSystemSuitabilityGLabel));
+		lines.add(UIComponents.drawLine(backCalculateHLabel, checkSystemSuitabilityHLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityALabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityBLabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityCLabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityDLabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityELabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityFLabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityGLabel, finalFitLabel));
+		lines.add(UIComponents.drawLineForFinalFit(checkSystemSuitabilityHLabel, finalFitLabel));
 		
-		Polygon polygon1A = drawPolygon(line1A);
-		Polygon polygon1B = drawPolygon(line1B);
-		Polygon polygon1C = drawPolygon(line1C);
-		Polygon polygon1D = drawPolygon(line1D);
-		Polygon polygon1E = drawPolygon(line1E);
-		Polygon polygon1F = drawPolygon(line1F);
-		Polygon polygon1G = drawPolygon(line1G);
-		Polygon polygon1H = drawPolygon(line1H);
-		Polygon polygon2A = drawPolygon(line2A);
-		Polygon polygon2B = drawPolygon(line2B);
-		Polygon polygon2C = drawPolygon(line2C);
-		Polygon polygon2D = drawPolygon(line2D);
-		Polygon polygon2E = drawPolygon(line2E);
-		Polygon polygon2F = drawPolygon(line2F);
-		Polygon polygon2G = drawPolygon(line2G);
-		Polygon polygon2H = drawPolygon(line2H);
-		Polygon polygon3A = drawPolygon(line3A);
-		Polygon polygon3B = drawPolygon(line3B);
-		Polygon polygon3C = drawPolygon(line3C);
-		Polygon polygon3D = drawPolygon(line3D);
-		Polygon polygon3E = drawPolygon(line3E);
-		Polygon polygon3F = drawPolygon(line3F);
-		Polygon polygon3G = drawPolygon(line3G);
-		Polygon polygon3H = drawPolygon(line3H);
-		
-		drawPane.getChildren().add(line1A);
-		drawPane.getChildren().add(polygon1A);
-		drawPane.getChildren().add(line1B);
-		drawPane.getChildren().add(polygon1B);
-		drawPane.getChildren().add(line1C);
-		drawPane.getChildren().add(polygon1C);
-		drawPane.getChildren().add(line1D);
-		drawPane.getChildren().add(polygon1D);
-		drawPane.getChildren().add(line1E);
-		drawPane.getChildren().add(polygon1E);
-		drawPane.getChildren().add(line1F);
-		drawPane.getChildren().add(polygon1F);
-		drawPane.getChildren().add(line1G);
-		drawPane.getChildren().add(polygon1G);
-		drawPane.getChildren().add(line1H);
-		drawPane.getChildren().add(polygon1H);
-		
-		drawPane.getChildren().add(line2A);
-		drawPane.getChildren().add(polygon2A);
-		drawPane.getChildren().add(line2B);
-		drawPane.getChildren().add(polygon2B);
-		drawPane.getChildren().add(line2C);
-		drawPane.getChildren().add(polygon2C);
-		drawPane.getChildren().add(line2D);
-		drawPane.getChildren().add(polygon2D);
-		drawPane.getChildren().add(line2E);
-		drawPane.getChildren().add(polygon2E);
-		drawPane.getChildren().add(line2F);
-		drawPane.getChildren().add(polygon2F);
-		drawPane.getChildren().add(line2G);
-		drawPane.getChildren().add(polygon2G);
-		drawPane.getChildren().add(line2H);
-		drawPane.getChildren().add(polygon2H);
-		
-		drawPane.getChildren().add(line3A);
-		drawPane.getChildren().add(polygon3A);
-		drawPane.getChildren().add(line3B);
-		drawPane.getChildren().add(polygon3B);
-		drawPane.getChildren().add(line3C);
-		drawPane.getChildren().add(polygon3C);
-		drawPane.getChildren().add(line3D);
-		drawPane.getChildren().add(polygon3D);
-		drawPane.getChildren().add(line3E);
-		drawPane.getChildren().add(polygon3E);
-		drawPane.getChildren().add(line3F);
-		drawPane.getChildren().add(polygon3F);
-		drawPane.getChildren().add(line3G);
-		drawPane.getChildren().add(polygon3G);
-		drawPane.getChildren().add(line3H);
-		drawPane.getChildren().add(polygon3H);
-		
-		drawPane.getChildren().add(line4A);
-		drawPane.getChildren().add(line4B);
-		drawPane.getChildren().add(line4C);
-		drawPane.getChildren().add(line4D);
-		drawPane.getChildren().add(line4E);
-		drawPane.getChildren().add(line4F);
-		drawPane.getChildren().add(line4G);
-		drawPane.getChildren().add(line4H);
+		ArrayList<Polygon> polygons = new ArrayList<Polygon>(24);
+		for(int i = 0; i < 24; i++){
+			polygons.add(UIComponents.drawPolygon(lines.get(i)));
+		}
+		UIComponents.setupAllShapes(drawPane, lines, polygons, finalFitLabel);
 
-		Line finalLine = new Line();
-		finalLine.startXProperty().bind(line4A.endXProperty());
-		finalLine.startYProperty().bind(line4A.endYProperty());
-		finalLine.endXProperty().bind(finalFitLabel.layoutXProperty().subtract(12.0));
-		finalLine.endYProperty().bind(finalFitLabel.layoutYProperty().add(finalFitLabel.heightProperty().divide(2.0)));
-		
-		Polygon finalPolygon = drawPolygon(finalLine);
-
-		drawPane.getChildren().add(finalLine);
-		drawPane.getChildren().add(finalPolygon);
     }
 }
