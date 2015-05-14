@@ -5,6 +5,7 @@ import java.util.ResourceBundle;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.*;
 
+import boswell.peakfinderlcfx.GlobalsDan;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -57,7 +58,6 @@ public class StepFourPaneController implements Initializable {
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		// TODO Auto-generated method stub
 		anchorPaneSuitabilityControl.getChildren().add(sliderIndicator);
 		AnchorPane.setTopAnchor(sliderIndicator, 0.0);
 		AnchorPane.setBottomAnchor(sliderIndicator, 0.0);
@@ -107,12 +107,12 @@ public class StepFourPaneController implements Initializable {
 	    	    });
 	    	    
 	    	    // Populate the table with the test compounds
-	    	    for (int i = 0; i < Globals.TestCompoundNameArray.length; i++)
+	    	    for (int i = 0; i < GlobalsDan.TestCompoundNameArray.length; i++)
 	    	    {
 	    	    	StandardCompound newTestCompound = new StandardCompound();
 	    	    	newTestCompound.setIndex(i);
-	    	    	newTestCompound.setName(Globals.TestCompoundNameArray[i]);
-	    	    	newTestCompound.setMz(Globals.convertMZToString(Globals.TestCompoundMZArray[i]));
+	    	    	newTestCompound.setName(GlobalsDan.TestCompoundNameArray[i]);
+	    	    	newTestCompound.setMz(GlobalsDan.convertMZToString(GlobalsDan.TestCompoundMZArray[i]));
 	    	    	testCompoundList.add(newTestCompound);
 	    	    }
 	    	    
@@ -129,7 +129,6 @@ public class StepFourPaneController implements Initializable {
 		Double dNewRetentionTime = 0.0;
 		try
 		{
-			// TODO: More sophisticated?
 			dNewRetentionTime = Double.valueOf(t.getNewValue());
 		}
 		catch (NumberFormatException e)

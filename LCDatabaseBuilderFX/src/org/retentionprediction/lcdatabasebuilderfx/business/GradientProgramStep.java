@@ -20,7 +20,7 @@ import javafx.beans.property.SimpleDoubleProperty;
     		this.time.set(time);
     	}
     	
-    	public DoubleProperty getTimeProperty(){
+    	public DoubleProperty timeProperty(){
     		return time;
     	}
     	
@@ -32,7 +32,7 @@ import javafx.beans.property.SimpleDoubleProperty;
     		this.solventComposition.set(solventComposition);
     	}
     	
-    	public DoubleProperty getSolventCompositionProperty(){
+    	public DoubleProperty solventCompositionProperty(){
     		return solventComposition;
     	}
     }

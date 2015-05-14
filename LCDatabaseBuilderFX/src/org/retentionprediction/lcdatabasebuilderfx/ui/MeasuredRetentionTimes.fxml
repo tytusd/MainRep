@@ -25,14 +25,14 @@
                                                       <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                                    </columnResizePolicy>
                                                    <columns>
-                                                      <TableColumn fx:id="columnTime" minWidth="-1.0" prefWidth="212.0" text="Time (min)" />
-                                                      <TableColumn fx:id="columnSolventComposition" minWidth="-1.0" prefWidth="274.00006103515625" text="\% B" />
+                                                      <TableColumn fx:id="columnTime" minWidth="-1.0" prefWidth="-1.0" text="Time (min)" />
+                                                      <TableColumn fx:id="columnSolventComposition" minWidth="-1.0" prefWidth="-1.0" text="\% B" />
                                                    </columns>
                                                 </TableView>
                                              </children>
                                              <columnConstraints>
-                                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" minWidth="10.0" percentWidth="50.0" prefWidth="10.0" />
-                                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="10.0" minWidth="10.0" percentWidth="50.0" prefWidth="10.0" />
+                                                <ColumnConstraints percentWidth="50.0" />
+                                                <ColumnConstraints percentWidth="50.0" />
                                              </columnConstraints>
                                              <rowConstraints>
                                                 <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />

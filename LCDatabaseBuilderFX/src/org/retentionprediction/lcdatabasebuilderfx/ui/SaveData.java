@@ -175,6 +175,7 @@ public class SaveData implements Serializable
 		double columnLength;
 		double innerDiameter;
 		double flowRate;
+		double instrumentDeadTime;
 		String fileName;
 		ObservableList<StandardCompound> standardsList;
 		double[][] gradientProgramInConventionalForm;
@@ -182,8 +183,9 @@ public class SaveData implements Serializable
 		double[][] m_dIdealGradientProfileArray;
 		double[][] m_dGradientProfileDifferenceArray;
 		double[][] m_dSimpleGradientProfileArray;
-		double[][] m_dHoldUpArray;
+		double[][] m_dDeadTimeArray;
 		double[] m_dExpectedErrorArray;
+		double[][] m_dDeadTimeDifferenceArray;
 		int status;
 		double score;
 	    
@@ -211,8 +213,10 @@ public class SaveData implements Serializable
 			m_dIdealGradientProfileArray = null;
 			m_dGradientProfileDifferenceArray = null;
 			m_dSimpleGradientProfileArray = null;
-			m_dHoldUpArray = null;
+			m_dDeadTimeDifferenceArray = null;
+			m_dDeadTimeArray = null;
 			m_dExpectedErrorArray = null;
+			instrumentDeadTime = 0;
 			status = 0;
 			score = 0;
 			
@@ -244,6 +248,7 @@ public class SaveData implements Serializable
 			out.writeDouble(columnLength);
 			out.writeDouble(innerDiameter);
 			out.writeDouble(flowRate);
+			out.writeDouble(instrumentDeadTime);
 			out.writeObject(fileName);
 			StandardCompound[] x = standardsList.toArray(new StandardCompound[0]);
 			out.writeObject(x);
@@ -252,7 +257,8 @@ public class SaveData implements Serializable
 		    out.writeObject(m_dIdealGradientProfileArray);
 		    out.writeObject(m_dGradientProfileDifferenceArray);
 		    out.writeObject(m_dSimpleGradientProfileArray);
-		    out.writeObject(m_dHoldUpArray);
+		    out.writeObject(m_dDeadTimeDifferenceArray);
+		    out.writeObject(m_dDeadTimeArray);
 		    out.writeObject(m_dExpectedErrorArray);
 		    out.writeInt(status);
 		    out.writeDouble(score);
@@ -281,6 +287,7 @@ public class SaveData implements Serializable
 				columnLength = in.readDouble();
 				innerDiameter = in.readDouble();
 				flowRate = in.readDouble();
+				instrumentDeadTime = in.readDouble();
 				fileName = (String)in.readObject();
 				standardsList = FXCollections.observableArrayList((StandardCompound[])in.readObject());
 				gradientProgramInConventionalForm = (double[][])in.readObject();
@@ -288,7 +295,8 @@ public class SaveData implements Serializable
 				m_dIdealGradientProfileArray = (double[][])in.readObject();
 		    	m_dGradientProfileDifferenceArray = (double[][])in.readObject();
 				m_dSimpleGradientProfileArray = (double[][])in.readObject();
-				m_dHoldUpArray = (double[][])in.readObject();
+				m_dDeadTimeDifferenceArray = (double[][]) in.readObject();
+				m_dDeadTimeArray = (double[][])in.readObject();
 				m_dExpectedErrorArray = (double[])in.readObject();
 				status = in.readInt();
 				score = in.readDouble();
@@ -321,19 +329,21 @@ public class SaveData implements Serializable
 		double columnLength;
 		double innerDiameter;
 		double flowRate;
-		
+		double instrumentDeadTime;
+		double[][] gradientProgramInConventionalForm;
 		MeasuredRetentionTimeSaveData()
 		{
-			programName = "Program A";
+			gradientProgramInConventionalForm = new double[][]{{5,95}};
+			programName = "Gradient A";
 			fileName = "";
 			// Load the measured retention times table with the correct values
 			List<StandardCompound> data = new ArrayList<StandardCompound>();
-			for (int i = 0; i < Globals.AlkaneNameArray.length; i++)
+			for (int i = 0; i < Globals.StandardCompoundsNameArray.length; i++)
 			{
 				StandardCompound newItem = new StandardCompound();
 				newItem.setUse(false);
-				newItem.setName(Globals.AlkaneNameArray[i]);
-				newItem.setMz(Globals.convertMZToString(Globals.AlkaneMZArray[i]));
+				newItem.setName(Globals.StandardCompoundsNameArray[i]);
+				newItem.setMz(Globals.convertMZToString(Globals.StandardCompoundsMZArray[i]));
 				newItem.setMeasuredRetentionTime(0.0);
 				newItem.setIndex(i);
 				
@@ -343,12 +353,13 @@ public class SaveData implements Serializable
 			columnLength = 30;
 			innerDiameter = 0.25;
 			flowRate = 1;
+			instrumentDeadTime = 0.125;
 		}
 		
 		private void writeObject(ObjectOutputStream out) throws IOException
 		{
 			out.writeLong(MeasuredRetentionTimeSaveData.classVersion);
-			
+			//out.writeObject(gradientProgramInConventionalForm);
 			out.writeObject(programName);
 			out.writeObject(fileName);
 			StandardCompound[] x = standardsList.toArray(new StandardCompound[0]);
@@ -356,6 +367,7 @@ public class SaveData implements Serializable
 			out.writeDouble(columnLength);
 			out.writeDouble(innerDiameter);
 			out.writeDouble(flowRate);
+			out.writeDouble(instrumentDeadTime);
 		}
 		
 		private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
@@ -364,6 +376,7 @@ public class SaveData implements Serializable
 			
 			if (version >= 1)
 			{
+				//gradientProgramInConventionalForm = (double[][])in.readObject();
 				programName = (String)in.readObject();
 				fileName = (String)in.readObject();
 				StandardCompound[] x = (StandardCompound[])in.readObject();
@@ -371,6 +384,7 @@ public class SaveData implements Serializable
 				columnLength = in.readDouble();
 				innerDiameter = in.readDouble();
 				flowRate = in.readDouble();
+				instrumentDeadTime = in.readDouble();
 			}
 		}
 	}

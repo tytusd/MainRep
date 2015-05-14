@@ -20,7 +20,7 @@ import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquar
 import org.apache.commons.math3.util.Precision;
 
 // This class solves for the retention parameters of the given compound.
-class SolveParametersTask extends Task
+public class SolveParametersTask extends Task
 {
 	private SimpleStringProperty varianceProperty = new SimpleStringProperty("");
 	private SimpleStringProperty iterationProperty = new SimpleStringProperty("");

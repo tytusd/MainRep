@@ -27,12 +27,15 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Callback;
 
+import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
+import org.retentionprediction.lcdatabasebuilderfx.business.SolveParametersTask;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 import org.retentionprediction.lcdatabasebuilderfx.business.UIComponents;
 import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.BackCalculateControllerListener;
@@ -161,7 +164,18 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     private int[] iCurrentStep = new int[8];
     private ObservableList<StandardCompound> programList = FXCollections.observableArrayList();
     private boolean finalFitComplete = false;
+    private SolveParametersTask solveParametersTask;
     
+    public interface ParentPaneControllerListener {
+
+    	public void onNew();
+    	public void onOpen();
+    	public void onSave();
+    	public void onSaveAs();
+    	public void onClose();
+    	public void onAbout();
+    }
+
     
     @Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -537,13 +551,60 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		backCalculateController.setFlowRate(measuredRetentionTimesController.getFlowRate());
 		backCalculateController.setColumnLength(measuredRetentionTimesController.getColumnLength());
 		backCalculateController.setGradientProgram(measuredRetentionTimesController.getGradientProgram());
-//		backCalculateController.setTemperatureProgramInConventionalForm(measuredRetentionTimesController.getInitialTemperature(), measuredRetentionTimesController.getInitialHoldTime(), measuredRetentionTimesController.getTemperatureProgramInConventionalForm());
-		backCalculateController.setStandardsList(measuredRetentionTimesController.getStandardsList());
 		backCalculateController.setFileName(measuredRetentionTimesController.getFileName());
+		backCalculateController.setInstrumentDeadTime(measuredRetentionTimesController.getInstrumentDeadTime());
+		backCalculateController.setStandardsList(measuredRetentionTimesController.getStandardsList());
 	}
 	
 	public void updateFinalFitProgress(){
-		//TODO: IMPLEMENT THIS
+		for (int i = 0; i < backcalculateController.length; i++)
+		{
+			if (backcalculateController[i] == null)
+				return;
+		}
+		
+		boolean bIsAcceptableToSolveForParameters = true;
+		for (int i = 0; i < backcalculateController.length; i++)
+		{
+			if (backcalculateController[i].getStatus() == backcalculateController[i].INCOMPLETE)
+				bIsAcceptableToSolveForParameters = false;
+		}
+		
+		// Make the Solve pane disabled if one of the programs is incomplete.
+		this.paneSolveForParameters.setDisable(!bIsAcceptableToSolveForParameters);
+		
+		statusForFinalFitByLabel(labelGradientAStatus, 0);
+		statusForFinalFitByLabel(labelGradientBStatus, 1);
+		statusForFinalFitByLabel(labelGradientCStatus, 2);
+		statusForFinalFitByLabel(labelGradientDStatus, 3);
+		statusForFinalFitByLabel(labelGradientEStatus, 4);
+		statusForFinalFitByLabel(labelGradientFStatus, 5);
+		statusForFinalFitByLabel(labelGradientGStatus, 6);
+		statusForFinalFitByLabel(labelGradientHStatus, 7);
+		
+	}
+	
+	public void statusForFinalFitByLabel(Label label, int index){
+		if (backcalculateController[index].getStatus() == backcalculateController[index].INCOMPLETE)
+		{
+			label.setText("Incomplete");
+			label.setTextFill(Color.BLACK);
+		}
+		else if (backcalculateController[index].getStatus() == backcalculateController[index].PASSED)
+		{
+			label.setText("Passed (score = " + Float.toString((float)Globals.roundToSignificantFigures(backcalculateController[index].getScore(), 2)) + ")");
+			label.setTextFill(Color.GREEN);
+		}
+		else if (backcalculateController[index].getStatus() == backcalculateController[index].PASSEDBUTQUESTIONABLE)
+		{
+			label.setText("Passed (score = " + Float.toString((float)Globals.roundToSignificantFigures(backcalculateController[index].getScore(), 2)) + ")");
+			label.setTextFill(Color.YELLOW);
+		}
+		else if (backcalculateController[index].getStatus() == backcalculateController[index].FAILED)
+		{
+			label.setText("Failed (score = " + Float.toString((float)Globals.roundToSignificantFigures(backcalculateController[index].getScore(), 2)) + ")");
+			label.setTextFill(Color.RED);
+		}
 	}
 	
 	private void performValidations()
@@ -604,6 +665,167 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		
 		if (programList.size() > 0)
 			programList.get(programListIndex).setMeasuredRetentionTime(dTemp);
+	}
+	
+	public void cancelAllTasks()
+	{
+		for (int i = 0; i < backcalculateController.length; i++)
+		{
+			if (backcalculateController[i] != null)
+				backcalculateController[i].cancelTasks();
+		}
+	}
+	
+	public boolean areThreadsRunning()
+	{
+		boolean threadRunning = false;
+		for (int i = 0; i < backcalculateController.length; i++)
+		{
+			if (backcalculateController[i].isThreadRunning())
+				threadRunning = true;
+		}
+		
+		if (this.solveParametersTask != null && this.solveParametersTask.isRunning())
+			threadRunning = true;
+		
+		return threadRunning;
+	}
+    
+	public void loadSaveData(SaveData saveData) {
+		for (int i = 0; i < saveData.measuredRetentionTimeSaveData.length; i++)
+		{
+			measuredRetentionTimesController[i].loadSaveData(saveData.measuredRetentionTimeSaveData[i]);
+		}
+			
+		for (int i = 0; i < saveData.backCalculateSaveData.length; i++)
+		{
+			backcalculateController[i].loadSaveData(saveData.backCalculateSaveData[i]);
+		}
+		
+		iCurrentStep = saveData.iCurrentStep;
+		finalFitComplete = saveData.finalFitComplete;
+		programList = saveData.programList;
+		labelH.textProperty().unbind();
+		labelH.setText(saveData.labelHText);
+		labelS.textProperty().unbind();
+		labelS.setText(saveData.labelSText);
+		labelCp.textProperty().unbind();
+		labelCp.setText(saveData.labelCpText);
+		labelIteration.textProperty().unbind();
+		labelIteration.setText(saveData.labelIterationText);
+		labelVariance.textProperty().unbind();
+		labelVariance.setText(saveData.labelVarianceText);
+		labelTimeElapsed.textProperty().unbind();
+		labelTimeElapsed.setText(saveData.labelTimeElapsedText);
+		labelStatus.textProperty().unbind();
+		labelStatus.setText(saveData.statusText);
+		textCompoundName.setText(saveData.compoundName);
+		textFormula.setText(saveData.formula);
+		textPubChemID.setText(saveData.pubChemID);
+		textCAS.setText(saveData.cAS);
+		textNISTID.setText(saveData.nISTID);
+		textHMDB.setText(saveData.hMDB);
+		textRetentionTimeA.setText(saveData.retentionTimeA);
+		textRetentionTimeB.setText(saveData.retentionTimeB);
+		textRetentionTimeC.setText(saveData.retentionTimeC);
+		textRetentionTimeD.setText(saveData.retentionTimeD);
+		textRetentionTimeE.setText(saveData.retentionTimeE);
+		textRetentionTimeF.setText(saveData.retentionTimeF);
+		textRetentionTimeG.setText(saveData.retentionTimeG);
+		textRetentionTimeH.setText(saveData.retentionTimeH);
+		
+		// Set the visible pane in the tab
+		for (int i = 0; i < this.backcalculateController.length; i++)
+		{
+			if (iCurrentStep[i] <= 1)
+				backcalculateController[i].switchToStep3();
+			else if (iCurrentStep[i] >= 2)
+				backcalculateController[i].switchToStep4();
+		}
+		
+		if (iCurrentStep[0] == 0)
+			gradientAtab.setContent(measuredRetentionTimes[0]);
+		if (iCurrentStep[1] == 0)
+			gradientBtab.setContent(measuredRetentionTimes[1]);
+		if (iCurrentStep[2] == 0)
+			gradientCtab.setContent(measuredRetentionTimes[2]);
+		if (iCurrentStep[3] == 0)
+			gradientDtab.setContent(measuredRetentionTimes[3]);
+		if (iCurrentStep[4] == 0)
+			gradientEtab.setContent(measuredRetentionTimes[4]);
+		if (iCurrentStep[5] == 0)
+			gradientFtab.setContent(measuredRetentionTimes[5]);
+		if (iCurrentStep[6] == 0)
+			gradientGtab.setContent(measuredRetentionTimes[6]);
+		if (iCurrentStep[7] == 0)
+			gradientHtab.setContent(measuredRetentionTimes[7]);
+		
+		
+		if (iCurrentStep[0] >= 1)
+			gradientAtab.setContent(backCalculatePane[0]);
+		if (iCurrentStep[1] >= 1)
+			gradientBtab.setContent(backCalculatePane[1]);
+		if (iCurrentStep[2] >= 1)
+			gradientCtab.setContent(backCalculatePane[2]);
+		if (iCurrentStep[3] >= 1)
+			gradientDtab.setContent(backCalculatePane[3]);
+		if (iCurrentStep[4] >= 1)
+			gradientEtab.setContent(backCalculatePane[4]);
+		if (iCurrentStep[5] >= 1)
+			gradientFtab.setContent(backCalculatePane[5]);
+		if (iCurrentStep[6] >= 1)
+			gradientGtab.setContent(backCalculatePane[6]);
+		if (iCurrentStep[7] >= 1)
+			gradientHtab.setContent(backCalculatePane[7]);
+		
+		
+	    tableRetentionTimes.setItems(programList);
+
+		this.updateRoadMap();
+		this.updateFinalFitProgress();
+		
+	}
+	
+	public void writeSaveData(SaveData saveData) {
+		saveData.measuredRetentionTimeSaveData = new SaveData.MeasuredRetentionTimeSaveData[this.measuredRetentionTimesController.length];
+		saveData.backCalculateSaveData = new SaveData.BackCalculateSaveData[backcalculateController.length];
+		
+		for (int i = 0; i < measuredRetentionTimesController.length; i++)
+		{
+			saveData.measuredRetentionTimeSaveData[i] = saveData.new MeasuredRetentionTimeSaveData();
+			measuredRetentionTimesController[i].writeSaveData(saveData.measuredRetentionTimeSaveData[i]);
+		}
+		
+		for (int i = 0; i < backcalculateController.length; i++)
+		{
+			saveData.backCalculateSaveData[i] = saveData.new BackCalculateSaveData();
+			backcalculateController[i].writeSaveData(saveData.backCalculateSaveData[i]);
+		}
+		
+		saveData.iCurrentStep = iCurrentStep;
+		saveData.finalFitComplete = finalFitComplete;
+		saveData.programList = programList;
+		saveData.labelHText = labelH.getText();
+		saveData.labelSText = labelS.getText();
+		saveData.labelCpText = labelCp.getText();
+		saveData.labelIterationText = labelIteration.getText();
+		saveData.labelVarianceText = labelVariance.getText();
+		saveData.labelTimeElapsedText = labelTimeElapsed.getText();
+		saveData.statusText = labelStatus.getText();
+		saveData.compoundName = textCompoundName.getText();
+		saveData.formula = textFormula.getText();
+		saveData.pubChemID = textPubChemID.getText();
+		saveData.cAS = textCAS.getText();
+		saveData.nISTID = textNISTID.getText();
+		saveData.hMDB = textHMDB.getText();
+		saveData.retentionTimeA = textRetentionTimeA.getText();
+		saveData.retentionTimeB = textRetentionTimeB.getText();
+		saveData.retentionTimeC = textRetentionTimeC.getText();
+		saveData.retentionTimeD = textRetentionTimeD.getText();
+		saveData.retentionTimeE = textRetentionTimeE.getText();
+		saveData.retentionTimeF = textRetentionTimeF.getText();
+		saveData.retentionTimeG = textRetentionTimeG.getText();
+		saveData.retentionTimeH = textRetentionTimeH.getText();
 	}
 	
 	/*
@@ -863,4 +1085,5 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		UIComponents.setupAllShapes(drawPane, lines, polygons, finalFitLabel);
 
     }
+
 }

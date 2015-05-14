@@ -1,10 +1,19 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
 
+import org.retentionprediction.lcdatabasebuilderfx.ui.ParentPaneController.ParentPaneControllerListener;
+
+import boswell.fxoptionpane.FXOptionPane;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,6 +25,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -29,9 +39,15 @@ public class MainController implements Initializable, ParentPaneControllerListen
     private final ToggleGroup toggleGroup = new ToggleGroup();
     
     //Fields for ParentPaneController
-    private ParentPaneControllerListener parentPaneControllerListener;
     private ParentPaneController parentPaneController;
     private Stage primaryStage;
+	private File currentFile = null;
+	private Preferences prefs;
+	private SaveData saveData = new SaveData();
+	//private SaveData saveData = null;
+	private int majorVersion = 1;
+	private int minorVersion = 0;
+	private boolean documentChangedFlag;
     
     public Stage getPrimaryStage() {
 		return primaryStage;
@@ -51,7 +67,7 @@ public class MainController implements Initializable, ParentPaneControllerListen
     			InputStream stream = getClass().getResource("ParentPane.fxml").openStream();
     			root = fxmlLoader.load(stream);
     			parentPaneController = fxmlLoader.getController();
-    			parentPaneController.setParentPaneControllerListener(parentPaneControllerListener);
+    			parentPaneController.setParentPaneControllerListener(this);
     		}
     		else{
     			//Singlegradientpane
@@ -67,7 +83,6 @@ public class MainController implements Initializable, ParentPaneControllerListen
 			primaryStage.show();
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	
@@ -80,7 +95,8 @@ public class MainController implements Initializable, ParentPaneControllerListen
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		// TODO Auto-generated method stub
+		// Create the Preferences class
+		prefs = Preferences.userNodeForPackage(this.getClass());
 		eightGradientsRadio.setToggleGroup(toggleGroup);
 		singleGradientRadio.setToggleGroup(toggleGroup);
 		toggleGroup.selectToggle(eightGradientsRadio);
@@ -90,47 +106,171 @@ public class MainController implements Initializable, ParentPaneControllerListen
 
 	@Override
 	public void onNew() {
-		// TODO Auto-generated method stub
-		
+		SaveData saveData = new SaveData();
+       	parentPaneController.loadSaveData(saveData);
+		currentFile = null;
+		this.updateWindowTitle();
 	}
 
 	@Override
 	public void onOpen() {
-		// TODO Auto-generated method stub
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Open LC Database Builder File");
+		
+		fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("LC Database Builder Files (*.lcdata)", "*.lcdata"),
+				new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
+            );
+		
+		// Set default directory
+		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
+		if (lastOutputDir != "")
+		{
+			File lastDir = new File(lastOutputDir);
+			if (lastDir.exists())
+				fileChooser.setInitialDirectory(lastDir.getParentFile());
+		}
+		
+		File returnedFile = fileChooser.showOpenDialog(primaryStage);
+
+		if (returnedFile != null) 
+		{
+			if (readFromInputStream(returnedFile))
+			{
+				parentPaneController.cancelAllTasks();
+				updateWindowTitle();
+				prefs.put("LAST_OUTPUT_DIR", returnedFile.getAbsolutePath());
+			}
+		}	
 		
 	}
 
 	@Override
 	public void onSave() {
-		// TODO Auto-generated method stub
+		if (parentPaneController.areThreadsRunning())
+		{
+			FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
+			return;
+		}
+		
+		if (currentFile == null)
+		{
+			onSaveAs();
+		}
+	
+		writeToOutputStream();
 		
 	}
 
 	@Override
 	public void onSaveAs() {
-		// TODO Auto-generated method stub
+		if (parentPaneController.areThreadsRunning())
+		{
+			FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
+			return;
+		}
+
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Save LC Database Builder File");
 		
+		fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("LC Database Builder Files (*.lcdata)", "*.lcdata"),
+				new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
+            );
+
+		// Set default directory
+		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
+		if (lastOutputDir != "")
+		{
+			File lastDir = new File(lastOutputDir);
+			if (lastDir.exists())
+				fileChooser.setInitialDirectory(lastDir.getParentFile());
+		}
+		
+		File returnedFile = fileChooser.showSaveDialog(primaryStage);
+
+		if (returnedFile != null) 
+		{
+			if (!returnedFile.getName().endsWith(".lcdata"))
+				returnedFile = new File(returnedFile.getAbsolutePath() + ".lcdata");
+			
+			this.currentFile = returnedFile;
+			updateWindowTitle();
+			writeToOutputStream();
+			prefs.put("LAST_OUTPUT_DIR", returnedFile.getAbsolutePath());
+		}
 	}
 
 	@Override
 	public void onClose() {
-		// TODO Auto-generated method stub
-		
+		primaryStage.close();
 	}
 
 	@Override
 	public void onAbout() {
-		// TODO Auto-generated method stub
-		
+		FXOptionPane.showMessageDialog(primaryStage, "LC Retention Database Builder version " + Integer.toString(majorVersion) + "." + Integer.toString(minorVersion) + "\n\nLearn more about LC Retention Database Builder at www.retentionprediction.org", "About LC Retention Database Builder", FXOptionPane.INFORMATION_MESSAGE);
 	}
+	
+    public boolean readFromInputStream(File fileToRead)
+    {
+    	if (fileToRead != null)
+    	{
+    		try 
+            {
+                FileInputStream fis = new FileInputStream(fileToRead);
+                ObjectInputStream ois = new ObjectInputStream(fis);
+                
+                saveData = (SaveData)ois.readObject();
+               	parentPaneController.loadSaveData(saveData);
+    	        
+                ois.close();
+			} 
+            catch (IOException | ClassNotFoundException e) 
+            {
+				e.printStackTrace();
+	    		FXOptionPane.showMessageDialog(primaryStage, "The file is not a valid LC Retention Database Builder file.", "Not a Valid File", FXOptionPane.WARNING_MESSAGE);
+		        return false;
+			} 
+    	}
 
-	public ParentPaneControllerListener getParentPaneControllerListener() {
-		return parentPaneControllerListener;
+    	currentFile = fileToRead;
+    	this.updateWindowTitle();
+    	
+    	return true;
+    }
+    
+	private boolean writeToOutputStream()
+	{
+    	try 
+		{
+            FileOutputStream fos = new FileOutputStream(currentFile, false);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+	    	parentPaneController.writeSaveData(saveData);
+	    	oos.writeObject(saveData);
+	    	
+            oos.flush();
+			oos.close();
+			this.documentChangedFlag = false;
+    	}
+    	catch (IOException e) 
+		{
+			e.printStackTrace();
+    		FXOptionPane.showMessageDialog(primaryStage, "The file could not be saved.", "Error saving file", FXOptionPane.WARNING_MESSAGE);
+	        return false;
+		}
+    	
+    	return true;
 	}
-
-	public void setParentPaneControllerListener(
-			ParentPaneControllerListener parentPaneControllerListener) {
-		this.parentPaneControllerListener = parentPaneControllerListener;
+    
+	private void updateWindowTitle()
+	{
+		String fileName;
+		if (currentFile == null)
+			fileName = "untitled";
+		else
+			fileName = currentFile.getName();
+		primaryStage.setTitle("LC Retention Database Builder - " + fileName);
 	}
 
 }

@@ -27,6 +27,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Window;
 
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
@@ -35,7 +36,7 @@ import org.retentionprediction.lcdatabasebuilderfx.business.*;
 
 import boswell.fxoptionpane.FXOptionPane;
 import boswell.graphcontrolfx.GraphControlFX;
-import boswell.peakfinderlcfx.GlobalsDan;
+import boswell.peakfinderlcfx.PeakFinderLCFX;
 
 public class BackcalculateController implements Initializable, StepFourPaneControllerListener{
 	
@@ -52,14 +53,14 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 
 		public int getCompoundNum()
 		{
-			return GlobalsDan.StandardCompoundsNameArray.length;
+			return Globals.StandardCompoundsNameArray.length;
 		}
 		
 		public boolean loadCompoundInfo(int iIndex)
 		{
 			iCompoundIndex = iIndex;
 			
-			strCompoundName = GlobalsDan.StandardCompoundsNameArray[iIndex];
+			strCompoundName = Globals.StandardCompoundsNameArray[iIndex];
 			
 			return true;
 		}
@@ -154,6 +155,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
     
     private int status = 0;
     private double score = 0;
+	private Window parentWindow;
     
 	public BackCalculateControllerListener getBackcalculateListener() {
 		return backcalculateControllerListener;
@@ -221,7 +223,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 					{
 						@Override
 						public void handle(MouseEvent event) {
-							//onFindRetentionTimesAutomaticallyButtonMouseClicked(event);
+							onFindRetentionTimesAutomaticallyButtonMouseClicked(event);
 						}
 					});
 
@@ -284,6 +286,75 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		
 	}
 	
+	public void onFindRetentionTimesAutomaticallyButtonMouseClicked(
+			MouseEvent event) {
+		PeakFinderLCFX peakfinder = new PeakFinderLCFX(parentWindow, Globals.StationaryPhaseArray, false);
+		peakfinder.setColumnLength(columnLength);
+		peakfinder.setFileName(fileName);
+		peakfinder.setFlowRate(flowRate);
+		peakfinder.setInstrumentDeadTime(instrumentDeadTime);
+		peakfinder.setInnerDiameter(innerDiameter);
+		peakfinder.setStandardCompoundMZData(Globals.TestCompoundMZArray);
+		peakfinder.setStandardCompoundNames(Globals.TestCompoundNameArray);
+		peakfinder.setIsocraticDataArray(Globals.TestCompoundsIsocraticDataArray);
+		//TODO: might need to add more parameters here
+		double[][] combinedGradientProfileArray = new double[simpleGradientArray.length][2];
+		for(int i = 0; i < simpleGradientArray.length; i++){
+			combinedGradientProfileArray[i][0] = simpleGradientArray[i][0];
+			combinedGradientProfileArray[i][1] = simpleGradientArray[i][1] + this.interpolatedGradientDifferenceProfile.getAt(simpleGradientArray[i][0]);
+		}
+		peakfinder.setInterpolatedGradientProfile(combinedGradientProfileArray);
+		peakfinder.setGradientProgramInConventionalForm(gradientProgram);
+		// Now set the back-calculated dead time profile
+    	int iNumPoints = 1000;
+    	double[][] dCombinedDeadTimeProfileArray = new double[iNumPoints][2];
+    	double dStartPhi = initialDeadTimeArray[0][0];
+    	double dEndPhi = initialDeadTimeArray[initialDeadTimeArray.length - 1][0];
+    	for (int i = 0; i < iNumPoints; i++)
+    	{
+    		double dCurrentPhi = (((dEndPhi - dStartPhi) / (double)(iNumPoints - 1)) * (double)i) + dStartPhi;
+    		dCombinedDeadTimeProfileArray[i][0] = dCurrentPhi;
+    		dCombinedDeadTimeProfileArray[i][1] = initialInterpolatedDeadTimeProfile.getAt(dCurrentPhi) + interpolatedDeadTimeDifferenceProfile.getAt(dCurrentPhi);
+    	}
+    	peakfinder.setInterpolatedDeadTime(dCombinedDeadTimeProfileArray);
+    	
+		
+		peakfinder.setTStep(dtstep);
+		peakfinder.run();
+		
+		if (peakfinder.getOkPressed())
+    	{
+    		double[] dRetentionTimes = peakfinder.getSelectedRetentionTimes();
+    		boolean[] bSkippedStandards = peakfinder.getSkippedStandards();
+    		int[] iPeakRank = peakfinder.getSelectedPeakRank();
+    		
+    		ObservableList<StandardCompound> testCompoundList = stepFourPaneController.getTestCompoundList();
+    		
+    		for (int i = 0; i < dRetentionTimes.length; i++)
+    		{
+    			// Mark whether the standard is skipped.
+    			testCompoundList.get(i).setUse(!bSkippedStandards[i]);
+    			
+    			// Put in the correct retention time
+    			if (iPeakRank[i] >= 0)
+    			{
+    				if (!bSkippedStandards[i])
+    					testCompoundList.get(i).setMeasuredRetentionTime(dRetentionTimes[i]);
+    				else
+    					testCompoundList.get(i).setMeasuredRetentionTime(0.0);
+    			}
+    			else
+    			{
+    				// If the peak wasn't picked, then skip this one.
+    				testCompoundList.get(i).setMeasuredRetentionTime(0.0);    				
+	    			testCompoundList.get(i).setUse(false);
+    			}
+    		}	
+    	}
+		fileName = peakfinder.getFileName();
+		updateTestCompoundTable();
+	}
+
 	public interface BackCalculateControllerListener 
 	{
 		public void onNextStepPressed(BackcalculateController thisController);
@@ -302,7 +373,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		
 		NumberFormat formatter1 = new DecimalFormat("#0.000");
 		NumberFormat formatter2 = new DecimalFormat("#0.0");
-
+//TODO: Check the problem with gradientDifferenceProfileArray
 		int iTotalCompounds = 0;
 		
 		for (int i = 0; i < testCompoundsList.size(); i++)
@@ -317,6 +388,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 				dSumofSquares += Math.pow(error, 2);
 				dExpectedSumofSquares += Math.pow(this.expectedErrorArray[i], 2);
 				dSumAbsolute += Math.abs(error);
+				System.out.println(i+","+error+","+dSumofSquares+","+dExpectedSumofSquares+","+dSumAbsolute);
 				dErrorList[i] = Math.abs(error);
 				iTotalCompounds++;
 			}
@@ -330,7 +402,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			stepFourPaneController.mostLikelyErrorLabelProperty().set("-");
 			stepFourPaneController.columnRatingLabelProperty().set("-");
 			stepFourPaneController.setSliderIndicatorVisible(false);
-			this.status = INCOMPLETE;
+			this.setStatus(INCOMPLETE);
 		}
 		else
 		{
@@ -342,9 +414,9 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			double dColumnRating = dStandardDeviation / d75Limit;
 			double dYellowRating = d95Limit / d75Limit;
 			
-			stepFourPaneController.overallErrorLabelProperty().set("± " + Float.toString((float)GlobalsDan.roundToSignificantFigures(dStandardDeviation, 2)) + " min (" + Float.toString((float)GlobalsDan.roundToSignificantFigures(dStandardDeviation * 60, 2)) + " sec)");
-			stepFourPaneController.mostLikelyErrorLabelProperty().set("± " + Float.toString((float)GlobalsDan.roundToSignificantFigures(dExpectedStandardDeviation, 2)) + " min (" + Float.toString((float)GlobalsDan.roundToSignificantFigures(dExpectedStandardDeviation * 60, 2)) + " sec)");
-			stepFourPaneController.columnRatingLabelProperty().set(Float.toString((float)GlobalsDan.roundToSignificantFigures(dColumnRating, 2)));
+			stepFourPaneController.overallErrorLabelProperty().set("± " + Float.toString((float)Globals.roundToSignificantFigures(dStandardDeviation, 2)) + " min (" + Float.toString((float)Globals.roundToSignificantFigures(dStandardDeviation * 60, 2)) + " sec)");
+			stepFourPaneController.mostLikelyErrorLabelProperty().set("± " + Float.toString((float)Globals.roundToSignificantFigures(dExpectedStandardDeviation, 2)) + " min (" + Float.toString((float)Globals.roundToSignificantFigures(dExpectedStandardDeviation * 60, 2)) + " sec)");
+			stepFourPaneController.columnRatingLabelProperty().set(Float.toString((float)Globals.roundToSignificantFigures(dColumnRating, 2)));
 			
 			Color clrGreen = Color.rgb(0, 161, 75);
 			Color clrYellow = Color.rgb(188, 174, 0);
@@ -354,17 +426,17 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			if (dColumnRating <= 1.0)
 			{
 				stepFourPaneController.setRatingColor(clrGreen);
-				this.status = PASSED;
+				this.setStatus(PASSED);
 			}
 			else if (dColumnRating > 1.0 && dColumnRating <= dYellowRating)
 			{
 				stepFourPaneController.setRatingColor(clrYellow);
-				this.status = PASSEDBUTQUESTIONABLE;
+				this.setStatus(PASSEDBUTQUESTIONABLE);
 			}
 			else if (dColumnRating > dYellowRating)
 			{
 				stepFourPaneController.setRatingColor(clrRed);
-				this.status = FAILED;
+				this.setStatus(FAILED);
 			}
 				
 			
@@ -372,7 +444,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			stepFourPaneController.setSliderYellowLimit((float)dYellowRating);
 			stepFourPaneController.setSliderPosition((float)(dColumnRating / 3.0) * 100);
 			
-			this.score = dColumnRating;
+			this.setScore(dColumnRating);
 		}
 	}
 	
@@ -413,8 +485,19 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		}*/
 		
 		stepThreePaneController.setBackCalculationButtonDisable(false);
-		buttonNextStep.setDisable(true);
-		
+		boolean isNextDisabled = false;
+		if(standardsList.isEmpty()){
+			isNextDisabled = true;
+		}
+		else{
+			for(int i = 0; i < standardsList.size(); i++){
+				if(standardsList.get(i).getPredictedRetentionTime() == 0.0){
+					isNextDisabled = true;
+					break;
+				}
+			}
+		}
+		buttonNextStep.setDisable(isNextDisabled);
 		eluentCompositionTimeGraph.RemoveAllSeries();
 		deadTimeEluentCompositionGraph.RemoveAllSeries();
 
@@ -522,16 +605,16 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 				ObservableList<StandardCompound> testCompoundsList = stepFourPaneController.getTestCompoundList();
 				
 				// Predict retention times of test compounds here.
-				expectedErrorArray = new double[GlobalsDan.TestCompoundNameArray.length];
+				expectedErrorArray = new double[Globals.TestCompoundNameArray.length];
 				
 				// Fill in the table with predicted retention times
-		    	for (int i = 0; i < GlobalsDan.TestCompoundNameArray.length; i++)
+		    	for (int i = 0; i < Globals.TestCompoundNameArray.length; i++)
 		    	{
-		    		PredictedRetentionObject predictedRetention = predictRetention(GlobalsDan.TestCompoundsIsocraticDataArray[i]);
-		    		//PredictedRetentionObject predictedRetention = predictRetention2(GlobalsDan.TestCompoundParamArray[i]);
+		    		PredictedRetentionObject predictedRetention = predictRetention(Globals.TestCompoundsIsocraticDataArray[i]);
+		    		//PredictedRetentionObject predictedRetention = predictRetention2(Globals.TestCompoundParamArray[i]);
 		    		expectedErrorArray[i] = predictedRetention.dPredictedErrorSigma;
 		    		
-		    		testCompoundsList.get(i).setPredictedRetentionTime(GlobalsDan.roundToSignificantFigures(predictedRetention.dPredictedRetentionTime, 5));
+		    		testCompoundsList.get(i).setPredictedRetentionTime(Globals.roundToSignificantFigures(predictedRetention.dPredictedRetentionTime, 5));
 		    	}
 		    	
 		    	this.updateTestCompoundTable();
@@ -851,9 +934,6 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    		//contentPane2.jbtnCalculate.setActionCommand("Copy to clipboard");
 	    		//contentPane2.jbtnCalculate.setEnabled(true);
 	    		buttonNextStep.setDisable(false);	    		
-        	}
-        	for(int i = 0; i < standardsList.size(); i++){
-        		System.out.println(standardsList.get(i).getPredictedRetentionTime());
         	}
         }
     	
@@ -2400,12 +2480,12 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			NumberFormat percentFormatter = new DecimalFormat("0.00");
 			
 			// Step #1: Create interpolating functions for the isocratic data of each gradient calibration solute
-			standardIsocraticDataInterpolated = new InterpolationFunction[GlobalsDan.StandardIsocraticDataArray.length];
+			standardIsocraticDataInterpolated = new InterpolationFunction[Globals.StandardIsocraticDataArray.length];
 			
 			for (int i = 0; i < standardIsocraticDataInterpolated.length; i++)
 			{
 				Integer iIndex = (Integer) standardsList.get(i).getIndex();
-				standardIsocraticDataInterpolated[i] = new InterpolationFunction(GlobalsDan.StandardIsocraticDataArray[iIndex]);
+				standardIsocraticDataInterpolated[i] = new InterpolationFunction(Globals.StandardIsocraticDataArray[iIndex]);
 			}
 
 			int iPhase = 1;
@@ -2859,14 +2939,14 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	public void setStandardsList(ObservableList<StandardCompound> standardsList) {
 		
 		// Create dead time array
-        this.initialDeadTimeArray = new double[GlobalsDan.dDeadTimeArray.length][2];
+        this.initialDeadTimeArray = new double[Globals.dDeadTimeArray.length][2];
         
-        for (int i = 0; i < GlobalsDan.dDeadTimeArray.length; i++)
+        for (int i = 0; i < Globals.dDeadTimeArray.length; i++)
         {
-        	double dVolumeInRefColumn = Math.PI * Math.pow(GlobalsDan.dRefColumnID / 2, 2) * GlobalsDan.dRefColumnLength;
-        	double dDeadVolPerVol = (GlobalsDan.dDeadTimeArray[i][1] * GlobalsDan.dRefFlowRate) / dVolumeInRefColumn;
+        	double dVolumeInRefColumn = Math.PI * Math.pow(Globals.dRefColumnID / 2, 2) * Globals.dRefColumnLength;
+        	double dDeadVolPerVol = (Globals.dDeadTimeArray[i][1] * Globals.dRefFlowRate) / dVolumeInRefColumn;
         	double dNewDeadVol = dDeadVolPerVol * Math.PI * Math.pow((this.innerDiameter / 2) / 10, 2) * this.columnLength / 10;
-        	this.initialDeadTimeArray[i][0] = GlobalsDan.dDeadTimeArray[i][0];
+        	this.initialDeadTimeArray[i][0] = Globals.dDeadTimeArray[i][0];
         	this.initialDeadTimeArray[i][1] = (dNewDeadVol / this.flowRate) * 60;
         }
         
@@ -3108,6 +3188,14 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	}
 	
 
+	public double getInstrumentDeadTime() {
+		return instrumentDeadTime;
+	}
+
+	public void setInstrumentDeadTime(double instrumentDeadTime) {
+		this.instrumentDeadTime = instrumentDeadTime;
+	}
+
 	public void calculateSimpleDeadTime()
 	{
 		// Create new profile for the dead time offset
@@ -3260,6 +3348,146 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    eluentCompositionTimeGraph.repaint();
 	    deadTimeEluentCompositionGraph.repaint();	    
 		}
+		}
+	}
+	
+	// Cancels the task and waits for it to finish
+	public void cancelTasks()
+	{
+		if (this.task != null && task.isRunning())
+			task.cancel();
+		
+		while(this.task != null && !this.task.isDone())
+		{
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public boolean isThreadRunning()
+	{
+		if (this.task == null)
+			return false;
+		else
+			return this.task.isRunning();
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public double getScore() {
+		return score;
+	}
+
+	public void setScore(double score) {
+		this.score = score;
+	}
+	
+	public void writeSaveData(SaveData.BackCalculateSaveData saveData)
+	{
+		saveData.columnLength = columnLength;
+		saveData.innerDiameter = innerDiameter;
+		saveData.flowRate = flowRate;
+		saveData.fileName = fileName;
+		saveData.standardsList = standardsList;
+		saveData.instrumentDeadTime = instrumentDeadTime;
+		saveData.gradientProgramInConventionalForm = gradientProgram;
+		saveData.tStep = dtstep;
+		saveData.m_dIdealGradientProfileArray = idealGradientProfileArray;
+		saveData.m_dGradientProfileDifferenceArray = gradientProfileDifferenceArray;
+		saveData.m_dSimpleGradientProfileArray = simpleGradientArray;
+		saveData.m_dDeadTimeArray = initialDeadTimeArray;
+		saveData.m_dDeadTimeDifferenceArray = deadTimeDifferenceArray;
+		saveData.m_dExpectedErrorArray = expectedErrorArray;
+		saveData.status = status;
+		saveData.score = score;
+	    
+	    // Step3Pane stuff
+	    saveData.labelIterationText = stepThreePaneController.iterationLabelProperty().getValue();
+	    saveData.labelVarianceText = stepThreePaneController.varianceLabelProperty().getValue();
+	    saveData.labelLastIterationVarianceText = stepThreePaneController.lastIterationVarianceLabelProperty().getValue();
+	    saveData.labelPercentImprovementText = stepThreePaneController.percentImprovementLabelProperty().getValue();
+	    saveData.labelTimeElapsedText = stepThreePaneController.timeElapsedLabelProperty().getValue();
+	    saveData.labelStatusText = stepThreePaneController.statusLabelProperty().getValue();
+	    saveData.progressBarValue = stepThreePaneController.progressBarProperty().getValue();
+	    saveData.backCalculationButtonDisabled = stepThreePaneController.isBackCalculationButtonDisabled();
+	    
+	    // Step4Pane stuff - most is updated with updateTestCompoundTable()
+	    saveData.testCompoundList = stepFourPaneController.getTestCompoundList();
+	}
+	
+	public void loadSaveData(SaveData.BackCalculateSaveData saveData)
+	{
+		columnLength = saveData.columnLength;
+		innerDiameter = saveData.innerDiameter;
+		flowRate = saveData.flowRate;
+		fileName = saveData.fileName;
+		standardsList = saveData.standardsList;
+		gradientProgram = saveData.gradientProgramInConventionalForm;
+		dtstep = saveData.tStep;
+		instrumentDeadTime = saveData.instrumentDeadTime;
+		
+		idealGradientProfileArray = saveData.m_dIdealGradientProfileArray;
+		if (idealGradientProfileArray != null)
+			this.interpolatedIdealGradientProfile = new LinearInterpolationFunction(this.idealGradientProfileArray);
+		
+    	gradientProfileDifferenceArray = saveData.m_dGradientProfileDifferenceArray;
+		if (gradientProfileDifferenceArray != null)
+			this.interpolatedGradientDifferenceProfile = new LinearInterpolationFunction(gradientProfileDifferenceArray);
+		
+		simpleGradientArray = saveData.m_dSimpleGradientProfileArray;
+		if (simpleGradientArray != null)
+			this.interpolatedSimpleGradient = new LinearInterpolationFunction(simpleGradientArray);
+
+		initialDeadTimeArray = saveData.m_dDeadTimeArray;
+		if (initialDeadTimeArray != null)
+			this.initialInterpolatedDeadTimeProfile = new InterpolationFunction(initialDeadTimeArray);
+		
+		deadTimeDifferenceArray = saveData.m_dDeadTimeDifferenceArray;
+		if(deadTimeDifferenceArray != null){
+			this.interpolatedDeadTimeDifferenceProfile = new InterpolationFunction(deadTimeDifferenceArray);
+		}
+
+		expectedErrorArray = saveData.m_dExpectedErrorArray;
+		status = saveData.status;
+		score = saveData.score;
+		
+	    // Step3Pane stuff
+		stepThreePaneController.iterationLabelProperty().unbind();
+		stepThreePaneController.iterationLabelProperty().setValue(saveData.labelIterationText);
+		stepThreePaneController.varianceLabelProperty().unbind();
+		stepThreePaneController.varianceLabelProperty().setValue(saveData.labelVarianceText);
+		stepThreePaneController.lastIterationVarianceLabelProperty().unbind();
+		stepThreePaneController.lastIterationVarianceLabelProperty().setValue(saveData.labelLastIterationVarianceText);
+		stepThreePaneController.percentImprovementLabelProperty().unbind();
+		stepThreePaneController.percentImprovementLabelProperty().setValue(saveData.labelPercentImprovementText);
+		stepThreePaneController.timeElapsedLabelProperty().unbind();
+		stepThreePaneController.timeElapsedLabelProperty().setValue(saveData.labelTimeElapsedText);
+		stepThreePaneController.statusLabelProperty().unbind();
+		stepThreePaneController.statusLabelProperty().setValue(saveData.labelStatusText);
+		stepThreePaneController.progressBarProperty().unbind();
+		stepThreePaneController.progressBarProperty().setValue(saveData.progressBarValue);
+		stepThreePaneController.setBackCalculationButtonDisable(saveData.backCalculationButtonDisabled);
+
+		// Step4Pane stuff
+		stepFourPaneController.setTestCompoundList(saveData.testCompoundList);
+
+		this.buttonNextStep.setDisable(!saveData.backCalculationButtonDisabled);
+		stepThreePaneController.setStandardCompoundList(standardsList);
+
+		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
+		{
+			//updateGraphsWithIdealProfiles();
+			//updateGraphs(this.interpolatedSimpleGradient, this.interpolatedGradientDifferenceProfile, this.gradientProfileDifferenceArray, this.m_InterpolatedHoldUpProfile, this.m_dHoldUpArray);
+	    	updateTestCompoundTable();
 		}
 	}
 

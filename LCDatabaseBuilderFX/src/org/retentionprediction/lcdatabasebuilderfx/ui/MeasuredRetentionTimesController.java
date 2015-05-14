@@ -30,11 +30,10 @@ import javafx.stage.Window;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
 
+import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
 import org.retentionprediction.lcdatabasebuilderfx.business.GradientProgramStep;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 
-import boswell.peakfinderlcfx.Globals;
-import boswell.peakfinderlcfx.GlobalsDan;
 import boswell.peakfinderlcfx.PeakFinderLCFX;
 
 public class MeasuredRetentionTimesController implements Initializable, ChangeListener<Boolean> {
@@ -81,8 +80,6 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	private double innerDiameter = 2.1; // in mm
 	private double instrumentDeadTime = 0.125; // in  min
 	private double flowRate = 0.4; // in mL/min
-	private double initialTime = 0.0;
-	private double initialSolventComp = 5.0;
 	
 	private Window parentWindow;
 	private String fileName;
@@ -117,16 +114,34 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		textFieldInstrumentDeadTime.focusedProperty().addListener(this);
 		
 		List<StandardCompound> data = new ArrayList<StandardCompound>();
-		for (int i = 0; i < GlobalsDan.StandardCompoundsNameArray.length; i++){
+		for (int i = 0; i < Globals.StandardCompoundsNameArray.length; i++){
 			StandardCompound newItem = new StandardCompound();
 			newItem.setUse(false);
-			newItem.setName(GlobalsDan.StandardCompoundsNameArray[i]);
-			newItem.setMz(GlobalsDan.convertMZToString(GlobalsDan.StandardCompoundsMZArray[i]));
+			newItem.setName(Globals.StandardCompoundsNameArray[i]);
+			newItem.setMz(Globals.convertMZToString(Globals.StandardCompoundsMZArray[i]));
 			newItem.setMeasuredRetentionTime(0.0);
 			newItem.setIndex(i);
 			data.add(newItem);
 		}
 		standardsList = FXCollections.observableArrayList(data);
+		
+		//Temporary code : Preload the table
+		double[] dRetentionTimes = Globals.dPredefinedValues[0][0];
+		boolean[] bSkippedStandards = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false};	
+		for (int i = 0; i < dRetentionTimes.length; i++)
+		{
+			// Mark whether the standard is skipped.
+			standardsList.get(i).setUse(!bSkippedStandards[i]);
+			if (!bSkippedStandards[i])
+				standardsList.get(i).setMeasuredRetentionTime(dRetentionTimes[i]);
+			else
+				standardsList.get(i).setMeasuredRetentionTime(0.0);
+		}
+		
+		performValidations();
+		//End
+		
+		
 		columnUse.setCellValueFactory(new PropertyValueFactory<StandardCompound,Boolean>("use"));
 		columnUse.setCellFactory(new Callback<TableColumn<StandardCompound, Boolean>, TableCell<StandardCompound, Boolean>>() {
             public TableCell<StandardCompound, Boolean> call(TableColumn<StandardCompound, Boolean> p) 
@@ -143,7 +158,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		columnRetentionTime.setCellFactory(TextFieldTableCell.<StandardCompound>forTableColumn());
 		setTableMeasuredRetentionTimesItems(standardsList);
 	
-		tableViewGradientProgram.setEditable(false);
+		//tableViewGradientProgram.setEditable(false);
 		
 		//Load the table with correct values
 		List<GradientProgramStep> data1 = new ArrayList<GradientProgramStep>();
@@ -177,10 +192,10 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	
 	private void performValidations()
 	{
-		validatePhysicalVariables(textFieldColumnLength, columnLength, 0.1, 10000);
-		validatePhysicalVariables(textFieldInnerDiameter, innerDiameter, 0.00001, 10000);
-		validatePhysicalVariables(textFieldFlowRate, flowRate, 0.000000001, 10000);
-		//validatePhysicalVariables(textFieldInstrumentDeadTime, instrumentDeadTime, dTempLow, dTempHigh);
+		columnLength = validatePhysicalVariables(textFieldColumnLength, 0.1, 10000);
+		innerDiameter = validatePhysicalVariables(textFieldInnerDiameter, 0.00001, 10000);
+		flowRate = validatePhysicalVariables(textFieldFlowRate, 0.000000001, 10000);
+		instrumentDeadTime = validatePhysicalVariables(textFieldInstrumentDeadTime, 0.0, 100);
 		
 		// Now check to see if we have enough retention times to make the Next Step button enabled
 		int iTotalUsed = 0;
@@ -196,7 +211,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 			buttonNextStep.setDisable(true);			
 	}
 	
-	private void validatePhysicalVariables(TextField textField, double variable, double dTempLow, double dTempHigh){
+	private double validatePhysicalVariables(TextField textField, double dTempLow, double dTempHigh){
 		double dTemp = 0;
     	try
     	{
@@ -212,8 +227,8 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		if (dTemp > dTempHigh)
 			dTemp = dTempHigh;
 		
-		variable = dTemp;
-		textField.setText(Float.toString((float)variable));   
+		textField.setText(Float.toString((float)dTemp));   
+		return dTemp;
 	}
 	
 	
@@ -255,48 +270,52 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	}
 	
 	@FXML private void onFindRetentionTimesAutomatically(ActionEvent e){
-//		PeakFinderLCFX peakfinder = new PeakFinderLCFX(parentWindow, GlobalsDan.StationaryPhaseArray, true);
-//		peakfinder.setStandardCompoundMZData(GlobalsDan.StandardCompoundsMZArray);
-//		peakfinder.setStandardCompoundNames(GlobalsDan.StandardCompoundsNameArray);
-//		peakfinder.setIsocraticDataArray(GlobalsDan.StandardIsocraticDataArray);
-//		peakfinder.setInterpolatedDeadTime();
-//		//TODO: might need to add more parameters here
-//		peakfinder.run();
-//		
-//		if (peakfinder.getOkPressed())
-//    	{
-    		//double[] dRetentionTimes = peakfinder.getSelectedRetentionTimes();
-		double[] dRetentionTimes = GlobalsDan.dPredefinedValues[0][0];
-    		//boolean[] bSkippedStandards = peakfinder.getSkippedStandards();
-    		//int[] iPeakRank = peakfinder.getSelectedPeakRank();
-    	boolean[] bSkippedStandards = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false};	
+		PeakFinderLCFX peakfinder = new PeakFinderLCFX(parentWindow, Globals.StationaryPhaseArray, true);
+		peakfinder.setStandardCompoundMZData(Globals.StandardCompoundsMZArray);
+		peakfinder.setStandardCompoundNames(Globals.StandardCompoundsNameArray);
+		peakfinder.setIsocraticDataArray(Globals.StandardIsocraticDataArray);
+		peakfinder.setFileName(fileName);
+		peakfinder.setColumnLength(columnLength);
+		peakfinder.setFlowRate(flowRate);
+		peakfinder.setInstrumentDeadTime(instrumentDeadTime);
+		
+		gradientProgramInConventionalForm = getGradientProgram();
+		
+		peakfinder.setGradientProgramInConventionalForm(gradientProgramInConventionalForm);
+		peakfinder.setInnerDiameter(innerDiameter);
+		peakfinder.setInterpolatedDeadTime(null);
+		peakfinder.run();
+		
+		if (peakfinder.getOkPressed())
+    	{
+    		double[] dRetentionTimes = peakfinder.getSelectedRetentionTimes();
+    		boolean[] bSkippedStandards = peakfinder.getSkippedStandards();
+    		int[] iPeakRank = peakfinder.getSelectedPeakRank();
 		
     		for (int i = 0; i < dRetentionTimes.length; i++)
     		{
     			// Mark whether the standard is skipped.
     			standardsList.get(i).setUse(!bSkippedStandards[i]);
     			
-//    			// Put in the correct retention time
-//    			if (iPeakRank[i] >= 0)
-//    			{
+    			// Put in the correct retention time
+    			if (iPeakRank[i] >= 0)
+    			{
     				if (!bSkippedStandards[i])
     					standardsList.get(i).setMeasuredRetentionTime(dRetentionTimes[i]);
     				else
     					standardsList.get(i).setMeasuredRetentionTime(0.0);
-    			
-//    			else
-//    			{
-    				// If the peak wasn't picked, then skip this one.
-					//standardsList.get(i).setMeasuredRetentionTime(0.0);    				
-	    			//standardsList.get(i).setUse(false);
-    			//}
+    			}
+    			else
+    			{
+					standardsList.get(i).setMeasuredRetentionTime(0.0);    				
+	    			standardsList.get(i).setUse(false);
+    			}
     		}
     		
+    		fileName = peakfinder.getFileName();
     		performValidations();
-    		
-    //		fileName = peakfinder.getFileName();
     	}
-//	}
+	}
 
 	public void writeSaveData(SaveData.MeasuredRetentionTimeSaveData saveData)
 	{
@@ -306,6 +325,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		saveData.columnLength = columnLength;
 		saveData.innerDiameter = innerDiameter;
 		saveData.flowRate = flowRate;
+		saveData.instrumentDeadTime = instrumentDeadTime;
 	}
 	
 	public void loadSaveData(SaveData.MeasuredRetentionTimeSaveData saveData)
@@ -316,13 +336,14 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		columnLength = saveData.columnLength;
 		innerDiameter = saveData.innerDiameter;
 		flowRate = saveData.flowRate;
-
-		setTableMeasuredRetentionTimesItems(standardsList);
-
+		instrumentDeadTime = saveData.instrumentDeadTime;
+//		gradientProgramInConventionalForm = saveData.gradientProgramInConventionalForm;
+//		setGradientProgramInConventionalForm();
 		this.textFieldColumnLength.setText(Float.toString((float)columnLength));
 		this.textFieldInnerDiameter.setText(Float.toString((float)innerDiameter));
 		this.textFieldFlowRate.setText(Float.toString((float)flowRate));
 		this.setProgramName(strProgramName);
+		setTableMeasuredRetentionTimesItems(standardsList);
 	}
 	
 	public void setParentWindow(Window parentWindow)
@@ -347,7 +368,8 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 			gradientProgramInConventionalForm[i][1] = gradientProgramList.get(i).getSolventComposition();
 		}
 		
-		return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComp);
+		//return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComp);
+		return gradientProgramInConventionalForm;
 	}
 	
 	public void setGradientProgram(double[][] gradientProgram) {
@@ -377,6 +399,14 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 
 	public void setColumnLength(double columnLength) {
 		this.columnLength = columnLength;
+	}
+
+	public double getInstrumentDeadTime() {
+		return instrumentDeadTime;
+	}
+
+	public void setInstrumentDeadTime(double instrumentDeadTime) {
+		this.instrumentDeadTime = instrumentDeadTime;
 	}
 
 	public double getInnerDiameter() {
