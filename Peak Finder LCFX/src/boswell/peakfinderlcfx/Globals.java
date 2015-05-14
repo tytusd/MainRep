@@ -109,7 +109,7 @@ public class Globals
 
 	public static double[][] convertGradientProgramInConventionalFormToRegularForm(
 			double[][] gradientProgramInConventionalProgram,
-			double initialTime, double initialSolventComposition, double[] retentionTimes) {
+			double initialTime, double initialSolventComposition) {
 		double[][] newGradientProgram = new double[gradientProgramInConventionalProgram.length + 2][2];
     	int iPointCount = 0;
     	

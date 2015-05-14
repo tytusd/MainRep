@@ -95,7 +95,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
     		this.time.set(time);
     	}
     	
-    	public DoubleProperty getTimeProperty(){
+    	public DoubleProperty timeProperty(){
     		return time;
     	}
     	
@@ -107,7 +107,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
     		this.solventComposition.set(solventComposition);
     	}
     	
-    	public DoubleProperty getSolventCompositionProperty(){
+    	public DoubleProperty solventCompositionProperty(){
     		return solventComposition;
     	}
     }
@@ -204,7 +204,6 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 		int lastRowIndex = gradientProgramList.size() - 1;
 
     	double rowValue1, rowValue2;
-    	//TODO: Set default values here
     	if (lastRowIndex == -1)    	{
     		rowValue1 = 10.0; //Default time
     		rowValue2 = initialSolventComposition ;
@@ -284,7 +283,6 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 		this.mixingVolume = validateParameters(textFieldMixingVolume, 0.001, 100000, this.mixingVolume);
 		this.nonMixingVolume = validateParameters(textFieldNonMixingVolume, 0.001, 100000, this.nonMixingVolume);
 		setFileName(this.textFieldDataFile.getText());
-		//TODO: Check if we need any more validations. Compare with PeakFinderLC
 	}
 	
 	public double validateParameters(TextField textField, double dTemp1, double dTemp2, double valueToSet){
@@ -375,7 +373,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 			gradientProgramInConventionalForm[i][1] = gradientProgramList.get(i).getSolventComposition();
 		}
 		
-		return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition, retentionTimes);
+		return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
 	}
 
 	public void setGradientProgram(double[][] gradientProgram) {
@@ -383,8 +381,7 @@ public class PeakFinderSettingsPaneController implements Initializable, ChangeLi
 	}
 
 	public void setGradientProgramInConventionalForm(
-			double[][] gradientProgramInConventionalForm, double initialTime,
-			double initialSolventComposition) {
+			double[][] gradientProgramInConventionalForm) {
 		
 		gradientProgramList.clear();
 		for(int i = 0; i < gradientProgramInConventionalForm.length; i++){

@@ -56,9 +56,10 @@ public class GlobalsDan
 	
 	public static double[][][] dGradientPrograms = 
 	{
+		//innerdiameter,length, flowrate, instrumentdead time.
 		{ // Yan 5 min gradient
 			{2.1, 100, 0.4, 0.125},
-			{0.0, 5.0},
+			{0.0, 5.0}, //time, phi
 			{5.0, 95.0},
 			{10, 95}
 		},
@@ -1719,5 +1720,18 @@ public class GlobalsDan
 	    final long shifted = Math.round(num * magnitude);
 	    
 	    return shifted / magnitude;
+	}
+	
+	public static String convertMZToString(double[] mzValues)
+	{
+		String str = "";
+		for (int j = 0; j < mzValues.length; j++)
+		{
+			str += mzValues[j];
+			if (j < mzValues.length - 1)
+				str += ", ";
+		}
+		
+		return str;
 	}
 }

@@ -38,9 +38,6 @@ public class PeakFinderLCFX
 	private double flowRate = 1; // in mL/min=
 	private double mixingVolume = 0.1;
 	private double nonMixingVolume = 0.2;
-	private double initialTime = 0.0;
-	private double initialSolventComposition = 5.0;
-    private double theoreticalPlatesPerMeter = 4433;
     private double theoreticalPlates = 10000;
     private double tStep = 0;
 
@@ -78,6 +75,7 @@ public class PeakFinderLCFX
 	private boolean okPressed = false;
 	
 	private Window parentWindow;
+	private double instrumentDeadTime;
 	
 	public PeakFinderLCFX(Window parentWindow, String[] stationaryPhaseNames, boolean editable)
 	{
@@ -106,7 +104,7 @@ public class PeakFinderLCFX
 			peakFinderSettingsPaneController.setFileName(fileName);
 			peakFinderSettingsPaneController.setMixingVolume(mixingVolume);
 			peakFinderSettingsPaneController.setNonMixingVolume(nonMixingVolume);
-			peakFinderSettingsPaneController.setGradientProgramInConventionalForm(gradientProgramInConventionalForm, initialTime, initialSolventComposition);
+			peakFinderSettingsPaneController.setGradientProgramInConventionalForm(gradientProgramInConventionalForm);
 			//TODO: Fix this line above..the method its calling is not working properly
 			
 			// Set the dialog to the be editable or not
@@ -257,8 +255,9 @@ public class PeakFinderLCFX
 		peakFinderDialogStage.initModality(Modality.WINDOW_MODAL);
 		peakFinderDialogStage.initOwner(parentWindow);
 		peakFinderDialogStage.setMaximized(true);
-		
+		//TODO: set interpolated gradient and dead time functions here
 		peakFinderPaneController.setStage(peakFinderDialogStage);
+		peakFinderPaneController.setInstrumentDeadTime(instrumentDeadTime);
 		peakFinderPaneController.setMzData(mzData);
 		peakFinderPaneController.setMZArray(standardCompoundsMZArray);
 		peakFinderPaneController.setPeaksArray(peaks);
@@ -554,31 +553,44 @@ public class PeakFinderLCFX
 		this.tStep = dtstep;
 	}
 	
-	public void setInterpolatedGradientProfile(
-			LinearInterpolationFunction interpolatedGradientProfile) {
-		this.interpolatedGradientProfile = interpolatedGradientProfile;
+	public double getInstrumentDeadTime() {
+		return instrumentDeadTime;
 	}
-//	
-//	//not used i think
-//	public void setGradientProgramInConventionalForm(double[][] gradientProgramInConventionalProgram, double initialTime, double initialSolventComposition){
-//		this.gradientProgramInConventionalForm = gradientProgramInConventionalProgram;
-//		this.initialTime = initialTime;
-//		this.initialSolventComposition = initialSolventComposition;
-//		this.gradientProgram = Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalProgram, initialTime, initialSolventComposition);
-//	}
 
-	public void setInterpolatedDeadTime() {
-		// Create dead time array
-        double[][] initialDeadTimeArray = new double[GlobalsDan.dDeadTimeArray.length][2];
-        
-        for (int i = 0; i < GlobalsDan.dDeadTimeArray.length; i++)
-        {
-        	double dVolumeInRefColumn = Math.PI * Math.pow(GlobalsDan.dRefColumnID / 2, 2) * GlobalsDan.dRefColumnLength;
-        	double dDeadVolPerVol = (GlobalsDan.dDeadTimeArray[i][1] * GlobalsDan.dRefFlowRate) / dVolumeInRefColumn;
-        	double dNewDeadVol = dDeadVolPerVol * Math.PI * Math.pow((this.innerDiameter / 2) / 10, 2) * this.columnLength / 10;
-        	initialDeadTimeArray[i][0] = GlobalsDan.dDeadTimeArray[i][0];
-        	initialDeadTimeArray[i][1] = (dNewDeadVol / this.flowRate) * 60;
-        }
+	public void setInstrumentDeadTime(double instrumentDeadTime) {
+		this.instrumentDeadTime = instrumentDeadTime;
+	}
+
+	public double[][] getGradientProgramInConventionalForm() {
+		return gradientProgramInConventionalForm;
+	}
+
+	public void setGradientProgramInConventionalForm(
+			double[][] gradientProgramInConventionalForm) {
+		this.gradientProgramInConventionalForm = gradientProgramInConventionalForm;
+	}
+
+	public void setInterpolatedGradientProfile(
+			double[][] interpolatedGradientProfileArray) {
+		this.interpolatedGradientProfile = new LinearInterpolationFunction(interpolatedGradientProfileArray);
+	}
+
+	public void setInterpolatedDeadTime(double[][] deadTimeArray) {
+		double[][] initialDeadTimeArray = deadTimeArray;
+		
+		if(deadTimeArray == null){
+			// Create dead time array
+	        initialDeadTimeArray = new double[GlobalsDan.dDeadTimeArray.length][2];
+	        
+	        for (int i = 0; i < GlobalsDan.dDeadTimeArray.length; i++)
+	        {
+	        	double dVolumeInRefColumn = Math.PI * Math.pow(GlobalsDan.dRefColumnID / 2, 2) * GlobalsDan.dRefColumnLength;
+	        	double dDeadVolPerVol = (GlobalsDan.dDeadTimeArray[i][1] * GlobalsDan.dRefFlowRate) / dVolumeInRefColumn;
+	        	double dNewDeadVol = dDeadVolPerVol * Math.PI * Math.pow((this.innerDiameter / 2) / 10, 2) * this.columnLength / 10;
+	        	initialDeadTimeArray[i][0] = GlobalsDan.dDeadTimeArray[i][0];
+	        	initialDeadTimeArray[i][1] = (dNewDeadVol / this.flowRate) * 60;
+	        }
+		}
         this.interpolatedDeadTimeProfile = new LinearInterpolationFunction(initialDeadTimeArray);
 	}
 

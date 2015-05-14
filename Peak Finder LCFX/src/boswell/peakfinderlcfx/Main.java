@@ -186,7 +186,7 @@ public class Main extends Application
 		peakFinderGC.setStandardCompoundMZData(GlobalsDan.StandardCompoundsMZArray);
 		peakFinderGC.setStandardCompoundNames(GlobalsDan.StandardCompoundsNameArray);
 		peakFinderGC.setIsocraticDataArray(GlobalsDan.StandardIsocraticDataArray);
-		peakFinderGC.setInterpolatedDeadTime();
+		peakFinderGC.setInterpolatedDeadTime(null);
 		peakFinderGC.run();		
 
 	}

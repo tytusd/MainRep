@@ -62,6 +62,7 @@ class OpenMzXMLFileTask extends Task
 	{
 		this.fileName = fileName;
 		file = new File(fileName);
+		//TODO: this is error prone. can throw null pointer exception when fileName is ""
 	}
 	
 	public void setStandardCompoundsMZArray (double[][] standardCompoundsMZArray)

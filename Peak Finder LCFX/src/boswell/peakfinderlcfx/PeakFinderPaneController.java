@@ -45,8 +45,6 @@ public class PeakFinderPaneController implements Initializable{
     @FXML private TableColumn<Peak, String> columnPeakIntensity;
     @FXML private TableColumn<StandardCompound, String> columnPeak;
     @FXML private TableColumn<Peak, String> columnPeakRetentionTime;
-    @FXML private LineChart<?, ?> chartZoomPlot;
-    @FXML private LineChart<?, ?> chartExtractedIonChromatogram;
 
     @FXML private Button buttonPreviousStandard;
     @FXML private Button buttonNextStandard;
@@ -61,10 +59,6 @@ public class PeakFinderPaneController implements Initializable{
     @FXML private Label labelExpectedPeakWidth;
     @FXML private Label labelFitScore;
     @FXML private Label labelExpectedRetentionTime;
-    @FXML private NumberAxis axisZoomPlotTime;
-    @FXML private NumberAxis axisExtractedIonChromatogramTime;
-    @FXML private NumberAxis axisExtractedIonChromatogramIntensity;
-    @FXML private NumberAxis axisZoomPlotIntensity;
 
     @FXML private Rectangle s;
     private final double rem = javafx.scene.text.Font.getDefault().getSize();
@@ -604,6 +598,8 @@ public class PeakFinderPaneController implements Initializable{
         		double dPeakScoreWidth = Math.exp(-Math.abs((dPeakWidthHalfHeight / 60) - this.predictedPeakWidths[iIndexOfStandard]) / ErrorAt36Percent);
         		
         		double dPeakScore = Math.pow(dPeakScoreRetentionTime, 10) * Math.pow(dPeakScoreHeight, 1) * Math.pow(dPeakScoreWidth, .1);
+
+        		//System.out.println(dPeakWidthHalfHeight+","+dPeakScoreRetentionTime+","+dPeakScoreHeight+","+ErrorAt36Percent+","+dPeakScoreWidth+","+dPeakScore);
         		// {peak time, peak intensity, peak width at half height}
         		peaks.get(iIndexOfStandard).add(new double[]{dPeakTime, dPeakIntensity, dPeakWidthHalfHeight, dPeakScore});
            	}
@@ -868,6 +864,14 @@ public class PeakFinderPaneController implements Initializable{
 	public void setPredictedRetentionTimes(double[] predictedRetentionTimes)
 	{
 		this.predictedRetentionTimes = predictedRetentionTimes;
+	}
+
+	public double getInstrumentDeadTime() {
+		return instrumentDeadTime;
+	}
+
+	public void setInstrumentDeadTime(double instrumentDeadTime) {
+		this.instrumentDeadTime = instrumentDeadTime;
 	}
 
 	
