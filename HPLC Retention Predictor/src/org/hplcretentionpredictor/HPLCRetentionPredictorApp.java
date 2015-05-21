@@ -164,6 +164,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	private ArrayList<IsocraticCompound> otherCompounds = new ArrayList<IsocraticCompound>(1000);
 	public UpdateProgressDialog updateDialog = null;
 	public TaskUpdateDatabase taskUpdateDb = null;
+
+	public String path = System.getProperty("java.io.tmpdir");
 	
     // Start the app
     public static void main(String[] args) 
@@ -243,6 +245,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
         // Load the JavaHelp
 		String helpHS = "org/hplcretentionpredictor/help/RetentionPredictorHelp.hs";
 		ClassLoader cl = TopPanel.class.getClassLoader();
+		path =	path.replaceAll("%20", " "); 
 /*		try {
 			URL hsURL = HelpSet.findHelpSet(cl, helpHS);
 			GlobalsDan.hsMainHelpSet = new HelpSet(null, hsURL);
@@ -977,7 +980,13 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    	}
 	    	else if (m_iStage == 3)
 	    	{
-	    		Utilities.parseCSV("isocratic_database.csv", otherCompounds);
+	    		if((new File(path,fileName)).exists()){
+	    			Utilities.parseCSV(path+fileName, otherCompounds);
+	    		}
+	    		else{
+	    			Utilities.parseCSV("isocratic_database.csv", otherCompounds);
+	    		}
+	    		
 	    		// Fill in the table with the solutes that weren't selected
 		    	contentPane2.tmPredictionModel.getDataVector().clear();
 		    	
@@ -2007,25 +2016,25 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 			updateDialog.jProgressBar.setMinimum(0);
 			InputStream urlStream = null;
 			InputStream fileStream = null;
+			File isocratic_database_file = new File(fileName);
+			File isocratic_database_file_temp = new File(path+fileName);
+			boolean diff = false;
 			try 
 			{
 				urlStream = new URL(fileURL).openStream();
 				updateDialog.jLblStatus.setText("Connected to the web. Checking for updates ...");
-			} 
-			catch (IOException e) 
-			{
-				e.printStackTrace();
-			}
-			try 
-			{
-				fileStream = new FileInputStream(new File(fileName));
+				if(isocratic_database_file_temp.exists()){
+					isocratic_database_file = isocratic_database_file_temp;		//If it exists in temp, then we dont care about the one in jar
+				}
+				fileStream = new FileInputStream(isocratic_database_file);
+				diff = Utilities.areDifferent(urlStream, fileStream);
 			} 
 			catch (FileNotFoundException e) 
 			{
 				e.printStackTrace();
 			}
 			
-			boolean diff = Utilities.areDifferent(urlStream, fileStream);
+			
 			if(!diff)
 			{
 				updateDialog.jLblStatus.setText("Your database is up-to-date. No updates needed.");
@@ -2035,11 +2044,14 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 			else
 			{
 				updateDialog.jLblStatus.setText("Update found. Starting the update!");
-				File isocratic_database_file = new File(fileName);
-				File backup_database_file = new File(fileName+".bak");
-	    		if(isocratic_database_file.exists()){
-	    			FileUtils.copyFile(isocratic_database_file, backup_database_file);
-	    		}
+				isocratic_database_file = isocratic_database_file_temp;
+				if(!isocratic_database_file.exists()){
+					isocratic_database_file.createNewFile();
+				}
+				File backup_database_file = new File(path+fileName+".bak");
+	    		
+	    		FileUtils.copyFile(isocratic_database_file, backup_database_file);
+	    		
 	    		updateDialog.jLblStatus.setText("Current database backup done.");
 				try 
 				{
@@ -2090,7 +2102,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 						
 						otherCompounds.clear();
 						//Update the prediction table
-						Utilities.parseCSV("isocratic_database.csv", otherCompounds);
+						Utilities.parseCSV(path+fileName, otherCompounds);
 			    		// Fill in the table with the solutes that weren't selected
 				    	contentPane2.tmPredictionModel.getDataVector().clear();
 				    	
@@ -2181,6 +2193,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 				dSumofSquares += Math.pow(dError, 2);
 				dExpectedSumofSquares += Math.pow(this.m_dExpectedErrorArray[i], 2);
 				dSumAbsolute += Math.abs(dError);
+				//System.out.println(i+","+dError+","+dSumofSquares+","+dExpectedSumofSquares+","+dSumAbsolute);
 				dErrorList[i] = Math.abs(dError);
 				iTotalCompounds++;
 			}
@@ -3773,8 +3786,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     // Start by optimizing the entire dead time error profile.
 	public void backCalculate(Task task, boolean bDeadTimeProfileFirst)
 	{
-		if (true)
-			return;
+//		if (true)
+//			return;
 		long starttime = System.currentTimeMillis();
 		m_bNoFullBackcalculation = false;
 		
