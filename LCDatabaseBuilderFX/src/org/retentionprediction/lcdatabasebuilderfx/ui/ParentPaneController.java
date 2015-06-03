@@ -35,13 +35,13 @@ import javafx.scene.text.FontWeight;
 import javafx.util.Callback;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
-import org.retentionprediction.lcdatabasebuilderfx.business.SolveParametersTask;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 import org.retentionprediction.lcdatabasebuilderfx.business.UIComponents;
 import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.BackCalculateControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController.MeasuredRetentionTimesControllerListener;
+import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
 
-public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener {
+public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener, SolveParametersListener {
 
 	private ParentPaneControllerListener parentPaneControllerListener;
 	
@@ -70,7 +70,6 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private Label labelE;
     @FXML private Label labelF;
     @FXML private Label labelG;
-    @FXML private Label labelH;
 
     @FXML private Tab gradientAtab;
     @FXML private Tab gradientBtab;
@@ -132,7 +131,12 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private TableColumn<StandardCompound, String> columnMeasuredRetentionTime;
     @FXML private ProgressBar progressOverall;
 
-    @FXML private Label labelS;
+	@FXML private Label labelAZero;
+	@FXML private Label labelAOne;
+	@FXML private Label labelATwo;
+	@FXML private Label labelBOne;
+	@FXML private Label labelBTwo;
+    
     @FXML private TextField textCAS;
     @FXML private Label labelTimeElapsed;
     @FXML private TableColumn<StandardCompound, String> columnError;
@@ -144,7 +148,6 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private Label labelStatus;
     @FXML private Label labelIteration;
     @FXML private TextField textCompoundName;
-    @FXML private Label labelCp;
     @FXML private TextField textPubChemID;
 
     @FXML private TextField textHMDB;
@@ -194,6 +197,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 				measuredRetentionTimes[i] = fxmlLoader.load(getClass().getResource("MeasuredRetentionTimes.fxml").openStream());
 				measuredRetentionTimesController[i] = fxmlLoader.getController();
 				measuredRetentionTimesController[i].setMeasuredRetentionTimesControllerListener(this);
+				measuredRetentionTimesController[i].setIndex(i);
 			}
 			gradientAtab.setContent(measuredRetentionTimes[0]);
 			gradientBtab.setContent(measuredRetentionTimes[1]);
@@ -342,7 +346,24 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     }
 
     @FXML void onSolveForRetentionParameters(ActionEvent event) {
-    	//TODO:Implement this
+    	solveParametersTask = new SolveParametersTask();
+    	solveParametersTask.setBackCalculateController(this.backcalculateController);
+    	solveParametersTask.setProgramList(programList);
+    	solveParametersTask.setSolveParametersListener(this);
+    	
+    	labelIteration.textProperty().bind(solveParametersTask.getIterationProperty());
+		labelTimeElapsed.textProperty().bind(solveParametersTask.getTimeElapsedProperty());
+		labelVariance.textProperty().bind(solveParametersTask.getVarianceProperty());
+		labelAZero.textProperty().bind(solveParametersTask.getAZeroProperty());
+		labelAOne.textProperty().bind(solveParametersTask.getAOneProperty());
+		labelATwo.textProperty().bind(solveParametersTask.getATwoProperty());
+		labelBOne.textProperty().bind(solveParametersTask.getBOneProperty());
+		labelBTwo.textProperty().bind(solveParametersTask.getBTwoProperty());
+		labelStatus.textProperty().bind(solveParametersTask.messageProperty());
+    	
+    	Thread thread = new Thread(solveParametersTask);
+    	thread.start();
+    	buttonSolve.setDisable(true);
     }
     
     @FXML void actionPerformValidation(ActionEvent event){
@@ -386,12 +407,12 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		else if (thisController == this.measuredRetentionTimesController[6])
 		{
 			i = 6;
-			gradientFtab.setContent(backCalculatePane[6]);
+			gradientGtab.setContent(backCalculatePane[6]);
 		}
 		else if (thisController == this.measuredRetentionTimesController[7])
 		{
 			i = 7;
-			gradientFtab.setContent(backCalculatePane[7]);
+			gradientHtab.setContent(backCalculatePane[7]);
 		}
 		
 		if(thisController == this.measuredRetentionTimesController[i]){
@@ -519,7 +540,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			}
 			else if (this.iCurrentStep[i] == 1)
 			{
-				gradientFtab.setContent(measuredRetentionTimes[i]);
+				gradientGtab.setContent(measuredRetentionTimes[i]);
 				measuredRetentionTimes[i].setVisible(true);
 			}
 			this.iCurrentStep[i]--;
@@ -535,7 +556,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			}
 			else if (this.iCurrentStep[i] == 1)
 			{
-				gradientFtab.setContent(measuredRetentionTimes[i]);
+				gradientHtab.setContent(measuredRetentionTimes[i]);
 				measuredRetentionTimes[i].setVisible(true);
 			}
 			this.iCurrentStep[i]--;
@@ -582,6 +603,18 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		statusForFinalFitByLabel(labelGradientGStatus, 6);
 		statusForFinalFitByLabel(labelGradientHStatus, 7);
 		
+		 //TODO: remove the below forloop.
+	    for(int i = 0; i < Globals.finalFitExpected.length; i++){
+	    	programList.get(i).setMeasuredRetentionTime(Globals.finalFitExpected[i]);
+	    }
+		textRetentionTimeA.setText(Globals.finalFitExpected[0]+"");
+		textRetentionTimeB.setText(Globals.finalFitExpected[1]+"");
+		textRetentionTimeC.setText(Globals.finalFitExpected[2]+"");
+		textRetentionTimeD.setText(Globals.finalFitExpected[3]+"");
+		textRetentionTimeE.setText(Globals.finalFitExpected[4]+"");
+		textRetentionTimeF.setText(Globals.finalFitExpected[5]+"");
+		textRetentionTimeG.setText(Globals.finalFitExpected[6]+"");
+		textRetentionTimeH.setText(Globals.finalFitExpected[7]+"");
 	}
 	
 	public void statusForFinalFitByLabel(Label label, int index){
@@ -705,12 +738,16 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		iCurrentStep = saveData.iCurrentStep;
 		finalFitComplete = saveData.finalFitComplete;
 		programList = saveData.programList;
-		labelH.textProperty().unbind();
-		labelH.setText(saveData.labelHText);
-		labelS.textProperty().unbind();
-		labelS.setText(saveData.labelSText);
-		labelCp.textProperty().unbind();
-		labelCp.setText(saveData.labelCpText);
+		labelAZero.textProperty().unbind();
+		labelAZero.setText(saveData.labelAZeroText);
+		labelAOne.textProperty().unbind();
+		labelAOne.setText(saveData.labelAOneText);
+		labelATwo.textProperty().unbind();
+		labelATwo.setText(saveData.labelATwoText);
+		labelBOne.textProperty().unbind();
+		labelBOne.setText(saveData.labelBOneText);
+		labelBTwo.textProperty().unbind();
+		labelBTwo.setText(saveData.labelBTwoText);
 		labelIteration.textProperty().unbind();
 		labelIteration.setText(saveData.labelIterationText);
 		labelVariance.textProperty().unbind();
@@ -794,6 +831,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		{
 			saveData.measuredRetentionTimeSaveData[i] = saveData.new MeasuredRetentionTimeSaveData();
 			measuredRetentionTimesController[i].writeSaveData(saveData.measuredRetentionTimeSaveData[i]);
+			saveData.measuredRetentionTimeSaveData[i].gradientProgramInConventionalForm = measuredRetentionTimesController[i].getGradientProgram();
 		}
 		
 		for (int i = 0; i < backcalculateController.length; i++)
@@ -805,9 +843,11 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		saveData.iCurrentStep = iCurrentStep;
 		saveData.finalFitComplete = finalFitComplete;
 		saveData.programList = programList;
-		saveData.labelHText = labelH.getText();
-		saveData.labelSText = labelS.getText();
-		saveData.labelCpText = labelCp.getText();
+		saveData.labelAZeroText = labelAZero.getText();
+		saveData.labelAOneText = labelAOne.getText();
+		saveData.labelATwoText = labelATwo.getText();
+		saveData.labelBOneText = labelBOne.getText();
+		saveData.labelBTwoText = labelBTwo.getText();
 		saveData.labelIterationText = labelIteration.getText();
 		saveData.labelVarianceText = labelVariance.getText();
 		saveData.labelTimeElapsedText = labelTimeElapsed.getText();
@@ -1085,5 +1125,14 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		UIComponents.setupAllShapes(drawPane, lines, polygons, finalFitLabel);
 
     }
+
+	@Override
+	public void onUpdateTable(ObservableList<StandardCompound> list) {
+		for (int i = 0; i < list.size(); i++)
+		{
+			this.programList.get(i).makeEqualTo(list.get(i));
+		}
+		
+	}
 
 }

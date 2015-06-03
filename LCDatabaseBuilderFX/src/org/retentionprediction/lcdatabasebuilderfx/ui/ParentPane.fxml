@@ -338,26 +338,32 @@
                                                             </TableView>
                                                             <GridPane hgap="12.0" minHeight="-Infinity" minWidth="-Infinity" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0">
                                                                <children>
-                                                                  <Label text="Iteration #:" GridPane.rowIndex="3" />
-                                                                  <Label text="Variance (min²):" GridPane.rowIndex="4" />
-                                                                  <Label text="Time elapsed:" GridPane.rowIndex="5" />
-                                                                  <Label fx:id="labelIteration" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                                                  <Label fx:id="labelVariance" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                                                                  <Label fx:id="labelTimeElapsed" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                                                                  <Label style="-fx-font-weight: bold;" text="ΔH:" />
-                                                                  <Label fx:id="labelH" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" />
-                                                                  <Label style="-fx-font-weight: bold;" text="ΔS:" GridPane.rowIndex="1" />
-                                                                  <Label fx:id="labelS" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                                                  <Label style="-fx-font-weight: bold;" text="ΔCp:" GridPane.rowIndex="2" />
-                                                                  <Label fx:id="labelCp" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                                                  <ProgressBar fx:id="progressBar" maxWidth="1.7976931348623157E308" minHeight="-Infinity" progress="0.0" GridPane.columnSpan="2" GridPane.rowIndex="7" />
-                                                                  <Label fx:id="labelStatus" minHeight="-Infinity" text="Click the button below to solve for ΔH, ΔS, and ΔCp" GridPane.columnSpan="2" GridPane.rowIndex="6" />
+                                                                  <Label text="Iteration #:" GridPane.rowIndex="5" />
+                                                                  <Label text="Variance (min²):" GridPane.rowIndex="6" />
+                                                                  <Label text="Time elapsed:" GridPane.rowIndex="7" />
+                                                                  <Label fx:id="labelIteration" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                                                  <Label fx:id="labelVariance" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                                                  <Label fx:id="labelTimeElapsed" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                                                  <Label style="-fx-font-weight: bold;" text="a0:" />
+                                                                  <Label fx:id="labelAZero" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" />
+                                                                  <Label style="-fx-font-weight: bold;" text="a1:" GridPane.rowIndex="1" />
+                                                                  <Label fx:id="labelAOne" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                                  <Label style="-fx-font-weight: bold;" text="a2:" GridPane.rowIndex="2" />
+                                                                  <Label fx:id="labelATwo" maxWidth="1.7976931348623157E308" text="-" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                                  <ProgressBar fx:id="progressBar" maxWidth="1.7976931348623157E308" minHeight="-Infinity" progress="0.0" GridPane.columnSpan="2" GridPane.rowIndex="9" />
+                                                                  <Label fx:id="labelStatus" minHeight="-Infinity" text="Click the button below to solve for Pade Approximant's parameters" GridPane.columnSpan="2" GridPane.rowIndex="8" />
+                                                                  <Label style="-fx-font-weight: bold;" text="b1:" GridPane.rowIndex="3" />
+                                                                  <Label fx:id="labelBOne" text="-" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                                  <Label style="-fx-font-weight: bold;" text="b2:" GridPane.rowIndex="4" />
+                                                                  <Label fx:id="labelBTwo" text="-" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                                                </children>
                                                                <columnConstraints>
                                                                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                                                                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                                                                </columnConstraints>
                                                                <rowConstraints>
+                                                                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                                                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                                                                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                                                                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                                                                   <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />

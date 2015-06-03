@@ -388,7 +388,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 				dSumofSquares += Math.pow(error, 2);
 				dExpectedSumofSquares += Math.pow(this.expectedErrorArray[i], 2);
 				dSumAbsolute += Math.abs(error);
-				System.out.println(i+","+error+","+dSumofSquares+","+dExpectedSumofSquares+","+dSumAbsolute);
+				//System.out.println(i+","+error+","+dSumofSquares+","+dExpectedSumofSquares+","+dSumAbsolute);
 				dErrorList[i] = Math.abs(error);
 				iTotalCompounds++;
 			}
@@ -595,6 +595,111 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		return pro;
     }
 
+    public PredictedRetentionObject predictRetentionFromLogKPhiRelationship(double a0, double a1, double a2, double b1, double b2)
+    {
+    	PredictedRetentionObject pro = new PredictedRetentionObject();
+
+		double dIntegral = 0;
+		double dtRFinal = 0;
+		double dtRErrorFinal = 0;
+		double dD = 0;
+		double dTotalTime = 0;
+		double dTotalDeadTime = 0;
+		double dXPosition = 0;
+		double dXPositionError = 0;
+		double[] dLastXPosition = {0,0};
+		double[] dLastko = {0,0};
+		double dXMovement = 0;
+		Boolean bIsEluted = false;
+		double dPhiC = 0;
+		double dCurVal = 0;
+		double dk = 0;
+		double dt0 = 0;
+		
+		for (double t = 0; t <= (Double) standardsList.get(standardsList.size() - 1).getMeasuredRetentionTime() * 1.5; t += dtstep)
+		{
+//			if(dIntegral < 0.001 && dIntegral != 0.0){
+//				break;
+//			}
+ 			dPhiC = (interpolatedSimpleGradient.getAt(dTotalTime - dIntegral) + interpolatedGradientDifferenceProfile.getAt(dTotalTime - dIntegral)) / 100;
+ 			double padeNumerator = (a0 + a1*dPhiC + a2*dPhiC*dPhiC);
+ 			double padeDenominator = (1 + b1*dPhiC + b2*dPhiC*dPhiC);
+ 			
+ 			if(padeDenominator == 0){
+ 				break;
+ 			}
+ 			
+ 			
+// 			double slope = (padeDenominator*(a1 + 2*a2*dPhiC) - padeNumerator*(b1 + 2*b2*dPhiC))/(padeDenominator*padeDenominator);
+// 			if(slope > 0){
+// 				break;
+// 			}
+// 			
+			double logk = padeNumerator/padeDenominator; //Pade's approximate
+			if(logk < -3){
+				logk = -3;
+			}
+			dk = Math.pow(10, logk);
+			dCurVal = dtstep / dk;
+			dt0 = (initialInterpolatedDeadTimeProfile.getAt(dPhiC) + interpolatedDeadTimeDifferenceProfile.getAt(dPhiC)) / 60;
+			dXMovement = dCurVal / dt0;
+			
+			if (dXPosition >= 1)
+			{
+				dD = ((1 - dLastXPosition[0])/(dXPosition - dLastXPosition[0])) * (dTotalDeadTime - dLastXPosition[1]) + dLastXPosition[1]; 
+			}
+			else
+			{
+				dLastXPosition[0] = dXPosition;
+				dLastXPosition[1] = dTotalDeadTime;
+			}
+			
+			dTotalDeadTime += dXMovement * dt0;
+			
+			if (dXPosition >= 1)
+			{
+				dtRFinal = ((dD - dLastko[0])/(dIntegral - dLastko[0]))*(dTotalTime - dLastko[1]) + dLastko[1];
+				if(Double.isNaN(dtRFinal)){
+					System.out.println();
+				}
+				double dxdt = (dXPosition - dLastXPosition[0]) / dtstep;
+				dtRErrorFinal = dtRFinal + (dXPositionError	/ dxdt);	
+			}
+			else
+			{
+				dLastko[0] = dIntegral;
+				dLastko[1] = dTotalTime;
+			}
+			
+			dTotalTime += dtstep + dCurVal;
+			dIntegral += dCurVal;
+			
+			if (dXPosition > 1 && bIsEluted == false)
+			{
+				bIsEluted = true;
+				break;
+			}
+			
+			dXPosition += dXMovement;
+			
+			// Add error to position
+			double dXMovementErrorFraction = (dk * 0.03) / (1 + dk);
+			dXPositionError += dXMovement * dXMovementErrorFraction;
+		}
+		
+		if (bIsEluted)
+		{
+			pro.dPredictedRetentionTime = dtRFinal;// + instrumentDeadTime;
+		}
+		else
+		{
+			pro.dPredictedRetentionTime = -1.0;
+		}
+		// Now calculate final error in the projection
+		pro.dPredictedErrorSigma = dtRErrorFinal - dtRFinal;
+
+		return pro;
+    }
 	
 	public void switchToStep4() {
 		// Can't update the table until it's added somewhere.
@@ -2480,9 +2585,9 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			NumberFormat percentFormatter = new DecimalFormat("0.00");
 			
 			// Step #1: Create interpolating functions for the isocratic data of each gradient calibration solute
-			standardIsocraticDataInterpolated = new InterpolationFunction[Globals.StandardIsocraticDataArray.length];
+			standardIsocraticDataInterpolated = new InterpolationFunction[standardsList.size()];
 			
-			for (int i = 0; i < standardIsocraticDataInterpolated.length; i++)
+			for (int i = 0; i < standardsList.size(); i++)
 			{
 				Integer iIndex = (Integer) standardsList.get(i).getIndex();
 				standardIsocraticDataInterpolated[i] = new InterpolationFunction(Globals.StandardIsocraticDataArray[iIndex]);
@@ -3090,7 +3195,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		
 		dVmMax *= this.flowRate / 60;
 		
-		plotXMax2 = standardsList.get(standardsList.size() - 1).getMeasuredRetentionTime()-instrumentDeadTime;
+		plotXMax2 = this.standardsList.get(this.standardsList.size() - 1).getMeasuredRetentionTime()-instrumentDeadTime;
     	
     	// Here is where we set the value of m_dtstep
     	dtstep = plotXMax2 * 0.001;
@@ -3486,8 +3591,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
 		{
 			//updateGraphsWithIdealProfiles();
-			//updateGraphs(this.interpolatedSimpleGradient, this.interpolatedGradientDifferenceProfile, this.gradientProfileDifferenceArray, this.m_InterpolatedHoldUpProfile, this.m_dHoldUpArray);
-	    	updateTestCompoundTable();
+			updateGraphs(false);
+			updateTestCompoundTable();
 		}
 	}
 

@@ -26,9 +26,11 @@ public class SaveData implements Serializable
 	int[] iCurrentStep;
 	boolean finalFitComplete;
 	ObservableList<StandardCompound> programList;
-	String labelHText;
-	String labelSText;
-	String labelCpText;
+	String labelAZeroText;
+	String labelAOneText;
+	String labelATwoText;
+	String labelBOneText;
+	String labelBTwoText;
 	String labelIterationText;
 	String labelVarianceText;
 	String labelTimeElapsedText;
@@ -62,9 +64,11 @@ public class SaveData implements Serializable
 	    	newTestCompound.setName(Globals.requiredGradientProgramNames[i]);
 	    	programList.add(newTestCompound);
 	    }
-		labelHText = "";
-		labelSText = "";
-		labelCpText = "";
+		labelAOneText = "";
+		labelATwoText = "";
+		labelAZeroText = "";
+		labelBOneText = "";
+		labelBTwoText = "";
 		labelIterationText = "";
 		labelVarianceText = "";
 		labelTimeElapsedText = "";
@@ -107,9 +111,11 @@ public class SaveData implements Serializable
 		out.writeBoolean(finalFitComplete);
 		StandardCompound[] x = programList.toArray(new StandardCompound[0]);
 		out.writeObject(x);
-		out.writeObject(labelHText);
-		out.writeObject(labelSText);
-		out.writeObject(labelCpText);
+		out.writeObject(labelAZeroText);
+		out.writeObject(labelAOneText);
+		out.writeObject(labelATwoText);
+		out.writeObject(labelBOneText);
+		out.writeObject(labelBTwoText);
 		out.writeObject(labelIterationText);
 		out.writeObject(labelVarianceText);
 		out.writeObject(labelTimeElapsedText);
@@ -142,9 +148,11 @@ public class SaveData implements Serializable
 			iCurrentStep = (int[])in.readObject();
 			finalFitComplete = in.readBoolean();
 			programList = FXCollections.observableArrayList((StandardCompound[])in.readObject());
-			labelHText = (String)in.readObject();
-			labelSText = (String)in.readObject();
-			labelCpText = (String)in.readObject();
+			labelAZeroText = (String)in.readObject();
+			labelAOneText = (String)in.readObject();
+			labelATwoText = (String)in.readObject();
+			labelBOneText = (String)in.readObject();
+			labelBTwoText = (String)in.readObject();
 			labelIterationText = (String)in.readObject();
 			labelVarianceText = (String)in.readObject();
 			labelTimeElapsedText = (String)in.readObject();
@@ -359,7 +367,7 @@ public class SaveData implements Serializable
 		private void writeObject(ObjectOutputStream out) throws IOException
 		{
 			out.writeLong(MeasuredRetentionTimeSaveData.classVersion);
-			//out.writeObject(gradientProgramInConventionalForm);
+			out.writeObject(gradientProgramInConventionalForm);
 			out.writeObject(programName);
 			out.writeObject(fileName);
 			StandardCompound[] x = standardsList.toArray(new StandardCompound[0]);
@@ -376,7 +384,7 @@ public class SaveData implements Serializable
 			
 			if (version >= 1)
 			{
-				//gradientProgramInConventionalForm = (double[][])in.readObject();
+				gradientProgramInConventionalForm = (double[][])in.readObject();
 				programName = (String)in.readObject();
 				fileName = (String)in.readObject();
 				StandardCompound[] x = (StandardCompound[])in.readObject();

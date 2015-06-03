@@ -5,7 +5,6 @@ import java.util.ResourceBundle;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.*;
 
-import boswell.peakfinderlcfx.GlobalsDan;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -107,12 +106,12 @@ public class StepFourPaneController implements Initializable {
 	    	    });
 	    	    
 	    	    // Populate the table with the test compounds
-	    	    for (int i = 0; i < GlobalsDan.TestCompoundNameArray.length; i++)
+	    	    for (int i = 0; i < Globals.TestCompoundNameArray.length; i++)
 	    	    {
 	    	    	StandardCompound newTestCompound = new StandardCompound();
 	    	    	newTestCompound.setIndex(i);
-	    	    	newTestCompound.setName(GlobalsDan.TestCompoundNameArray[i]);
-	    	    	newTestCompound.setMz(GlobalsDan.convertMZToString(GlobalsDan.TestCompoundMZArray[i]));
+	    	    	newTestCompound.setName(Globals.TestCompoundNameArray[i]);
+	    	    	newTestCompound.setMz(Globals.convertMZToString(Globals.TestCompoundMZArray[i]));
 	    	    	testCompoundList.add(newTestCompound);
 	    	    }
 	    	    

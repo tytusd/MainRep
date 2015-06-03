@@ -85,6 +85,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	private String fileName;
 	private String strProgramName = "";
 	private ObservableList<GradientProgramStep> gradientProgramList;
+	private int index = -1;
 	
 	
    	public interface MeasuredRetentionTimesControllerListener{
@@ -104,7 +105,6 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		// TODO Auto-generated method stub
 		comboStationaryPhase.getItems().clear();
 		comboStationaryPhase.getItems().addAll("Agilent HP-5MS UI");
 		
@@ -337,8 +337,8 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		innerDiameter = saveData.innerDiameter;
 		flowRate = saveData.flowRate;
 		instrumentDeadTime = saveData.instrumentDeadTime;
-//		gradientProgramInConventionalForm = saveData.gradientProgramInConventionalForm;
-//		setGradientProgramInConventionalForm();
+		gradientProgramInConventionalForm = saveData.gradientProgramInConventionalForm;
+		setGradientProgramInConventionalForm();
 		this.textFieldColumnLength.setText(Float.toString((float)columnLength));
 		this.textFieldInnerDiameter.setText(Float.toString((float)innerDiameter));
 		this.textFieldFlowRate.setText(Float.toString((float)flowRate));
@@ -437,6 +437,22 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	{
 		strProgramName = strName;
 		requirementsPane.setText("Requirements for " + strProgramName);
+	}
+
+	//TODO: delete this method later
+	public void setIndex(int index) {
+		this.index  = index;
+		double[] dRetentionTimes = Globals.dPredefinedValues[0][index];
+		boolean[] bSkippedStandards = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false};	
+		for (int i = 0; i < dRetentionTimes.length; i++)
+		{
+			// Mark whether the standard is skipped.
+			standardsList.get(i).setUse(!bSkippedStandards[i]);
+			if (!bSkippedStandards[i])
+				standardsList.get(i).setMeasuredRetentionTime(dRetentionTimes[i]);
+			else
+				standardsList.get(i).setMeasuredRetentionTime(0.0);
+		}
 	}
 
 }
