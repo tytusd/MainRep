@@ -6,9 +6,9 @@ We used Eclipse IDE to work on these projects. The projects can be setup on your
 
 2. Install Maven build tool - http://maven.apache.org/download.cgi . There are installation steps at the bottom of the page.
 
-3. Download the required custom libraries needed to run the projects - https://www.dropbox.com/s/a1faxxc03dgro4n/Javalibs.zip?dl=0 .Extract the Javalibs folder and run maven.bat. 
+3. Install an IDE such as Eclipse Java. Import the project from Git using this URI: https://github.com/boswellgroup/MainRep.git
 
-4. Install an IDE such as Eclipse Java. Import the project from Git using this URI: https://github.com/boswellgroup/MainRep.git
+4. Do a Maven Install on GraphControl to resolve all the external dependencies. In Eclipse, you can do so by right clicking the project -> Run As-> Maven Install. By now, all of the errors should go away. You might need to resolve minor problems such as choosing the right JavaSDK installed on your system.
 
 5. You are ready to go!
   
