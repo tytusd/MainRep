@@ -31,6 +31,7 @@ public class StandardCompound implements Serializable
 	private DoubleProperty predictedRetentionTime;
 	private DoubleProperty error;
 	private IntegerProperty index;
+	private DoubleProperty injectionTime;
 	
 	// This string binding produces the correct value for the predicted retention time
 	private StringBinding predictedRetentionTimeStringBinding;
@@ -60,7 +61,8 @@ public class StandardCompound implements Serializable
 		this.predictedRetentionTime = new SimpleDoubleProperty();
 		this.error = new SimpleDoubleProperty();
 		this.index = new SimpleIntegerProperty();
-
+		this.injectionTime = new SimpleDoubleProperty();
+		
 		this.use.set(use);
 		this.name.set(name);
 		this.mz.set(mz);
@@ -68,6 +70,7 @@ public class StandardCompound implements Serializable
 		this.predictedRetentionTime.set(predictedRetentionTime);
 		this.error.bind(this.measuredRetentionTime.subtract(this.predictedRetentionTime));
 		this.index.set(index);
+		this.injectionTime.set(0.0);
 		
 		// This string binding produces the correct value for the predicted retention time
 		this.predictedRetentionTimeStringBinding = new StringBinding(){
@@ -208,6 +211,18 @@ public class StandardCompound implements Serializable
 	    return use;
 	}
 	
+	public void setInjectionTime(double injectionTime){
+		this.injectionTime.set(injectionTime);
+	}
+	
+	public double getInjectionTime(){
+		return this.injectionTime.get();
+	}
+	
+	public DoubleProperty injectionTimeProperty(){
+		return injectionTime;
+	}
+	
 	public String getName()
 	{
 		return name.get();
@@ -288,6 +303,7 @@ public class StandardCompound implements Serializable
 		out.writeDouble(this.measuredRetentionTime.getValue());
 		out.writeDouble(this.predictedRetentionTime.getValue());
 		out.writeInt(this.index.getValue());
+		out.writeDouble(this.injectionTime.getValue());
 	}
 	
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
@@ -297,6 +313,7 @@ public class StandardCompound implements Serializable
 		if (lVersion >= 1)
 		{
 			init(in.readBoolean(), (String)in.readObject(), (String)in.readObject(), in.readDouble(), in.readDouble(), in.readInt());
+			this.injectionTime.set(in.readDouble());
 		}
 	}
 }

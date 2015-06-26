@@ -322,6 +322,11 @@
                                                    <children>
                                                       <VBox layoutX="91.0" layoutY="98.0" spacing="12.0" style="-fx-spacing: 0.5em;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                          <children>
+                                                         	<AnchorPane fx:id="anchorPaneRetentionSolver" minHeight="250.0" minWidth="200.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
+								                                 <padding>
+								                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+								                                 </padding>
+							                                 </AnchorPane>
                                                             <TableView fx:id="tableRetentionTimes" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" prefHeight="999999.0">
                                                                <columns>
                                                                   <TableColumn fx:id="columnProgram" editable="false" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="150.0" sortable="false" text="Program" />

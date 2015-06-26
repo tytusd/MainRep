@@ -41,6 +41,8 @@ import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.Ba
 import org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController.MeasuredRetentionTimesControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
 
+import boswell.graphcontrolfx.GraphControlFX;
+
 public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener, SolveParametersListener {
 
 	private ParentPaneControllerListener parentPaneControllerListener;
@@ -53,6 +55,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	@FXML private AnchorPane gradientFanchor;
 	@FXML private AnchorPane gradientGanchor;
 	@FXML private AnchorPane gradientHanchor;
+	@FXML private AnchorPane anchorPaneRetentionSolver;
 
     @FXML private TextField textRetentionTimeA;
     @FXML private TextField textRetentionTimeB;
@@ -168,6 +171,10 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     private ObservableList<StandardCompound> programList = FXCollections.observableArrayList();
     private boolean finalFitComplete = false;
     private SolveParametersTask solveParametersTask;
+
+    private final double rem = javafx.scene.text.Font.getDefault().getSize();
+    
+	private GraphControlFX retentionSolverTimeGraph;
     
     public interface ParentPaneControllerListener {
 
@@ -230,6 +237,31 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			textRetentionTimeF.focusedProperty().addListener(changeListener);
 			textRetentionTimeG.focusedProperty().addListener(changeListener);
 			textRetentionTimeH.focusedProperty().addListener(changeListener);
+			
+			retentionSolverTimeGraph = new GraphControlFX();
+			retentionSolverTimeGraph.setControlsEnabled(false);
+			retentionSolverTimeGraph.setYAxisTitle("K");
+			retentionSolverTimeGraph.setYAxisBaseUnit("", "");
+			retentionSolverTimeGraph.setYAxisScientificNotation(true);
+			retentionSolverTimeGraph.setYAxisRangeIndicatorsVisible(true);
+			retentionSolverTimeGraph.setAutoScaleY(true);
+			
+			retentionSolverTimeGraph.setXAxisType(false);
+			retentionSolverTimeGraph.setXAxisRangeIndicatorsVisible(false);
+			retentionSolverTimeGraph.setXAxisTitle("Eluent Composition");
+			retentionSolverTimeGraph.setXAxisBaseUnit("%B", "%B");
+			retentionSolverTimeGraph.setAutoScaleX(true);
+			retentionSolverTimeGraph.setSelectionCursorVisible(false);
+			
+			anchorPaneRetentionSolver.getChildren().add(retentionSolverTimeGraph);
+			
+			AnchorPane.setTopAnchor(retentionSolverTimeGraph, 0.0);
+			AnchorPane.setBottomAnchor(retentionSolverTimeGraph, 0.0);
+			AnchorPane.setLeftAnchor(retentionSolverTimeGraph, 0.0);
+			AnchorPane.setRightAnchor(retentionSolverTimeGraph, 0.0);
+			retentionSolverTimeGraph.widthProperty().bind(anchorPaneRetentionSolver.widthProperty().subtract(rem));
+			retentionSolverTimeGraph.heightProperty().bind(anchorPaneRetentionSolver.heightProperty().subtract(rem));
+
 			
 			performValidations();
 		}
@@ -349,6 +381,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     	solveParametersTask = new SolveParametersTask();
     	solveParametersTask.setBackCalculateController(this.backcalculateController);
     	solveParametersTask.setProgramList(programList);
+    	solveParametersTask.setGraphControl(retentionSolverTimeGraph);
     	solveParametersTask.setSolveParametersListener(this);
     	
     	labelIteration.textProperty().bind(solveParametersTask.getIterationProperty());

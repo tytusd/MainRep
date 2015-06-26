@@ -832,4 +832,14 @@ public class Globals
 		return tempArray;
 		
 	}
+	
+	public static double[][] injectionModeData = 	{{0,7.419},
+											{7,11.269},
+											{14,17.013},
+											{21,23.43},
+											{28,30.058},
+											{35,36.769},
+											{42,43.535},
+											{49,50.352},
+											{56,57.206}};
 }

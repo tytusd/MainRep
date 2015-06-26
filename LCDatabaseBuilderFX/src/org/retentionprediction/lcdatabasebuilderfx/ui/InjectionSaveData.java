@@ -13,17 +13,17 @@ import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class SaveData implements Serializable
+public class InjectionSaveData implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 
 	public static final long classVersion = 1L;
 
-	MeasuredRetentionTimeSaveData measuredRetentionTimeSaveData[];
-	BackCalculateSaveData backCalculateSaveData[];
+	MeasuredRetentionTimeSaveData measuredRetentionTimeSaveData;
+	BackCalculateSaveData backCalculateSaveData;
 
 	// For ParentPaneController
-	int[] iCurrentStep;
+	int iCurrentStep;
 	boolean finalFitComplete;
 	ObservableList<StandardCompound> programList;
 	String labelAZeroText;
@@ -35,35 +35,13 @@ public class SaveData implements Serializable
 	String labelVarianceText;
 	String labelTimeElapsedText;
 	String statusText;
-	String compoundName;
-	String formula;
-	String pubChemID;
-	String cAS;
-	String nISTID;
-	String hMDB;
-	String retentionTimeA;
-	String retentionTimeB;
-	String retentionTimeC;
-	String retentionTimeD;
-	String retentionTimeE;
-	String retentionTimeF;
-	String retentionTimeG;
-	String retentionTimeH;
 	
-	SaveData()
+	InjectionSaveData()
 	{
 		// Load with default values
 		
-		iCurrentStep = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		iCurrentStep = 0;
 		finalFitComplete = false;
-		programList = FXCollections.observableArrayList();
-	    for (int i = 0; i < 8; i++)
-	    {
-	    	StandardCompound newTestCompound = new StandardCompound();
-	    	newTestCompound.setIndex(i);
-	    	newTestCompound.setName(Globals.requiredGradientProgramNames[i]);
-	    	programList.add(newTestCompound);
-	    }
 		labelAOneText = "";
 		labelATwoText = "";
 		labelAZeroText = "";
@@ -73,31 +51,13 @@ public class SaveData implements Serializable
 		labelVarianceText = "";
 		labelTimeElapsedText = "";
 		statusText = "Click the button below to solve for \u0394H, \u0394S, and \u0394Cp";
-		compoundName = "";
-		formula = "";
-		pubChemID = "";
-		cAS = "";
-		nISTID = "";
-		hMDB = "";
-		retentionTimeA = "";
-		retentionTimeB = "";
-		retentionTimeC = "";
-		retentionTimeD = "";
-		retentionTimeE = "";
-		retentionTimeF = "";
-		retentionTimeG = "";
-		retentionTimeH = "";
 
-		measuredRetentionTimeSaveData = new MeasuredRetentionTimeSaveData[8];
-		backCalculateSaveData = new BackCalculateSaveData[8];
-		
-		for (int i = 0; i < 8; i++)
-		{
-			measuredRetentionTimeSaveData[i] = new MeasuredRetentionTimeSaveData();
-			measuredRetentionTimeSaveData[i].programName = Globals.requiredGradientProgramNames[i];
+		measuredRetentionTimeSaveData = new MeasuredRetentionTimeSaveData();
+		backCalculateSaveData = new BackCalculateSaveData();
 
-			backCalculateSaveData[i] = new BackCalculateSaveData();
-		}
+		measuredRetentionTimeSaveData = new MeasuredRetentionTimeSaveData();
+		measuredRetentionTimeSaveData.programName = "Gradient A";
+		backCalculateSaveData = new BackCalculateSaveData();
 	}
 	
 	private void writeObject(ObjectOutputStream out) throws IOException
@@ -109,7 +69,7 @@ public class SaveData implements Serializable
 
 		out.writeObject(iCurrentStep);
 		out.writeBoolean(finalFitComplete);
-		StandardCompound[] x = programList.toArray(new StandardCompound[0]);
+		StandardCompound[] x = programList.toArray(new StandardCompound[programList.size()]);
 		out.writeObject(x);
 		out.writeObject(labelAZeroText);
 		out.writeObject(labelAOneText);
@@ -120,20 +80,6 @@ public class SaveData implements Serializable
 		out.writeObject(labelVarianceText);
 		out.writeObject(labelTimeElapsedText);
 		out.writeObject(statusText);
-		out.writeObject(compoundName);
-		out.writeObject(formula);
-		out.writeObject(pubChemID);
-		out.writeObject(cAS);
-		out.writeObject(nISTID);
-		out.writeObject(hMDB);
-		out.writeObject(retentionTimeA);
-		out.writeObject(retentionTimeB);
-		out.writeObject(retentionTimeC);
-		out.writeObject(retentionTimeD);
-		out.writeObject(retentionTimeE);
-		out.writeObject(retentionTimeF);
-		out.writeObject(retentionTimeG);
-		out.writeObject(retentionTimeH);
 	}
 	
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException
@@ -142,10 +88,10 @@ public class SaveData implements Serializable
 		
 		if (version >= 1)
 		{
-			measuredRetentionTimeSaveData = (MeasuredRetentionTimeSaveData[])in.readObject();
-			backCalculateSaveData = (BackCalculateSaveData[])in.readObject();
+			measuredRetentionTimeSaveData = (MeasuredRetentionTimeSaveData)in.readObject();
+			backCalculateSaveData = (BackCalculateSaveData)in.readObject();
 			
-			iCurrentStep = (int[])in.readObject();
+			iCurrentStep = (int)in.readObject();
 			finalFitComplete = in.readBoolean();
 			programList = FXCollections.observableArrayList((StandardCompound[])in.readObject());
 			labelAZeroText = (String)in.readObject();
@@ -157,20 +103,6 @@ public class SaveData implements Serializable
 			labelVarianceText = (String)in.readObject();
 			labelTimeElapsedText = (String)in.readObject();
 			statusText = (String)in.readObject();
-			compoundName = (String)in.readObject();
-			formula = (String)in.readObject();
-			pubChemID = (String)in.readObject();
-			cAS = (String)in.readObject();
-			nISTID = (String)in.readObject();
-			hMDB = (String)in.readObject();
-			retentionTimeA = (String)in.readObject();
-			retentionTimeB = (String)in.readObject();
-			retentionTimeC = (String)in.readObject();
-			retentionTimeD = (String)in.readObject();
-			retentionTimeE = (String)in.readObject();
-			retentionTimeF = (String)in.readObject();
-			retentionTimeG = (String)in.readObject();
-			retentionTimeH = (String)in.readObject();
 		}
 	}
 	
@@ -217,7 +149,7 @@ public class SaveData implements Serializable
 			flowRate = 1.0;
 			fileName = "";
 			standardsList = FXCollections.observableArrayList();
-			gradientProgramInConventionalForm = new double[][]{{0,5},{5,95}};
+			gradientProgramInConventionalForm = new double[][]{{0,5},{60,95}};
 			m_dIdealGradientProfileArray = null;
 			m_dGradientProfileDifferenceArray = null;
 			m_dSimpleGradientProfileArray = null;
@@ -341,7 +273,7 @@ public class SaveData implements Serializable
 		double[][] gradientProgramInConventionalForm;
 		MeasuredRetentionTimeSaveData()
 		{
-			gradientProgramInConventionalForm = new double[][]{{0,5},{5,95}};
+			gradientProgramInConventionalForm = new double[][]{{0,5},{60,95}};
 			programName = "Gradient A";
 			fileName = "";
 			// Load the measured retention times table with the correct values

@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
 
+import org.retentionprediction.lcdatabasebuilderfx.ui.InjectionParentPaneController.InjectionParentPaneControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.ParentPaneController.ParentPaneControllerListener;
 
 import boswell.fxoptionpane.FXOptionPane;
@@ -29,7 +30,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-public class MainController implements Initializable, ParentPaneControllerListener{
+public class MainController implements Initializable, ParentPaneControllerListener, InjectionParentPaneControllerListener{
 
     //Fields for this class
 	@FXML private RadioButton eightGradientsRadio;
@@ -40,15 +41,19 @@ public class MainController implements Initializable, ParentPaneControllerListen
     
     //Fields for ParentPaneController
     private ParentPaneController parentPaneController;
+    private InjectionParentPaneController injectionParentPaneController;
+    
     private Stage primaryStage;
 	private File currentFile = null;
 	private Preferences prefs;
 	private SaveData saveData = new SaveData();
+	private InjectionSaveData injectionSaveData = new InjectionSaveData();
 	//private SaveData saveData = null;
 	private int majorVersion = 1;
 	private int minorVersion = 0;
 	private boolean documentChangedFlag;
-    
+    private boolean isEightGradientsRadio = true;
+	
     public Stage getPrimaryStage() {
 		return primaryStage;
 	}
@@ -62,7 +67,7 @@ public class MainController implements Initializable, ParentPaneControllerListen
     	FXMLLoader fxmlLoader = new FXMLLoader();
     	try {
     		VBox root = null;
-    		boolean isEightGradientsRadio = toggleGroup.getSelectedToggle().equals(eightGradientsRadio);
+    		isEightGradientsRadio = toggleGroup.getSelectedToggle().equals(eightGradientsRadio);
     		if(isEightGradientsRadio){
     			InputStream stream = getClass().getResource("ParentPane.fxml").openStream();
     			root = fxmlLoader.load(stream);
@@ -71,6 +76,10 @@ public class MainController implements Initializable, ParentPaneControllerListen
     		}
     		else{
     			//Singlegradientpane
+    			InputStream stream = getClass().getResource("InjectionParentPane.fxml").openStream();
+    			root = fxmlLoader.load(stream);
+    			injectionParentPaneController = fxmlLoader.getController();
+    			injectionParentPaneController.setInjectionParentPaneControllerListener(this);
     		}
 			primaryStage.hide();
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getBounds();
@@ -100,14 +109,19 @@ public class MainController implements Initializable, ParentPaneControllerListen
 		eightGradientsRadio.setToggleGroup(toggleGroup);
 		singleGradientRadio.setToggleGroup(toggleGroup);
 		toggleGroup.selectToggle(eightGradientsRadio);
-		singleGradientRadio.setDisable(true);
 		
 	}
 
 	@Override
 	public void onNew() {
-		SaveData saveData = new SaveData();
-       	parentPaneController.loadSaveData(saveData);
+		if(isEightGradientsRadio){
+			SaveData saveData = new SaveData();
+	       	parentPaneController.loadSaveData(saveData);
+		}
+		else{
+			InjectionSaveData saveData = new InjectionSaveData();
+			injectionParentPaneController.loadSaveData(saveData);
+		}
 		currentFile = null;
 		this.updateWindowTitle();
 	}
@@ -118,10 +132,10 @@ public class MainController implements Initializable, ParentPaneControllerListen
 		fileChooser.setTitle("Open LC Database Builder File");
 		
 		fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("LC Database Builder Files (*.lcdata)", "*.lcdata"),
+	            new FileChooser.ExtensionFilter("LC Database Builder Files (*.lcdata)", "*.lcdata"),
 				new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
-            );
-		
+	    );
+			
 		// Set default directory
 		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
 		if (lastOutputDir != "")
@@ -132,12 +146,15 @@ public class MainController implements Initializable, ParentPaneControllerListen
 		}
 		
 		File returnedFile = fileChooser.showOpenDialog(primaryStage);
-
 		if (returnedFile != null) 
 		{
 			if (readFromInputStream(returnedFile))
 			{
-				parentPaneController.cancelAllTasks();
+				if(isEightGradientsRadio){
+					parentPaneController.cancelAllTasks();
+				}
+				else injectionParentPaneController.cancelAllTasks();
+				
 				updateWindowTitle();
 				prefs.put("LAST_OUTPUT_DIR", returnedFile.getAbsolutePath());
 			}
@@ -147,58 +164,79 @@ public class MainController implements Initializable, ParentPaneControllerListen
 
 	@Override
 	public void onSave() {
-		if (parentPaneController.areThreadsRunning())
-		{
-			FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
-			return;
+		if(isEightGradientsRadio){
+			if (parentPaneController.areThreadsRunning())
+			{
+				FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
+				return;
+			}
 		}
-		
+		else{
+			if (injectionParentPaneController.areThreadsRunning())
+			{
+				FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
+				return;
+			}
+		}	
 		if (currentFile == null)
 		{
 			onSaveAs();
 		}
-	
 		writeToOutputStream();
+				
 		
 	}
 
 	@Override
 	public void onSaveAs() {
-		if (parentPaneController.areThreadsRunning())
-		{
-			FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
-			return;
+		if(isEightGradientsRadio){
+			if (parentPaneController.areThreadsRunning())
+			{
+				FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
+				return;
+			}
+		}
+		else{
+			if (injectionParentPaneController.areThreadsRunning())
+			{
+				FXOptionPane.showMessageDialog(primaryStage, "You cannot save while background calculations are running. Wait until the calculations are complete and then try again.", "Cannot Save Now", FXOptionPane.WARNING_MESSAGE);
+				return;
+			}
 		}
 
-		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle("Save LC Database Builder File");
-		
-		fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("LC Database Builder Files (*.lcdata)", "*.lcdata"),
-				new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
-            );
-
-		// Set default directory
-		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
-		if (lastOutputDir != "")
-		{
-			File lastDir = new File(lastOutputDir);
-			if (lastDir.exists())
-				fileChooser.setInitialDirectory(lastDir.getParentFile());
-		}
-		
-		File returnedFile = fileChooser.showSaveDialog(primaryStage);
-
-		if (returnedFile != null) 
-		{
-			if (!returnedFile.getName().endsWith(".lcdata"))
-				returnedFile = new File(returnedFile.getAbsolutePath() + ".lcdata");
 			
-			this.currentFile = returnedFile;
-			updateWindowTitle();
-			writeToOutputStream();
-			prefs.put("LAST_OUTPUT_DIR", returnedFile.getAbsolutePath());
-		}
+			FileChooser fileChooser = new FileChooser();
+			fileChooser.setTitle("Save LC Database Builder File");
+			
+			fileChooser.getExtensionFilters().addAll(
+	                new FileChooser.ExtensionFilter("LC Database Builder Files (*.lcdata)", "*.lcdata"),
+					new FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
+	            );
+
+			// Set default directory
+			String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
+			if (lastOutputDir != "")
+			{
+				File lastDir = new File(lastOutputDir);
+				if (lastDir.exists())
+					fileChooser.setInitialDirectory(lastDir.getParentFile());
+			}
+			
+			File returnedFile = fileChooser.showSaveDialog(primaryStage);
+
+			if (returnedFile != null) 
+			{
+				if (!returnedFile.getName().endsWith(".lcdata"))
+					returnedFile = new File(returnedFile.getAbsolutePath() + ".lcdata");
+				
+				this.currentFile = returnedFile;
+				updateWindowTitle();
+				writeToOutputStream();
+				prefs.put("LAST_OUTPUT_DIR", returnedFile.getAbsolutePath());
+			}
+		
+		
+		
 	}
 
 	@Override
@@ -220,8 +258,15 @@ public class MainController implements Initializable, ParentPaneControllerListen
                 FileInputStream fis = new FileInputStream(fileToRead);
                 ObjectInputStream ois = new ObjectInputStream(fis);
                 
-                saveData = (SaveData)ois.readObject();
-               	parentPaneController.loadSaveData(saveData);
+                if(isEightGradientsRadio){
+                	saveData = (SaveData)ois.readObject();
+                   	parentPaneController.loadSaveData(saveData);
+                }
+                else{
+                	injectionSaveData = (InjectionSaveData)ois.readObject();
+                	injectionParentPaneController.loadSaveData(injectionSaveData);
+                }
+                
     	        
                 ois.close();
 			} 
@@ -246,9 +291,14 @@ public class MainController implements Initializable, ParentPaneControllerListen
             FileOutputStream fos = new FileOutputStream(currentFile, false);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-	    	parentPaneController.writeSaveData(saveData);
-	    	oos.writeObject(saveData);
-	    	
+            if(isEightGradientsRadio){
+            	parentPaneController.writeSaveData(saveData);
+            	oos.writeObject(saveData);
+            }
+            else{
+            	injectionParentPaneController.writeSaveData(injectionSaveData);
+            	oos.writeObject(injectionSaveData);
+            }
             oos.flush();
 			oos.close();
 			this.documentChangedFlag = false;

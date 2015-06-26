@@ -156,7 +156,11 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
     private int status = 0;
     private double score = 0;
 	private Window parentWindow;
+	private int m_iIdealPlotIndexGrad = -1;
+	private int m_iIdealPlotIndexDeadTime = -1;
     
+	private boolean isInjectionMode = false;
+	
 	public BackCalculateControllerListener getBackcalculateListener() {
 		return backcalculateControllerListener;
 	}
@@ -231,8 +235,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 
 			eluentCompositionTimeGraph = new GraphControlFX();
 			eluentCompositionTimeGraph.setControlsEnabled(false);
-			eluentCompositionTimeGraph.setYAxisTitle("Eluent Composition (%B)");
-			eluentCompositionTimeGraph.setYAxisBaseUnit("\u00B0C", "\u00B0C");
+			eluentCompositionTimeGraph.setYAxisTitle("Eluent Composition");
+			eluentCompositionTimeGraph.setYAxisBaseUnit("%B", "%B");
 			eluentCompositionTimeGraph.setYAxisScientificNotation(true);
 			eluentCompositionTimeGraph.setYAxisRangeIndicatorsVisible(true);
 			eluentCompositionTimeGraph.setAutoScaleY(true);
@@ -251,9 +255,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			eluentCompositionTimeGraph.heightProperty().bind(anchorPaneEluentCompositionTime.heightProperty().subtract(rem));
 
 			deadTimeEluentCompositionGraph = new GraphControlFX();
-			deadTimeEluentCompositionGraph = new GraphControlFX();
 			deadTimeEluentCompositionGraph.setControlsEnabled(false);
-			deadTimeEluentCompositionGraph.setYAxisTitle("Uracil Dead Time (s)");
+			deadTimeEluentCompositionGraph.setYAxisTitle("Uracil Dead Time");
 			deadTimeEluentCompositionGraph.setYAxisBaseUnit("seconds", "s");
 			//holdUpProfileGraph.setYAxisRangeLimits(-1E15d, 1E15d);
 			deadTimeEluentCompositionGraph.setYAxisScientificNotation(true);
@@ -262,8 +265,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	        
 			deadTimeEluentCompositionGraph.setXAxisType(false);
 			deadTimeEluentCompositionGraph.setXAxisRangeIndicatorsVisible(false);
-			deadTimeEluentCompositionGraph.setXAxisTitle("Eluent Composition (%B)");
-			deadTimeEluentCompositionGraph.setXAxisBaseUnit("\u00B0C", "\u00B0C");
+			deadTimeEluentCompositionGraph.setXAxisTitle("Eluent Composition");
+			deadTimeEluentCompositionGraph.setXAxisBaseUnit("%B", "%B");
 			deadTimeEluentCompositionGraph.setAutoScaleX(true);
 			deadTimeEluentCompositionGraph.setSelectionCursorVisible(false);
 			
@@ -595,7 +598,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		return pro;
     }
 
-    public PredictedRetentionObject predictRetentionFromLogKPhiRelationship(double a0, double a1, double a2, double b1, double b2)
+    public PredictedRetentionObject predictRetentionFromLogKPhiRelationship(double a0, double a1, double a2, double b1, double b2, double injectionTime)
     {
     	PredictedRetentionObject pro = new PredictedRetentionObject();
 
@@ -603,7 +606,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		double dtRFinal = 0;
 		double dtRErrorFinal = 0;
 		double dD = 0;
-		double dTotalTime = 0;
+		double dTotalTime = injectionTime;
 		double dTotalDeadTime = 0;
 		double dXPosition = 0;
 		double dXPositionError = 0;
@@ -615,8 +618,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		double dCurVal = 0;
 		double dk = 0;
 		double dt0 = 0;
-		
-		for (double t = 0; t <= (Double) standardsList.get(standardsList.size() - 1).getMeasuredRetentionTime() * 1.5; t += dtstep)
+		for (double t = injectionTime; t <= (Double) standardsList.get(standardsList.size() - 1).getMeasuredRetentionTime() * 1.5; t += dtstep)
 		{
 //			if(dIntegral < 0.001 && dIntegral != 0.0){
 //				break;
@@ -660,7 +662,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			{
 				dtRFinal = ((dD - dLastko[0])/(dIntegral - dLastko[0]))*(dTotalTime - dLastko[1]) + dLastko[1];
 				if(Double.isNaN(dtRFinal)){
-					System.out.println();
+					System.out.println("NaN");
 				}
 				double dxdt = (dXPosition - dLastXPosition[0]) / dtstep;
 				dtRErrorFinal = dtRFinal + (dXPositionError	/ dxdt);	
@@ -3392,6 +3394,32 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		interpolatedSimpleGradient = new LinearInterpolationFunction(simpleGradientArray);
 	}
 	
+	private void updateGraphsWithIdealProfiles()
+	{
+		eluentCompositionTimeGraph.RemoveSeries(m_iIdealPlotIndexGrad);
+		deadTimeEluentCompositionGraph.RemoveSeries(m_iIdealPlotIndexDeadTime);
+
+    	m_iIdealPlotIndexGrad = eluentCompositionTimeGraph.AddSeries("Ideal Gradient Program", Color.rgb(0, 0, 0), 1, false, false);
+    	m_iIdealPlotIndexDeadTime = deadTimeEluentCompositionGraph.AddSeries("Ideal Dead Time", Color.rgb(0, 0, 0), 1, false, false);
+    	
+		double dMinTemp = this.idealGradientProfileArray[0][1];
+		double dMaxTemp = this.idealGradientProfileArray[this.idealGradientProfileArray.length - 1][1];
+		
+		// Plot the ideal temperature profile
+    	for (int i = 0; i < idealGradientProfileArray.length; i++)
+    	{
+    		this.eluentCompositionTimeGraph.AddDataPoint(m_iIdealPlotIndexGrad, idealGradientProfileArray[i][0] * 60, idealGradientProfileArray[i][1]);
+    	}
+    	
+    	// Add the initial interpolated hold-up time profile to the graph control
+	    int iNumPoints = 1000;
+	    for (int i = 0; i < iNumPoints; i++)
+	    {
+	    	double dXPos = (((double)i / (double)(iNumPoints - 1)) * (dMaxTemp - dMinTemp)) + dMinTemp;
+	    	deadTimeEluentCompositionGraph.AddDataPoint(m_iIdealPlotIndexDeadTime, dXPos, initialInterpolatedDeadTimeProfile.getAt(dXPos));
+	    }
+	}
+	
 	public void updateGraphs(boolean bAlsoUpdateTable)
 	{
 		synchronized(eluentCompositionTimeGraph.lockObject)
@@ -3496,7 +3524,48 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		this.score = score;
 	}
 	
+	public boolean isInjectionMode() {
+		return isInjectionMode;
+	}
+
+	public void setInjectionMode(boolean isInjectionMode) {
+		this.isInjectionMode = isInjectionMode;
+	}
+
 	public void writeSaveData(SaveData.BackCalculateSaveData saveData)
+	{
+		saveData.columnLength = columnLength;
+		saveData.innerDiameter = innerDiameter;
+		saveData.flowRate = flowRate;
+		saveData.fileName = fileName;
+		saveData.standardsList = standardsList;
+		saveData.instrumentDeadTime = instrumentDeadTime;
+		saveData.gradientProgramInConventionalForm = gradientProgram;
+		saveData.tStep = dtstep;
+		saveData.m_dIdealGradientProfileArray = idealGradientProfileArray;
+		saveData.m_dGradientProfileDifferenceArray = gradientProfileDifferenceArray;
+		saveData.m_dSimpleGradientProfileArray = simpleGradientArray;
+		saveData.m_dDeadTimeArray = initialDeadTimeArray;
+		saveData.m_dDeadTimeDifferenceArray = deadTimeDifferenceArray;
+		saveData.m_dExpectedErrorArray = expectedErrorArray;
+		saveData.status = status;
+		saveData.score = score;
+	    
+	    // Step3Pane stuff
+	    saveData.labelIterationText = stepThreePaneController.iterationLabelProperty().getValue();
+	    saveData.labelVarianceText = stepThreePaneController.varianceLabelProperty().getValue();
+	    saveData.labelLastIterationVarianceText = stepThreePaneController.lastIterationVarianceLabelProperty().getValue();
+	    saveData.labelPercentImprovementText = stepThreePaneController.percentImprovementLabelProperty().getValue();
+	    saveData.labelTimeElapsedText = stepThreePaneController.timeElapsedLabelProperty().getValue();
+	    saveData.labelStatusText = stepThreePaneController.statusLabelProperty().getValue();
+	    saveData.progressBarValue = stepThreePaneController.progressBarProperty().getValue();
+	    saveData.backCalculationButtonDisabled = stepThreePaneController.isBackCalculationButtonDisabled();
+	    
+	    // Step4Pane stuff - most is updated with updateTestCompoundTable()
+	    saveData.testCompoundList = stepFourPaneController.getTestCompoundList();
+	}
+	
+	public void writeSaveData(InjectionSaveData.BackCalculateSaveData saveData)
 	{
 		saveData.columnLength = columnLength;
 		saveData.innerDiameter = innerDiameter;
@@ -3560,7 +3629,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		if(deadTimeDifferenceArray != null){
 			this.interpolatedDeadTimeDifferenceProfile = new InterpolationFunction(deadTimeDifferenceArray);
 		}
-
+		//setStandardsList(saveData.standardsList);
 		expectedErrorArray = saveData.m_dExpectedErrorArray;
 		status = saveData.status;
 		score = saveData.score;
@@ -3595,5 +3664,74 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			updateTestCompoundTable();
 		}
 	}
+	
+	public void loadSaveData(InjectionSaveData.BackCalculateSaveData saveData)
+	{
+		columnLength = saveData.columnLength;
+		innerDiameter = saveData.innerDiameter;
+		flowRate = saveData.flowRate;
+		fileName = saveData.fileName;
+		standardsList = saveData.standardsList;
+		gradientProgram = saveData.gradientProgramInConventionalForm;
+		dtstep = saveData.tStep;
+		instrumentDeadTime = saveData.instrumentDeadTime;
+		
+		idealGradientProfileArray = saveData.m_dIdealGradientProfileArray;
+		if (idealGradientProfileArray != null)
+			this.interpolatedIdealGradientProfile = new LinearInterpolationFunction(this.idealGradientProfileArray);
+		
+    	gradientProfileDifferenceArray = saveData.m_dGradientProfileDifferenceArray;
+		if (gradientProfileDifferenceArray != null)
+			this.interpolatedGradientDifferenceProfile = new LinearInterpolationFunction(gradientProfileDifferenceArray);
+		
+		simpleGradientArray = saveData.m_dSimpleGradientProfileArray;
+		if (simpleGradientArray != null)
+			this.interpolatedSimpleGradient = new LinearInterpolationFunction(simpleGradientArray);
+
+		initialDeadTimeArray = saveData.m_dDeadTimeArray;
+		if (initialDeadTimeArray != null)
+			this.initialInterpolatedDeadTimeProfile = new InterpolationFunction(initialDeadTimeArray);
+		
+		deadTimeDifferenceArray = saveData.m_dDeadTimeDifferenceArray;
+		if(deadTimeDifferenceArray != null){
+			this.interpolatedDeadTimeDifferenceProfile = new InterpolationFunction(deadTimeDifferenceArray);
+		}
+		//setStandardsList(saveData.standardsList);
+		expectedErrorArray = saveData.m_dExpectedErrorArray;
+		status = saveData.status;
+		score = saveData.score;
+		
+	    // Step3Pane stuff
+		stepThreePaneController.iterationLabelProperty().unbind();
+		stepThreePaneController.iterationLabelProperty().setValue(saveData.labelIterationText);
+		stepThreePaneController.varianceLabelProperty().unbind();
+		stepThreePaneController.varianceLabelProperty().setValue(saveData.labelVarianceText);
+		stepThreePaneController.lastIterationVarianceLabelProperty().unbind();
+		stepThreePaneController.lastIterationVarianceLabelProperty().setValue(saveData.labelLastIterationVarianceText);
+		stepThreePaneController.percentImprovementLabelProperty().unbind();
+		stepThreePaneController.percentImprovementLabelProperty().setValue(saveData.labelPercentImprovementText);
+		stepThreePaneController.timeElapsedLabelProperty().unbind();
+		stepThreePaneController.timeElapsedLabelProperty().setValue(saveData.labelTimeElapsedText);
+		stepThreePaneController.statusLabelProperty().unbind();
+		stepThreePaneController.statusLabelProperty().setValue(saveData.labelStatusText);
+		stepThreePaneController.progressBarProperty().unbind();
+		stepThreePaneController.progressBarProperty().setValue(saveData.progressBarValue);
+		stepThreePaneController.setBackCalculationButtonDisable(saveData.backCalculationButtonDisabled);
+
+		// Step4Pane stuff
+		stepFourPaneController.setTestCompoundList(saveData.testCompoundList);
+
+		this.buttonNextStep.setDisable(!saveData.backCalculationButtonDisabled);
+		stepThreePaneController.setStandardCompoundList(standardsList);
+
+		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
+		{
+			//updateGraphsWithIdealProfiles();
+			updateGraphs(false);
+			updateTestCompoundTable();
+		}
+	}
+
+	
 
 }

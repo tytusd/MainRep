@@ -63,7 +63,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
     @FXML private TextField textFieldInstrumentDeadTime;
     
     @FXML private TableView<StandardCompound> tableMeasuredRetentionTimes;
-
+  
     @FXML private TitledPane requirementsPane;
 
     @FXML private ScrollPane measuredretentiontimespage;
@@ -74,7 +74,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
     private ObservableList<StandardCompound> standardsList;
 
 	private double[][] gradientProgram;
-    private double[][] gradientProgramInConventionalForm = {{0.0,5.0} , {5.0,95.0}};
+    private double[][] gradientProgramInConventionalForm = {{0.0,5.0},{5.0,95.0}};
     
 	private double columnLength = 100; // in mm
 	private double innerDiameter = 2.1; // in mm
@@ -87,6 +87,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	private ObservableList<GradientProgramStep> gradientProgramList;
 	private int index = -1;
 	
+	private boolean isInjectionGradientMode = false;
 	
    	public interface MeasuredRetentionTimesControllerListener{
    		public void onNextStepPressed(MeasuredRetentionTimesController thisController);
@@ -112,6 +113,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		textFieldInnerDiameter.focusedProperty().addListener(this);
 		textFieldFlowRate.focusedProperty().addListener(this);
 		textFieldInstrumentDeadTime.focusedProperty().addListener(this);
+		
 		
 		List<StandardCompound> data = new ArrayList<StandardCompound>();
 		for (int i = 0; i < Globals.StandardCompoundsNameArray.length; i++){
@@ -328,7 +330,36 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		saveData.instrumentDeadTime = instrumentDeadTime;
 	}
 	
+	public void writeSaveData(InjectionSaveData.MeasuredRetentionTimeSaveData saveData)
+	{
+		saveData.programName = strProgramName;
+		saveData.fileName = fileName;
+		saveData.standardsList = standardsList;
+		saveData.columnLength = columnLength;
+		saveData.innerDiameter = innerDiameter;
+		saveData.flowRate = flowRate;
+		saveData.instrumentDeadTime = instrumentDeadTime;
+	}
+	
 	public void loadSaveData(SaveData.MeasuredRetentionTimeSaveData saveData)
+	{
+		strProgramName = saveData.programName;
+		fileName = saveData.fileName;
+		standardsList = saveData.standardsList;
+		columnLength = saveData.columnLength;
+		innerDiameter = saveData.innerDiameter;
+		flowRate = saveData.flowRate;
+		instrumentDeadTime = saveData.instrumentDeadTime;
+		gradientProgramInConventionalForm = saveData.gradientProgramInConventionalForm;
+		setGradientProgramInConventionalForm();
+		this.textFieldColumnLength.setText(Float.toString((float)columnLength));
+		this.textFieldInnerDiameter.setText(Float.toString((float)innerDiameter));
+		this.textFieldFlowRate.setText(Float.toString((float)flowRate));
+		this.setProgramName(strProgramName);
+		setTableMeasuredRetentionTimesItems(standardsList);
+	}
+	
+	public void loadSaveData(InjectionSaveData.MeasuredRetentionTimeSaveData saveData)
 	{
 		strProgramName = saveData.programName;
 		fileName = saveData.fileName;
@@ -453,6 +484,22 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 			else
 				standardsList.get(i).setMeasuredRetentionTime(0.0);
 		}
+	}
+
+	public boolean isInjectionGradientMode() {
+		return isInjectionGradientMode;
+	}
+
+	public void setInjectionGradientMode(boolean isInjectionGradientMode) {
+		this.isInjectionGradientMode = isInjectionGradientMode;
+		if(isInjectionGradientMode){
+			gradientProgramInConventionalForm[1][0] = 60.0;
+		}
+		else{
+			gradientProgramInConventionalForm[1][0] = 5.0;
+		}
+		setGradientProgramInConventionalForm();
+		tableViewGradientProgram.setEditable(false);
 	}
 
 }
