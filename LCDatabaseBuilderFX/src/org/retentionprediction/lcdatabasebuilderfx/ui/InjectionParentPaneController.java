@@ -170,6 +170,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 			for(int i = 0; i < Globals.injectionModeData.length; i++){
 				StandardCompound compound = new StandardCompound();
 				compound.setIndex(i+1);
+				compound.setName("Injection "+compound.getIndex());
 				compound.setUse(true);
 				double injectiondata = Globals.injectionModeData[i][0];
 				compound.setInjectionTime(injectiondata);
@@ -229,13 +230,12 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 		                buttonDelete.setDisable(true);
 		            }
 					
-					
+					copyUsedStandardCompounds(compoundsList, compoundsRetentionList);
 				}
 		    	
 		    });
 		    
-			this.compoundsRetentionList = this.compoundsList;
-			
+			this.compoundsRetentionList = FXCollections.observableArrayList(this.compoundsList);
 			
 			this.tableRetentionTimes.setItems(compoundsRetentionList);
 			
@@ -247,7 +247,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 	}
 
 	@FXML public void tabSelectionChanged(Event event){
-		
+		System.out.println();
 	}
 	
 	@FXML public void onCommitRetentionTime(TableColumn.CellEditEvent<StandardCompound,String> t) {
@@ -312,10 +312,10 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
     		mz = compoundsList.get(lastRowIndex).getMz();
     	}
     	
-		StandardCompound newStep = new StandardCompound(true,name,mz, rowValue2,0.0,lastRowIndex);
+		StandardCompound newStep = new StandardCompound(true,name,mz, rowValue2,0.0,lastRowIndex+2);
 		newStep.setInjectionTime(rowValue1);
 		compoundsList.add(newStep);
-		
+		compoundsRetentionList.add(newStep);
 	}
 	
 	@FXML public void onDeleteAction(ActionEvent event) {
@@ -325,6 +325,12 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 
 		compoundsList.remove(activatedRowIndex);
     	
+		for(int i = activatedRowIndex; i < this.compoundsList.size(); i++){
+    		StandardCompound c = compoundsList.get(i);
+    		c.setIndex(c.getIndex()-1);
+    		c.setName("Injection "+c.getIndex());
+    	}
+		copyUsedStandardCompounds(compoundsList, compoundsRetentionList);
 	    this.buttonDelete.setDisable(true);
 	    this.buttonInsert.setDisable(true);
 		
@@ -339,7 +345,14 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
     	StandardCompound newStep = new StandardCompound(compound.getUse(),compound.getName(),compound.getMz(),compound.getMeasuredRetentionTime(),compound.getPredictedRetentionTime(),compound.getIndex());
     	newStep.setInjectionTime(compound.getInjectionTime());
     	compoundsList.add(activatedRowIndex, newStep);
-		
+    	
+    	for(int i = activatedRowIndex+1; i < this.compoundsList.size(); i++){
+    		StandardCompound c = compoundsList.get(i);
+    		c.setIndex(c.getIndex()+1);
+    		c.setName("Injection "+c.getIndex());
+    	}
+    	
+    	copyUsedStandardCompounds(compoundsList, compoundsRetentionList);
 	}
 	
     @FXML void onNewAction(ActionEvent event) {
@@ -375,6 +388,15 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 		this.injectionParentPaneControllerListener = injectionParentPaneControllerListener;
 	}
 
+	private void copyUsedStandardCompounds(List<StandardCompound> src, List<StandardCompound> dest){
+		dest.clear();
+		for(StandardCompound c: src){
+			if(c.getUse()){
+				dest.add(c);
+			}
+		}
+	}
+	
 	@Override
 	public void onNextStepPressed(
 			MeasuredRetentionTimesController thisController) {

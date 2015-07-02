@@ -3402,9 +3402,6 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
     	m_iIdealPlotIndexGrad = eluentCompositionTimeGraph.AddSeries("Ideal Gradient Program", Color.rgb(0, 0, 0), 1, false, false);
     	m_iIdealPlotIndexDeadTime = deadTimeEluentCompositionGraph.AddSeries("Ideal Dead Time", Color.rgb(0, 0, 0), 1, false, false);
     	
-		double dMinTemp = this.idealGradientProfileArray[0][1];
-		double dMaxTemp = this.idealGradientProfileArray[this.idealGradientProfileArray.length - 1][1];
-		
 		// Plot the ideal temperature profile
     	for (int i = 0; i < idealGradientProfileArray.length; i++)
     	{
@@ -3415,7 +3412,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    int iNumPoints = 1000;
 	    for (int i = 0; i < iNumPoints; i++)
 	    {
-	    	double dXPos = (((double)i / (double)(iNumPoints - 1)) * (dMaxTemp - dMinTemp)) + dMinTemp;
+	    	double dXPos = ((double)i / (double)(iNumPoints - 1)) * (plotXMax2 * 60);
 	    	deadTimeEluentCompositionGraph.AddDataPoint(m_iIdealPlotIndexDeadTime, dXPos, initialInterpolatedDeadTimeProfile.getAt(dXPos));
 	    }
 	}
@@ -3675,6 +3672,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		gradientProgram = saveData.gradientProgramInConventionalForm;
 		dtstep = saveData.tStep;
 		instrumentDeadTime = saveData.instrumentDeadTime;
+		plotXMax2 = standardsList.get(standardsList.size()-1).getMeasuredRetentionTime()-instrumentDeadTime;
 		
 		idealGradientProfileArray = saveData.m_dIdealGradientProfileArray;
 		if (idealGradientProfileArray != null)
@@ -3727,7 +3725,11 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
 		{
 			//updateGraphsWithIdealProfiles();
+			showSimpleDeadTime = true;
+			showSimpleGradient = true;
+			calculateSimpleDeadTime();
 			updateGraphs(false);
+			updateGraphsWithIdealProfiles();
 			updateTestCompoundTable();
 		}
 	}

@@ -44,7 +44,7 @@ public class StandardCompound implements Serializable
 	
 	public StandardCompound()
 	{
-		init(false, "default", "0", 0.0, 0.0, -1);
+		init(false, "", "0", 0.0, 0.0, -1);
 	}
 
 	public StandardCompound(boolean use, String name, String mz, double measuredRetentionTime, double predictedRetentionTime, int index)
@@ -64,7 +64,7 @@ public class StandardCompound implements Serializable
 		this.injectionTime = new SimpleDoubleProperty();
 		
 		this.use.set(use);
-		this.name.set(name);
+		this.name.set("Injection "+index);
 		this.mz.set(mz);
 		this.measuredRetentionTime.set(measuredRetentionTime);
 		this.predictedRetentionTime.set(predictedRetentionTime);
