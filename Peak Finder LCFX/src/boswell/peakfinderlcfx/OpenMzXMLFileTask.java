@@ -679,7 +679,7 @@ class OpenMzXMLFileTask extends Task
   	        	origin[0] = iSpectrum;
   	        	ArrayDouble.D1 timeDataArray = (ArrayDouble.D1)timeValuesDataVar.read(origin, shape);
   	        
-  	        	dRetentionTimes[iSpectrum] = timeDataArray.get(0); //TODO: Confirm that this is the right value
+  	        	dRetentionTimes[iSpectrum] = timeDataArray.get(0);
   	        	for (int i = 0; i < mzData.length; i++)
 	        	{
 	        		mzData[i][iSpectrum][0] = timeDataArray.get(0);

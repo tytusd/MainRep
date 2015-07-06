@@ -356,7 +356,7 @@ public class PeakFinderPaneController implements Initializable{
     		return;
     	
 		NumberFormat formatter = new DecimalFormat("#0.000");
-    	int iSelectedStandardIndex = this.tableStandards.getSelectionModel().getSelectedIndex();
+    	int iSelectedStandardIndex = this.iSelectedStandardIndex;
     	if (iSelectedStandardIndex < 0)
     		return;
 		
