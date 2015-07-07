@@ -215,7 +215,7 @@ public class SolveParametersTask extends Task{
  				logk = -3;
  			}
  			
-			retentionSolverTimeGraph.AddDataPoint(measuredRetentionTimesSeries, i, Math.pow(10, logk));
+			retentionSolverTimeGraph.AddDataPoint(measuredRetentionTimesSeries, i, logk);
 		}
 		retentionSolverTimeGraph.AutoScaleToSeries(measuredRetentionTimesSeries);
 		retentionSolverTimeGraph.autoScaleY();

@@ -64,7 +64,7 @@ public class StandardCompound implements Serializable
 		this.injectionTime = new SimpleDoubleProperty();
 		
 		this.use.set(use);
-		this.name.set("Injection "+index);
+		this.name.set(name);
 		this.mz.set(mz);
 		this.measuredRetentionTime.set(measuredRetentionTime);
 		this.predictedRetentionTime.set(predictedRetentionTime);
@@ -137,7 +137,7 @@ public class StandardCompound implements Serializable
 	public void makeEqualTo(StandardCompound desiredCompound)
 	{
 		this.setUse(desiredCompound.getUse());
-		this.setName(desiredCompound.getName());
+		//this.setName(desiredCompound.getName());
 		this.setMz(desiredCompound.getMz());
 		this.setMeasuredRetentionTime(desiredCompound.getMeasuredRetentionTime());
 		this.setPredictedRetentionTime(desiredCompound.getPredictedRetentionTime());

@@ -3412,8 +3412,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    int iNumPoints = 1000;
 	    for (int i = 0; i < iNumPoints; i++)
 	    {
-	    	double dXPos = ((double)i / (double)(iNumPoints - 1)) * (plotXMax2 * 60);
-	    	deadTimeEluentCompositionGraph.AddDataPoint(m_iIdealPlotIndexDeadTime, dXPos, initialInterpolatedDeadTimeProfile.getAt(dXPos));
+	    	double dXPos = 0.9 * ((double)i / (double)(iNumPoints - 1)) + 0.05;
+	    	deadTimeEluentCompositionGraph.AddDataPoint(m_iIdealPlotIndexDeadTime, dXPos, interpolatedSimpleDeadTime.getAt(dXPos));
 	    }
 	}
 	
@@ -3606,6 +3606,10 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		dtstep = saveData.tStep;
 		instrumentDeadTime = saveData.instrumentDeadTime;
 		
+		if(!standardsList.isEmpty()){
+			plotXMax2 = standardsList.get(standardsList.size()-1).getMeasuredRetentionTime()-instrumentDeadTime;	
+		}
+		
 		idealGradientProfileArray = saveData.m_dIdealGradientProfileArray;
 		if (idealGradientProfileArray != null)
 			this.interpolatedIdealGradientProfile = new LinearInterpolationFunction(this.idealGradientProfileArray);
@@ -3657,7 +3661,11 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
 		{
 			//updateGraphsWithIdealProfiles();
+			showSimpleDeadTime = true;
+			showSimpleGradient = true;
+			calculateSimpleDeadTime();
 			updateGraphs(false);
+			updateGraphsWithIdealProfiles();
 			updateTestCompoundTable();
 		}
 	}
@@ -3672,7 +3680,9 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		gradientProgram = saveData.gradientProgramInConventionalForm;
 		dtstep = saveData.tStep;
 		instrumentDeadTime = saveData.instrumentDeadTime;
-		plotXMax2 = standardsList.get(standardsList.size()-1).getMeasuredRetentionTime()-instrumentDeadTime;
+		if(!standardsList.isEmpty()){
+			plotXMax2 = standardsList.get(standardsList.size()-1).getMeasuredRetentionTime()-instrumentDeadTime;	
+		}
 		
 		idealGradientProfileArray = saveData.m_dIdealGradientProfileArray;
 		if (idealGradientProfileArray != null)

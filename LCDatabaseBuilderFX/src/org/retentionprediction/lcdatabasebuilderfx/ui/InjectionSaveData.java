@@ -39,7 +39,7 @@ public class InjectionSaveData implements Serializable
 	InjectionSaveData()
 	{
 		// Load with default values
-		
+		programList = FXCollections.observableArrayList();
 		iCurrentStep = 0;
 		finalFitComplete = false;
 		labelAOneText = "";
@@ -51,7 +51,7 @@ public class InjectionSaveData implements Serializable
 		labelVarianceText = "";
 		labelTimeElapsedText = "";
 		statusText = "Click the button below to solve for \u0394H, \u0394S, and \u0394Cp";
-
+		
 		measuredRetentionTimeSaveData = new MeasuredRetentionTimeSaveData();
 		backCalculateSaveData = new BackCalculateSaveData();
 

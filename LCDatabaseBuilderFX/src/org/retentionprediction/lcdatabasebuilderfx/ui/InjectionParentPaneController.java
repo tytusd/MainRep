@@ -77,6 +77,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 	    @FXML private TableColumn<StandardCompound, String> columnPredictedRetentionTime;
 	    @FXML private TableColumn<StandardCompound, String> columnMeasuredRetentionTime;
 	    
+	    @FXML private TableColumn<StandardCompound, String> columnNames;
 	    @FXML private TableColumn<StandardCompound, Boolean> columnUse;
 	    @FXML private TableColumn<StandardCompound, Double> columnRetentionTime;
 	    @FXML private TableColumn<StandardCompound, Double> columnInjectionTime;
@@ -126,7 +127,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 			gradientAtab.setContent(measuredRetentionTimes);
 			retentionSolverTimeGraph = new GraphControlFX();
 			retentionSolverTimeGraph.setControlsEnabled(false);
-			retentionSolverTimeGraph.setYAxisTitle("K");
+			retentionSolverTimeGraph.setYAxisTitle("log K");
 			retentionSolverTimeGraph.setYAxisBaseUnit("", "");
 			retentionSolverTimeGraph.setYAxisScientificNotation(true);
 			retentionSolverTimeGraph.setYAxisRangeIndicatorsVisible(true);
@@ -179,7 +180,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 			}
 			
 			this.tableCompoundList.setItems(compoundsList);
-			
+			columnNames.setCellValueFactory(new PropertyValueFactory<StandardCompound, String>("name"));
 			columnProgram.setCellValueFactory(new PropertyValueFactory<StandardCompound, String>("name"));
 		    columnMeasuredRetentionTime.setCellValueFactory(new PropertyValueFactory<StandardCompound, String>("measuredRetentionTimeString"));
 		    
@@ -214,6 +215,10 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 		        }
 		    });
 		    
+		    this.compoundsRetentionList = FXCollections.observableArrayList(this.compoundsList);
+			
+			this.tableRetentionTimes.setItems(compoundsRetentionList);
+		    
 		    this.tableCompoundList.getSelectionModel().getSelectedIndices().addListener(new ListChangeListener<Integer>(){
 
 				@Override
@@ -234,10 +239,6 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 				}
 		    	
 		    });
-		    
-			this.compoundsRetentionList = FXCollections.observableArrayList(this.compoundsList);
-			
-			this.tableRetentionTimes.setItems(compoundsRetentionList);
 			
 		}
 		catch(Exception e){
@@ -498,7 +499,8 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 		
 		
 		iCurrentStep = saveData.iCurrentStep;
-		compoundsRetentionList = saveData.programList;
+		compoundsList = saveData.programList;
+		copyUsedStandardCompounds(compoundsList, compoundsRetentionList);
 		labelAZero.textProperty().unbind();
 		labelAZero.setText(saveData.labelAZeroText);
 		labelAOne.textProperty().unbind();
@@ -533,7 +535,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 		}
 		
 	    tableRetentionTimes.setItems(compoundsRetentionList);
-
+	    tableCompoundList.setItems(compoundsList);
 		
 	}
 }
