@@ -726,8 +726,14 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		    	
 		    	this.updateTestCompoundTable();
 				
-				this.buttonNextStep.setVisible(false);
-		
+		    	boolean nextBtnVisibility = false;
+		    	
+		    	if(isInjectionMode){
+		    		nextBtnVisibility = true;
+		    	}
+				this.buttonNextStep.setVisible(nextBtnVisibility);
+				loadGraphsIfAvailable(false);
+				
 	}
 
 	public void switchToStep3() {
@@ -3731,7 +3737,11 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 
 		this.buttonNextStep.setDisable(!saveData.backCalculationButtonDisabled);
 		stepThreePaneController.setStandardCompoundList(standardsList);
+		loadGraphsIfAvailable(true);
+	
+	}
 
+	public void loadGraphsIfAvailable(boolean testTableToo){
 		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
 		{
 			//updateGraphsWithIdealProfiles();
@@ -3740,10 +3750,11 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			calculateSimpleDeadTime();
 			updateGraphs(false);
 			updateGraphsWithIdealProfiles();
-			updateTestCompoundTable();
+			if(testTableToo){
+				
+			}updateTestCompoundTable();
+			
 		}
 	}
-
-	
 
 }

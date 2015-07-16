@@ -91,7 +91,7 @@ public class SolveParametersTask extends Task{
 		}
 		
 		if(isInjectionMode){
-			maxIterations = 500;
+			maxIterations = 200;
 		}
 		
 		while(iteration < maxIterations){

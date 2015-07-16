@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<ScrollPane fx:id="measuredretentiontimespage" fitToHeight="true" fitToWidth="true" prefHeight="965.0" prefWidth="2237.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController">
+<ScrollPane fx:id="measuredretentiontimespage" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" prefHeight="965.0" prefWidth="2237.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController">
    <content>
       <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" spacing="12.0" style="-fx-padding: 0.5em; -fx-spacing: 0.5em;">
          <children>
