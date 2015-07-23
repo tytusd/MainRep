@@ -55,7 +55,7 @@
                   <Insets left="100.0" top="10.0" />
                </VBox.margin>
             </RadioButton>
-            <Label text="This is the description for Eight gradients. Please choose this option if you want to build the database for eight gradients. blah blah blah" wrapText="true">
+            <Label text="In this mode, eight gradients are run to calculate the log K vs solvent composition relationship" wrapText="true">
                <VBox.margin>
                   <Insets left="121.0" right="100.0" />
                </VBox.margin>
@@ -65,7 +65,7 @@
                   <Insets left="100.0" top="10.0" />
                </VBox.margin>
             </RadioButton>
-            <Label text="This is the description for single gradient with multiple injections. Please choose this option if you want to build the database for single gradients with multiple injections. blah blah blah" wrapText="true">
+            <Label text="In this mode, there is only one gradient which typically has a long run time and with multiple injections" wrapText="true">
                <VBox.margin>
                   <Insets left="121.0" right="100.0" />
                </VBox.margin>

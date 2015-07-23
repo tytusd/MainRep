@@ -190,7 +190,7 @@
                <content>
                   <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100.0" minWidth="100.0" prefHeight="100.0" prefViewportHeight="999999.0" prefViewportWidth="999999.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefViewportHeight="999999.0" prefViewportWidth="999999.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <content>
                               <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="12.0" style="-fx-padding: .5em; -fx-spacing: .5em;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                  <children>
@@ -318,16 +318,16 @@
                                           </TitledPane>
                                           <TitledPane fx:id="paneSolveForParameters" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" text="Solve for the compound's retention parameters" GridPane.columnIndex="2">
                                              <content>
-                                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
+                                                <AnchorPane style="-fx-padding: 0.5em;">
                                                    <children>
                                                       <VBox layoutX="91.0" layoutY="98.0" spacing="12.0" style="-fx-spacing: 0.5em;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                          <children>
-                                                         	<AnchorPane fx:id="anchorPaneRetentionSolver" minHeight="250.0" minWidth="200.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
-								                                 <padding>
-								                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
-								                                 </padding>
-							                                 </AnchorPane>
-                                                            <TableView fx:id="tableRetentionTimes" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" prefHeight="999999.0">
+                                                         	<AnchorPane fx:id="anchorPaneRetentionSolver" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="200.0" minWidth="0.0" prefHeight="200.0" prefWidth="0.0" style="-fx-padding: 0.5em;">
+                  								                                 <padding>
+                  								                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                  								                                 </padding>
+                  							                                 </AnchorPane>
+                                                            <TableView fx:id="tableRetentionTimes" prefHeight="218.0">
                                                                <columns>
                                                                   <TableColumn fx:id="columnProgram" editable="false" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="150.0" sortable="false" text="Program" />
                                                                   <TableColumn fx:id="columnMeasuredRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="80.0" onEditCommit="#onCommitRetentionTime" prefWidth="150.0" sortable="false" text="Expt. tR (min)" />
@@ -341,7 +341,7 @@
                                                                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                                                </columnResizePolicy>
                                                             </TableView>
-                                                            <GridPane hgap="12.0" minHeight="-Infinity" minWidth="-Infinity" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0">
+                                                            <GridPane hgap="12.0" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0">
                                                                <children>
                                                                   <Label text="Iteration #:" GridPane.rowIndex="5" />
                                                                   <Label text="Variance (min²):" GridPane.rowIndex="6" />

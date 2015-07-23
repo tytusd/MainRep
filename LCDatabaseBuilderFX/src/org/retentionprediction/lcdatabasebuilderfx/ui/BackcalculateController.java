@@ -3419,7 +3419,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    for (int i = 0; i < iNumPoints; i++)
 	    {
 	    	double dXPos = 0.9 * ((double)i / (double)(iNumPoints - 1)) + 0.05;
-	    	deadTimeEluentCompositionGraph.AddDataPoint(m_iIdealPlotIndexDeadTime, dXPos, interpolatedSimpleDeadTime.getAt(dXPos));
+	    	deadTimeEluentCompositionGraph.AddDataPoint(m_iIdealPlotIndexDeadTime, dXPos*100, interpolatedSimpleDeadTime.getAt(dXPos));
 	    }
 	}
 	
@@ -3664,16 +3664,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		this.buttonNextStep.setDisable(!saveData.backCalculationButtonDisabled);
 		stepThreePaneController.setStandardCompoundList(standardsList);
 
-		if (interpolatedSimpleGradient != null && idealGradientProfileArray != null)
-		{
-			//updateGraphsWithIdealProfiles();
-			showSimpleDeadTime = true;
-			showSimpleGradient = true;
-			calculateSimpleDeadTime();
-			updateGraphs(false);
-			updateGraphsWithIdealProfiles();
-			updateTestCompoundTable();
-		}
+		loadGraphsIfAvailable(true);
 	}
 	
 	public void loadSaveData(InjectionSaveData.BackCalculateSaveData saveData)
@@ -3751,8 +3742,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			updateGraphs(false);
 			updateGraphsWithIdealProfiles();
 			if(testTableToo){
-				
-			}updateTestCompoundTable();
+				updateTestCompoundTable();
+			}
 			
 		}
 	}

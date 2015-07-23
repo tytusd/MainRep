@@ -383,7 +383,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    tableRetentionTimes.setItems(compoundsRetentionList);
 	    tableCompoundList.setItems(compoundsList);
 		
-	    
+	    anchorPaneRetentionSolver.getChildren().clear();
 		retentionSolverTimeGraph = new GraphControlFX();
 		retentionSolverTimeGraph.setControlsEnabled(false);
 		retentionSolverTimeGraph.setYAxisTitle("log K");
