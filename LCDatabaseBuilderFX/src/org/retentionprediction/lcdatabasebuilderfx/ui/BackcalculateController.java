@@ -2568,8 +2568,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    // Start by optimizing the entire dead time error profile.
 		public void backCalculate(boolean bDeadTimeProfileFirst)
 		{
-//			if (true)
-//				return;
+			if (true)
+				return;
 			long starttime = System.currentTimeMillis();
 			noFullBackcalculation = false;
 			

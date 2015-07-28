@@ -104,7 +104,7 @@
                   <Label fx:id="gradientDLabel" style="-fx-font-weight: bold;" text="Gradient D:" GridPane.rowIndex="3" />
                   <Label fx:id="gradientCLabel" style="-fx-font-weight: bold;" text="Gradient C:" GridPane.rowIndex="2" />
                   <Label fx:id="gradientBLabel" style="-fx-font-weight: bold;" text="Gradient B:" GridPane.rowIndex="1" />
-                  <Label fx:id="finalFitLabel" text="Final Fit" GridPane.columnIndex="4" GridPane.rowIndex="2" GridPane.rowSpan="2" />
+                  <Label fx:id="finalFitLabel" text="Final Fit" GridPane.columnIndex="4" GridPane.rowIndex="3" GridPane.rowSpan="2" />
                   <Label fx:id="gradientGLabel" style="-fx-font-weight: bold;" text="Gradient G:" GridPane.rowIndex="6" />
                   <Label fx:id="gradientHLabel" style="-fx-font-weight: bold;" text="Gradient H:" GridPane.rowIndex="7" />
                   <Label fx:id="enterTimesHLabel" text="Enter retention times" GridPane.columnIndex="1" GridPane.rowIndex="7" />
@@ -248,42 +248,43 @@
                                                       <GridPane hgap="12.0" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                          <children>
                                                             <Label text="Compound name:" GridPane.columnSpan="2147483647" />
-                                                            <Label text="PubChem ID:" GridPane.rowIndex="4" />
-                                                            <TextField fx:id="textFormula" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="2" />
-                                                            <Label text="Formula:" GridPane.rowIndex="2" />
-                                                            <TextField fx:id="textCAS" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="3" />
-                                                            <Label text="NIST ID:" GridPane.rowIndex="5" />
-                                                            <TextField fx:id="textPubChemID" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="4" />
                                                             <TextField fx:id="textCompoundName" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
+                                      						<Label text="Formula:" GridPane.rowIndex="2" />
+                                                            <TextField fx:id="textFormula" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="2" />
                                                             <Label text="CAS:" GridPane.rowIndex="3" />
+                                                            <TextField fx:id="textCAS" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="3" />
+                                                            <Label text="PubChem ID:" GridPane.rowIndex="4" />
+                                                            <TextField fx:id="textPubChemID" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="4" />
+                                                            <Label text="NIST ID:" GridPane.rowIndex="5" />
                                                             <TextField fx:id="textNISTID" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="5" />
-                                                            <Label text="Retention time in Gradient A:" GridPane.rowIndex="8" />
-                                                            <TextField fx:id="textRetentionTimeA" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-                                                            <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="8" />
                                                             <Label text="HMDB:" GridPane.rowIndex="6" />
                                                             <TextField fx:id="textHMDB" maxWidth="1.7976931348623157E308" prefWidth="50.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="6" />
+                                                            <Label text="Retention time in Gradient A:" GridPane.rowIndex="8" />
                                                             <Label text="Retention time in Gradient B:" GridPane.rowIndex="9" />
                                                             <Label text="Retention time in Gradient C:" GridPane.rowIndex="10" />
                                                             <Label text="Retention time in Gradient D:" GridPane.rowIndex="11" />
                                                             <Label text="Retention time in Gradient E:" GridPane.rowIndex="12" />
                                                             <Label text="Retention time in Gradient F:" GridPane.rowIndex="13" />
+                                                            <Label text="Retention time in Gradient G:" GridPane.rowIndex="14" />
+                                                            <Label text="Retention time in Gradient H:" GridPane.rowIndex="15" />
+                                                            <TextField fx:id="textRetentionTimeA" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
                                                             <TextField fx:id="textRetentionTimeB" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="9" />
                                                             <TextField fx:id="textRetentionTimeC" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="10" />
                                                             <TextField fx:id="textRetentionTimeD" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="11" />
                                                             <TextField fx:id="textRetentionTimeE" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="12" />
                                                             <TextField fx:id="textRetentionTimeF" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="13" />
+                                                            <TextField fx:id="textRetentionTimeG" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="14" />
+                                                            <TextField fx:id="textRetentionTimeH" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="15" />
+                                                            <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="15" />
+                                                            <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="14" />
+                                                            <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="8" />
                                                             <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="9" />
                                                             <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="10" />
                                                             <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="11" />
                                                             <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="12" />
                                                             <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="13" />
                                                             <Separator prefWidth="200.0" GridPane.columnSpan="3" GridPane.rowIndex="7" />
-                                                            <Label text="Retention time in Gradient G:" GridPane.rowIndex="14" />
-                                                            <Label text="Retention time in Gradient H:" GridPane.rowIndex="15" />
-                                                            <TextField fx:id="textRetentionTimeH" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="15" />
-                                                            <TextField fx:id="textRetentionTimeG" maxWidth="1.7976931348623157E308" onAction="#actionPerformValidation" prefWidth="50.0" GridPane.columnIndex="1" GridPane.rowIndex="14" />
-                                                            <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="15" />
-                                                            <Label text="min" GridPane.columnIndex="2" GridPane.rowIndex="14" />
+                                                            
                                                          </children>
                                                          <columnConstraints>
                                                             <ColumnConstraints hgrow="SOMETIMES" maxWidth="370.99998474121094" minWidth="10.0" percentWidth="60.0" prefWidth="370.99998474121094" />
@@ -327,7 +328,7 @@
                   								                                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
                   								                                 </padding>
                   							                                 </AnchorPane>
-                                                            <TableView fx:id="tableRetentionTimes" prefHeight="218.0">
+                                                            <TableView fx:id="tableRetentionTimes" maxHeight="1.7976931348623157E308" minHeight="218.0" prefHeight="218.0" VBox.vgrow="ALWAYS">
                                                                <columns>
                                                                   <TableColumn fx:id="columnProgram" editable="false" maxWidth="1.7976931348623157E308" minWidth="100.0" prefWidth="150.0" sortable="false" text="Program" />
                                                                   <TableColumn fx:id="columnMeasuredRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="80.0" onEditCommit="#onCommitRetentionTime" prefWidth="150.0" sortable="false" text="Expt. tR (min)" />
