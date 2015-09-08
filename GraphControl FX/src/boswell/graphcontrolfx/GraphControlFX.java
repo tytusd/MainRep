@@ -11,6 +11,7 @@ import com.sun.javafx.tk.FontLoader;
 import com.sun.javafx.tk.FontMetrics;
 import com.sun.javafx.tk.Toolkit;
 
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -3541,17 +3542,12 @@ public class GraphControlFX extends Canvas
 	
 	public void repaint()
 	{
-		// Create a new thread to redraw the graph.
-		Thread drawThread = new Thread(new Task(){
-
+		Platform.runLater(new Task(){
 			@Override
 			protected Object call() throws Exception {
 				draw();
 				return null;
 			}
-
 		});
-		
-		drawThread.run();
 	}
 }
