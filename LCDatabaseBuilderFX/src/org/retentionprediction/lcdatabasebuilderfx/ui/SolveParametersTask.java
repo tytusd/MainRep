@@ -77,7 +77,7 @@ public class SolveParametersTask extends Task{
 		long time = System.currentTimeMillis();
 		updateProgress(-1, 0);
 		updateMessage("Please wait, optimization in progress...");
-		int iteration = 0, maxIterations = 100;
+		int iteration = 0, maxIterations = 1000;
 		bestVariance = 100;
 		
 		Random[] rand = new Random[5];
@@ -160,6 +160,51 @@ public class SolveParametersTask extends Task{
 			
 			if (newError < bestVariance)
 			{
+				//Slope at phi  = 0.1
+				double padeNumerator = (bestFit[0] + bestFit[1]*0.1 + bestFit[2]*0.1*0.1);
+	 			double padeDenominator = (1 + bestFit[3]*0.1 + bestFit[4]*0.1*0.1);
+	 			
+	 			if(padeDenominator == 0){
+	 				continue;
+	 			}
+				double slope1 = (padeDenominator*(bestFit[1] + 2*bestFit[2]*0.1) - padeNumerator*(bestFit[3] + 2*bestFit[4]*0.1))/(padeDenominator*padeDenominator);
+				
+				//Slope at phi  = 5
+				padeNumerator = (bestFit[0] + bestFit[1]*5 + bestFit[2]*5*5);
+	 			padeDenominator = (1 + bestFit[3]*5 + bestFit[4]*5*5);
+	 			
+	 			if(padeDenominator == 0){
+	 				continue;
+	 			}
+				double slope2 = (padeDenominator*(bestFit[1] + 2*bestFit[2]*5) - padeNumerator*(bestFit[3] + 2*bestFit[4]*5))/(padeDenominator*padeDenominator);
+	 			
+				//Slope at 0.1 and at 5 should be negative because they are decreasing. Also, slope at 0.1 should be less than the slope at 5.
+				if(slope1 > slope2 || slope1 > 0 || slope2 > 0){
+	 				continue;
+	 			}
+	 			
+	 			boolean skipThisIteration = false;
+	 			
+	 			//Now check if every 0.2 of phi between 0 and 5 is negative. if it isn't, then we do not have valid coefficients for Pade.
+	 			for(double phi = 0.0001; phi <= 5.0001; phi = phi + 0.2 ){
+	 				//Slope at phi  = 0.1
+					padeNumerator = (bestFit[0] + bestFit[1]*phi + bestFit[2]*phi*phi);
+		 			padeDenominator = (1 + bestFit[3]*phi + bestFit[4]*phi*phi);
+		 			
+		 			if(padeDenominator == 0){
+		 				continue;
+		 			}
+					double slope = (padeDenominator*(bestFit[1] + 2*bestFit[2]*phi) - padeNumerator*(bestFit[3] + 2*bestFit[4]*phi))/(padeDenominator*padeDenominator);
+					if(slope > 0){
+						skipThisIteration = true;
+						break;
+					}
+	 			}
+	 			
+	 			if(skipThisIteration){
+	 				continue;
+	 			}
+				
 				bestVariance = newError;
 				bestParameters = bestFit;
 				

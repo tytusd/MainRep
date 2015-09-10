@@ -107,7 +107,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		comboStationaryPhase.getItems().clear();
-		comboStationaryPhase.getItems().addAll("Agilent HP-5MS UI");
+		comboStationaryPhase.getItems().addAll("Eclipse Plus C18");
 		
 		textFieldColumnLength.focusedProperty().addListener(this);
 		textFieldInnerDiameter.focusedProperty().addListener(this);

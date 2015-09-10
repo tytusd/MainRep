@@ -66,12 +66,12 @@ public class InterpolationFunction
 			dMatrix[iRowPos+1][(i*4)+1] = dataPoints[i+1][0];
 			
 			// ci
-			dMatrix[iRowPos][(i*4)+2] = Math.pow(dataPoints[i][0],2);
-			dMatrix[iRowPos+1][(i*4)+2] = Math.pow(dataPoints[i+1][0],2);
+			dMatrix[iRowPos][(i*4)+2] = dataPoints[i][0]*dataPoints[i][0];
+			dMatrix[iRowPos+1][(i*4)+2] = dataPoints[i+1][0]*dataPoints[i+1][0];
 						
 			// di
-			dMatrix[iRowPos][(i*4)+3] = Math.pow(dataPoints[i][0],3);
-			dMatrix[iRowPos+1][(i*4)+3] = Math.pow(dataPoints[i+1][0],3);
+			dMatrix[iRowPos][(i*4)+3] = dataPoints[i][0]*dataPoints[i][0]*dataPoints[i][0];
+			dMatrix[iRowPos+1][(i*4)+3] = dataPoints[i+1][0]*dataPoints[i+1][0]*dataPoints[i+1][0];
 						
 			// y
 			dMatrix[iRowPos][n] = dataPoints[i][1];
@@ -90,7 +90,7 @@ public class InterpolationFunction
 			dMatrix[iRowPos][(i*4)+2] = 2 * dataPoints[i+1][0];
 			
 			// di
-			dMatrix[iRowPos][(i*4)+3] = 3 * Math.pow(dataPoints[i+1][0],2);
+			dMatrix[iRowPos][(i*4)+3] = 3 * dataPoints[i+1][0]*dataPoints[i+1][0];
 			
 			// bi+1
 			dMatrix[iRowPos][(i*4)+5] = -1;
@@ -99,7 +99,7 @@ public class InterpolationFunction
 			dMatrix[iRowPos][(i*4)+6] = -2 * dataPoints[i+1][0];
 			
 			// di+1
-			dMatrix[iRowPos][(i*4)+7] = -3 * Math.pow(dataPoints[i+1][0],2);
+			dMatrix[iRowPos][(i*4)+7] = -3 * dataPoints[i+1][0]*dataPoints[i+1][0];
 			
 			iRowPos += 1;
 		}
@@ -216,17 +216,34 @@ public class InterpolationFunction
 			return lifTwoPoint.getAt(x);
 		}
 		
-		int i = 0;
-		while (x > dRanges[i])
-		{
-			i++;
-			if (i >= dRanges.length)
-				break;
-				
-		}
+		int i = binarySearch(x);
 		
-		double y = dInterpolationParameters[i][0] + dInterpolationParameters[i][1]*x + dInterpolationParameters[i][2]*Math.pow(x,2) + dInterpolationParameters[i][3]*Math.pow(x,3);
+		double y = dInterpolationParameters[i][0] + dInterpolationParameters[i][1]*x + dInterpolationParameters[i][2]*x*x + dInterpolationParameters[i][3]*x*x*x;
 		return y;
+	}
+	
+	public int binarySearch(double x){
+		int low = 0;
+		int high = dRanges.length-1;
+		if(x > dRanges[high]){
+			return high+1;
+		}
+		while(high - low > 1){
+			int mid = (low+high)/2;
+			if(x < dRanges[mid]){
+				high = mid;
+			}
+			else if(x > dRanges[mid]){
+				low = mid;
+			}
+			else{
+				return mid;
+			}
+		}
+		if(x <= dRanges[low]){
+			return low;
+		}
+		else return high;
 	}
 	
 	// swap row i with row k

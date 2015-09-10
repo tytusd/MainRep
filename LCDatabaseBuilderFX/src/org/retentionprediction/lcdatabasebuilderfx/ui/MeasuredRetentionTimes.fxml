@@ -68,7 +68,7 @@
                               <GridPane hgap="12.0" style="-fx-hgap: 0.5em; -fx-vgap: 0.5em;" vgap="12.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                  <children>
                                     <Label text="Choose your stationary phase:" GridPane.columnSpan="2147483647" />
-                                    <ComboBox fx:id="comboStationaryPhase" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Agilent HP-5MS UI" GridPane.columnSpan="3" GridPane.rowIndex="1" />
+                                    <ComboBox fx:id="comboStationaryPhase" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Eclipse Plus C18" GridPane.columnSpan="3" GridPane.rowIndex="1" />
                                     <Label text="Column length:" GridPane.rowIndex="2" />
                                     <TextField fx:id="textFieldColumnLength" onAction="#actionPerformValidation" prefWidth="50.0" text="100" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                                     <Label fx:id="labelColumnLength" text="mm" GridPane.columnIndex="2" GridPane.rowIndex="2" />

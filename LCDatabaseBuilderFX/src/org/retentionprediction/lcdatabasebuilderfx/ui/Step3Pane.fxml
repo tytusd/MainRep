@@ -6,7 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<TitledPane fx:id="step3pane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" prefHeight="900.0" prefWidth="1000.0" text="Step #3: Back-calculate gradient and dead time profiles" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.StepThreePaneController">
+<TitledPane fx:id="step3pane" animated="false" collapsible="false" maxHeight="1.7976931348623157E308" prefHeight="900.0" prefWidth="780.0" text="Step #3: Back-calculate gradient and dead time profiles" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.StepThreePaneController">
    <content>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-padding: 0.5em;">
          <children>
@@ -14,10 +14,10 @@
                <children>
                   <TableView fx:id="tableStandards" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="9999999.0">
                      <columns>
-                        <TableColumn fx:id="columnName" editable="false" maxWidth="1.7976931348623157E308" minWidth="300.0" prefWidth="100.0" sortable="false" text="Compound" />
-                        <TableColumn fx:id="columnExperimentalRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="100.0" sortable="false" text="Expt. tR (min)" />
-                        <TableColumn fx:id="columnCalculatedRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="100.0" sortable="false" text="Calc. tR (min)" />
-                        <TableColumn fx:id="columnDifference" editable="false" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="-1.0" sortable="false" text="Diff (min)" />
+                        <TableColumn fx:id="columnName" editable="false" maxWidth="1.7976931348623157E308" minWidth="192.0" prefWidth="192.0" sortable="false" text="Compound" />
+                        <TableColumn fx:id="columnExperimentalRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="155.0" prefWidth="155.0" sortable="false" text="Expt. tR (min)" />
+                        <TableColumn fx:id="columnCalculatedRetentionTime" editable="false" maxWidth="1.7976931348623157E308" minWidth="157.0" prefWidth="201.0" sortable="false" text="Calc. tR (min)" />
+                        <TableColumn fx:id="columnDifference" editable="false" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="333.0" sortable="false" text="Diff (min)" />
                      </columns>
                      <VBox.margin>
                         <Insets />

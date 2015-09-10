@@ -160,6 +160,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	private int m_iIdealPlotIndexDeadTime = -1;
     
 	private boolean isInjectionMode = false;
+	private long totalTime;
 	
 	public BackCalculateControllerListener getBackcalculateListener() {
 		return backcalculateControllerListener;
@@ -624,19 +625,26 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 //				break;
 //			}
  			dPhiC = (interpolatedSimpleGradient.getAt(dTotalTime - dIntegral) + interpolatedGradientDifferenceProfile.getAt(dTotalTime - dIntegral)) / 100;
+ 			
+ 			double root1 = ((-1)*b1 + Math.sqrt(b1*b1 - 4*b2))/2*b2;
+ 			double root2 = ((-1)*b1 - Math.sqrt(b1*b1 - 4*b2))/2*b2;
+ 			
+ 			if(root1 < 10 || root1 > 110 || root2 < 10 || root2 > 110){
+ 				continue;
+ 			}
+ 			
  			double padeNumerator = (a0 + a1*dPhiC + a2*dPhiC*dPhiC);
  			double padeDenominator = (1 + b1*dPhiC + b2*dPhiC*dPhiC);
  			
  			if(padeDenominator == 0){
  				break;
  			}
- 			
- 			
-// 			double slope = (padeDenominator*(a1 + 2*a2*dPhiC) - padeNumerator*(b1 + 2*b2*dPhiC))/(padeDenominator*padeDenominator);
-// 			if(slope > 0){
-// 				break;
-// 			}
-// 			
+ 			if(dPhiC <= 5){
+	 			double slope = (padeDenominator*(a1 + 2*a2*dPhiC) - padeNumerator*(b1 + 2*b2*dPhiC))/(padeDenominator*padeDenominator);
+	 			if(slope > 0){
+	 				break;
+	 			}
+ 			}
 			double logk = padeNumerator/padeDenominator; //Pade's approximate
 			if(logk < -3){
 				logk = -3;
@@ -1048,6 +1056,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    		//contentPane2.jbtnCalculate.setEnabled(true);
 	    		buttonNextStep.setDisable(false);	    		
         	}
+        	System.out.println(totalTime);
         }
     	
 		@Override
@@ -1058,6 +1067,7 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		
 		   public double calcRetentionError(double dtstep, int iNumCompoundsToInclude, boolean bUseSimpleGradient)
 		    {
+			  // long n1 = System.currentTimeMillis();
 		    	double dRetentionError = 0;
 				double dt0;
 				double dIntegral;
@@ -1138,16 +1148,20 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 					
 					if (bIsEluted)
 					{
-						dRetentionError += Math.pow(dtRFinal - (Double)standardsList.get(iCompound).getMeasuredRetentionTime(), 2);
+						double difference = dtRFinal - (Double)standardsList.get(iCompound).getMeasuredRetentionTime();
+						dRetentionError += difference*difference;
 						standardsList.get(iCompound).setPredictedRetentionTime(dtRFinal);
 					}
 					else
 					{
-						dRetentionError += Math.pow((Double)standardsList.get(iCompound).getMeasuredRetentionTime(), 2);
+						double time = (Double)standardsList.get(iCompound).getMeasuredRetentionTime();
+						dRetentionError += time*time;
 						standardsList.get(iCompound).setPredictedRetentionTime((double)-1.0);
 					}
 				}
 				
+				//long n2 = System.currentTimeMillis();
+				//totalTime += (n2-n1);
 		    	return dRetentionError;
 		    }
 
@@ -1192,7 +1206,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    		if (dNewAngle < 0)
 	    			dNewAngle = Math.PI + dNewAngle;
 	    		
-	    		double dAngleError = Math.pow((Math.abs(dNewAngle - dPreviousAngle) / (Math.PI)), 2);
+	    		double dAngleErrorRoot = Math.abs(dNewAngle - dPreviousAngle) / (Math.PI);
+	    		double dAngleError = dAngleErrorRoot*dAngleErrorRoot;
 	    		dTotalAngleError += dAngleError;
 	    	}
 	    	
@@ -1257,288 +1272,17 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    		if (dNewAngle < 0)
 	    			dNewAngle = Math.PI + dNewAngle;
 	    		
-	    		double dAngleError = Math.pow((Math.abs(dNewAngle - dPreviousAngle) / (Math.PI)), 2);
+	    		double dAngleErrorRoot = Math.abs(dNewAngle - dPreviousAngle) / (Math.PI);
+	    		double dAngleError = dAngleErrorRoot*dAngleErrorRoot;
 	    		dTotalAngleError += dAngleError;
 	    	}
 	    	
 	     	return dTotalAngleError + 1;
 	    }
-	    
-	/*    public double calcAngleDifference3(int iIndex)
-	    {
-	    	if (iIndex <= 1)
-	    		return 1;
-	    	
-	    	double dMaxRampRate = 70;
-	    	
-	    	double dTime2 = m_dTemperatureProfileArray[iIndex][0];
-	    	double dTemp2 = m_dTemperatureProfileArray[iIndex][1];
-	    	double dTime1 = this.m_dTemperatureProfileArray[iIndex - 1][0];
-	    	double dTemp1 = this.m_dTemperatureProfileArray[iIndex - 1][1];
-	    	double dTime0 = this.m_dTemperatureProfileArray[iIndex - 2][0];
-	    	double dTemp0 = this.m_dTemperatureProfileArray[iIndex - 2][1];
-	    	
-	    	// Check if the previous point is a corner
-	    	// If it is, then don't worry about the angle - return 0
-			for (int i = 0; i < this.m_dIdealTemperatureProfileArray.length - 1; i++)
-			{
-				if (this.m_dIdealTemperatureProfileArray[i][0] == dTime1)
-					return 1;
-			}
-	    	
-	    	// First determine angle of previous segment
-			double dPreviousAdjacent = (dTemp1 - dTemp0) / dMaxRampRate;
-			double dPreviousOpposite = dTime1 - dTime0;
-			double dPreviousAngle;
-			if (dPreviousAdjacent == 0)
-				dPreviousAngle = Math.PI / 2; // 90 degrees
-			else
-				dPreviousAngle = Math.atan(dPreviousOpposite / dPreviousAdjacent);
-			
-			if (dPreviousAngle < 0)
-				dPreviousAngle = Math.PI + dPreviousAngle;
-			
-			double dAdjacent = (dTemp2 - dTemp1) / dMaxRampRate;
-			double dOpposite = dTime2 - dTime1;
-			double dNewAngle;
-			if (dAdjacent == 0)
-				dNewAngle = Math.PI / 2; // 90 degrees
-			else
-				dNewAngle = Math.atan(dOpposite / dAdjacent);
-			
-			if (dNewAngle < 0)
-				dNewAngle = Math.PI + dNewAngle;
-			
-			double dFactor1 = 1;
-			double dAngleError = Math.pow((Math.abs(dNewAngle - dPreviousAngle) / (Math.PI)) * dFactor1, 2) + 1;
-	    	return dAngleError;
-	    }*/
-	    
-	 	/*public double goldenSectioningSearchSimpleGradientProfile(boolean bNonMixingVolume, double dStep, double dPrecision, double dMaxChangeAtOnce)
-	 	{
-			double dRetentionError = 1;
-			double x1;
-			double x2;
-			double x3;
-			double dRetentionErrorX1;
-			double dRetentionErrorX2;
-			double dRetentionErrorX3;
-			
-			double dLastVolumeGuess;
-			
-			if (bNonMixingVolume)
-				dLastVolumeGuess = this.m_dNonMixingVolume;
-			else
-				dLastVolumeGuess = this.m_dMixingVolume;
-			
-			// Find bounds
-			if (bNonMixingVolume)
-				x1 = m_dNonMixingVolume;
-			else
-				x1 = m_dMixingVolume;
-			dRetentionErrorX1 = calcRetentionError(m_dtstep, standardsList.size(), true);
-			
-			x2 = x1 + dStep;
-			if (bNonMixingVolume)
-				m_dNonMixingVolume = x2;
-			else
-				m_dMixingVolume = x2;
-			calculateSimpleGradient();
-			dRetentionErrorX2 = calcRetentionError(m_dtstep, standardsList.size(), true);
-			
-			if (dRetentionErrorX2 < dRetentionErrorX1)
-			{
-				// We're going in the right direction
-				x3 = x2;
-				dRetentionErrorX3 = dRetentionErrorX2;
-				
-				x2 = ((x3 - x1) * this.m_dGoldenRatio) + x3;
-				
-				if (bNonMixingVolume)
-					m_dNonMixingVolume = x2;
-				else
-					m_dMixingVolume = x2;
-				calculateSimpleGradient();
-				dRetentionErrorX2 = calcRetentionError(m_dtstep, standardsList.size(), true);
-
-				while (dRetentionErrorX2 < dRetentionErrorX3 && x2 < dLastVolumeGuess + dMaxChangeAtOnce)
-				{
-					x1 = x3;
-					dRetentionErrorX1 = dRetentionErrorX3;
-					x3 = x2;
-					dRetentionErrorX3 = dRetentionErrorX2;
-					
-					x2 = ((x3 - x1) * this.m_dGoldenRatio) + x3;
-					
-					if (bNonMixingVolume)
-						m_dNonMixingVolume = x2;
-					else
-						m_dMixingVolume = x2;
-					calculateSimpleGradient();
-					dRetentionErrorX2 = calcRetentionError(m_dtstep, standardsList.size(), true);
-				}
-			}
-			else
-			{
-				// We need to go in the opposite direction
-				x3 = x1;
-				dRetentionErrorX3 = dRetentionErrorX1;
-				
-				x1 = x3 - (x2 - x3) * this.m_dGoldenRatio;
-				
-				if (bNonMixingVolume)
-					m_dNonMixingVolume = x1;
-				else
-					m_dMixingVolume = x1;
-				calculateSimpleGradient();
-				dRetentionErrorX1 = calcRetentionError(m_dtstep, standardsList.size(), true);
-
-				while (dRetentionErrorX1 < dRetentionErrorX3 && x1 > dLastVolumeGuess - dMaxChangeAtOnce)
-				{
-					x2 = x3;
-					dRetentionErrorX2 = dRetentionErrorX3;
-					x3 = x1;
-					dRetentionErrorX3 = dRetentionErrorX1;
-
-					x1 = x3 - (x2 - x3) * this.m_dGoldenRatio;
-					
-					if (bNonMixingVolume)
-						m_dNonMixingVolume = x1;
-					else
-						m_dMixingVolume = x1;
-					calculateSimpleGradient();
-					dRetentionErrorX1 = calcRetentionError(m_dtstep, standardsList.size(), true);
-				}
-			}
-			
-			// Now we have our bounds (x1 to x2) and the results of one guess (x3)
-			if (x2 > dLastVolumeGuess + dMaxChangeAtOnce)
-			{
-				if (bNonMixingVolume)
-					m_dNonMixingVolume = dLastVolumeGuess + dMaxChangeAtOnce;
-				else
-					m_dMixingVolume = dLastVolumeGuess + dMaxChangeAtOnce;
-
-				calculateSimpleGradient();
-				dRetentionError = calcRetentionError(m_dtstep, standardsList.size(), true);
-
-				return dRetentionError;
-			}
-			
-			if (x1 < dLastVolumeGuess - dMaxChangeAtOnce)
-			{
-				if (dLastVolumeGuess - dMaxChangeAtOnce < 0.00001)
-				{
-					if (bNonMixingVolume)
-						m_dNonMixingVolume = 0.00001;
-					else
-						m_dMixingVolume = 0.00001;
-				}
-				else
-				{
-					if (bNonMixingVolume)
-						m_dNonMixingVolume = dLastVolumeGuess - dMaxChangeAtOnce;
-					else
-						m_dMixingVolume = dLastVolumeGuess - dMaxChangeAtOnce;
-				}
-				
-				calculateSimpleGradient();
-				dRetentionError = calcRetentionError(m_dtstep, standardsList.size(), true);
-				
-				return dRetentionError;
-			}
-			
-			// Loop of optimization
-			while ((x2 - x1) > dPrecision)
-			{
-				double x4;
-				double dRetentionErrorX4;
-				
-				// Is the bigger gap between x3 and x2 or x3 and x1?
-				if (x2 - x3 > x3 - x1) 
-				{
-					// x3 and x2, so x4 must be placed between them
-					x4 = x3 + (2 - this.m_dGoldenRatio) * (x2 - x3);
-				}
-				else 
-				{
-					// x1 and x3, so x4 must be placed between them
-					x4 = x3 - (2 - this.m_dGoldenRatio) * (x3 - x1);
-				}
-
-				if (bNonMixingVolume)
-					m_dNonMixingVolume = x4;
-				else
-					m_dMixingVolume = x4;
-				calculateSimpleGradient();
-				dRetentionErrorX4 = calcRetentionError(m_dtstep, standardsList.size(), true);
-				
-				// Decide what to do next
-				if (dRetentionErrorX4 < dRetentionErrorX3)
-				{
-					// Our new guess was better
-					// Where did we put our last guess again?
-					if (x2 - x3 > x3 - x1) 
-					{
-						// x4 was in between x3 and x2
-						x1 = x3;
-						dRetentionErrorX1 = dRetentionErrorX3;
-						x3 = x4;
-						dRetentionErrorX3 = dRetentionErrorX4;
-					}
-					else
-					{
-						// x4 was in between x1 and x3
-						x2 = x3;
-						dRetentionErrorX2 = dRetentionErrorX3;							
-						x3 = x4;
-						dRetentionErrorX3 = dRetentionErrorX4;
-					}
-				}
-				else
-				{
-					// Our new guess was worse
-					if (x2 - x3 > x3 - x1) 
-					{
-						// x4 was in between x3 and x2
-						x2 = x4;
-						dRetentionErrorX2 = dRetentionErrorX4;
-					}
-					else
-					{
-						// x4 was in between x1 and x3
-						x1 = x4;
-						dRetentionErrorX1 = dRetentionErrorX4;							
-					}
-				}
-			}
-			
-			// Restore profile to best value
-			if (x3 < 0.00001)
-			{
-				// We can't have mixing and nonmixing volumes that are negative and they also can't be zero
-				if (bNonMixingVolume)
-					m_dNonMixingVolume = 0.00001;
-				else
-					m_dMixingVolume = 0.00001;
-				calculateSimpleGradient();
-				dRetentionError = calcRetentionError(m_dtstep, standardsList.size(), true);			
-			}
-			else
-			{
-				if (bNonMixingVolume)
-					m_dNonMixingVolume = x3;
-				else
-					m_dMixingVolume = x3;
-				calculateSimpleGradient();
-				dRetentionError = dRetentionErrorX3;			
-			}
-	 		
-	 		return dRetentionError;
-	 	}*/
 	 	
 	 	public double goldenSectioningSearchSimpleGradientProfile(int iIndex, boolean bNonMixingVolume, double dStep, double dPrecision, double dMaxChangeAtOnce)
 	 	{
+	 		//long n1 = System.currentTimeMillis();
 			double dRetentionError = 1;
 			double x1;
 			double x2;
@@ -1775,7 +1519,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 				calculateSimpleGradient();
 				dRetentionError = dRetentionErrorX3;			
 			}
-	 		
+	 		//long n2 = System.currentTimeMillis();
+	 		//totalTime += (n2-n1);
 	 		return dRetentionError;
 	 	}
 	 	
@@ -2568,8 +2313,8 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    // Start by optimizing the entire dead time error profile.
 		public void backCalculate(boolean bDeadTimeProfileFirst)
 		{
-			if (true)
-				return;
+//			if (true)
+//				return;
 			long starttime = System.currentTimeMillis();
 			noFullBackcalculation = false;
 			
@@ -2617,7 +2362,6 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 					double dVolumeStep = .01; //in mL
 					double dMaxChangeAtOnce = .05;
 					double dPercentBPrecision = 0.0001;
-					
 					for (int i = 0; i < nonMixingVolumeArray.length; i++)
 					{
 						dRetentionError = goldenSectioningSearchSimpleGradientProfile(i, true, dVolumeStep, dPercentBPrecision, dMaxChangeAtOnce);
@@ -2627,7 +2371,6 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 					{
 						dRetentionError = goldenSectioningSearchSimpleGradientProfile(i, false, dVolumeStep, dPercentBPrecision, dMaxChangeAtOnce);
 					}
-					
 					variance = dRetentionError / standardsList.size();
 
 					updateTimeElapsed(starttime);
@@ -2827,8 +2570,6 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			}
 			
 		}
-
-
 		
 	    // Select where to place the handles in the m_dGradientProfileDifferenceArray and the m_dDeadTimeDifferenceArray
 	    public void placeHandles()
@@ -3324,81 +3065,82 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	}
 	
 	// New version handles change in mixing/nonmixing volume as a function of solvent composition
-	public void calculateSimpleGradient()
-	{
-		int iNumPoints = 10000;
-		// Create an array for the simple gradient
-		simpleGradientArray = new double[iNumPoints][2];
-				
-		// Initialize the solvent mixer composition to that of the initial solvent composition
-	//	double dMixerComposition = ((Double) gradientProgramgetValueAt(0, 1)).doubleValue(); //tmgradientprogram is an array with {{0.0, 5.0},{5.0, 95.0}}
-		double dMixerComposition = gradientProgram[0][1];
-		//double dFinalTime = (((m_dMixingVolume * 3 + m_dNonMixingVolume) / 1000) / m_dFlowRate) + ((Double) contentPane.jxpanelGradientOptions.tmGradientProgram.getValueAt(iGradientTableLength - 1, 0)).doubleValue();
-		double dFinalTime = plotXMax2; // in min
-		double dTimeStep = dFinalTime / (iNumPoints - 1);
-		
-		// Start at time 0
-		double dTime = 0;
-		
-		// Enter new values into the output array
-		simpleGradientArray[0][0] = dTime;
-		simpleGradientArray[0][1] = dMixerComposition;
-		
-		for (int i = 0; i < iNumPoints; i++)
+		public void calculateSimpleGradient()
 		{
-			// Find the current time
-			dTime = i * dTimeStep;
+			//long n1 = System.currentTimeMillis();
+			int iNumPoints = 1000;
+			// Create an array for the simple gradient
+			simpleGradientArray = new double[iNumPoints][2];
+					
+			// Initialize the solvent mixer composition to that of the initial solvent composition
+			double dMixerComposition = gradientProgram[0][1];
+			//double dFinalTime = (((m_dMixingVolume * 3 + m_dNonMixingVolume) / 1000) / m_dFlowRate) + ((Double) contentPane.jxpanelGradientOptions.tmGradientProgram.getValueAt(iGradientTableLength - 1, 0)).doubleValue();
+			double dFinalTime = this.plotXMax2; // in min
+			double dTimeStep = dFinalTime / (iNumPoints - 1);
 			
-			// Find the solvent composition coming into the nonmixing volume
-			double dIncomingSolventCompositionToNonMixingVolume = interpolatedIdealGradientProfile.getAt(dTime);
-
-			// Now find the solvent composition coming into the mixing volume
-			double dIncomingSolventCompositionToMixingVolume = 0;
-			if (dTime < interpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / flowRate)
-			{
-				dIncomingSolventCompositionToMixingVolume = interpolatedIdealGradientProfile.getAt(0);
-			}
-			else
-			{
-				double dTimeOfSolventComposition = dTime - (interpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / flowRate);
-				dIncomingSolventCompositionToMixingVolume = interpolatedIdealGradientProfile.getAt(dTimeOfSolventComposition);
-			}
-			
-			// Figure out the volume of solvent B in the mixer
-			double dSolventBInMixer = dMixerComposition * interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);//m_dMixingVolume;
-							
-			// Now push out a step's worth of volume from the mixer
-			dSolventBInMixer -= (flowRate * dTimeStep) * dMixerComposition;
-			
-			// dSolventBInMixer could be negative if the volume pushed out of the mixer is greater than the total volume of the mixer
-			if (dSolventBInMixer < 0)
-				dSolventBInMixer = 0;
-			
-			// Now add a step's worth of new volume from the pump
-			// First, find which two data points we are between
-			// Find the last data point that isn't greater than our current time
-			
-			if ((flowRate * dTimeStep) < interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
-				dSolventBInMixer += (flowRate * dTimeStep) * dIncomingSolventCompositionToMixingVolume;
-			else
-			{
-				// The amount of solvent entering the mixing chamber is larger than the mixing chamber. Just set the solvent composition in the mixer to that of the mobile phase.
-				dSolventBInMixer = interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) * dIncomingSolventCompositionToMixingVolume;
-			}
-			
-			// Calculate the new solvent composition in the mixing volume
-			if ((flowRate * dTimeStep) < interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
-				dMixerComposition = dSolventBInMixer / interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);
-			else
-				dMixerComposition = dIncomingSolventCompositionToMixingVolume;
+			// Start at time 0
+			double dTime = 0;
 			
 			// Enter new values into the output array
-			simpleGradientArray[i][0] = dTime - ((interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) - interpolatedMixingVolume.getAt(0)) / flowRate);
-			simpleGradientArray[i][1] = dMixerComposition;
+			simpleGradientArray[0][0] = dTime;
+			simpleGradientArray[0][1] = dMixerComposition;
+			
+			for (int i = 0; i < iNumPoints; i++)
+			{
+				// Find the current time
+				dTime = i * dTimeStep;
+				
+				// Find the solvent composition coming into the nonmixing volume
+				double dIncomingSolventCompositionToNonMixingVolume = this.interpolatedIdealGradientProfile.getAt(dTime);
+
+				// Now find the solvent composition coming into the mixing volume
+				double dIncomingSolventCompositionToMixingVolume = 0;
+				if (dTime < this.interpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / this.flowRate)
+				{
+					dIncomingSolventCompositionToMixingVolume = this.interpolatedIdealGradientProfile.getAt(0);
+				}
+				else
+				{
+					double dTimeOfSolventComposition = dTime - (this.interpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / this.flowRate);
+					dIncomingSolventCompositionToMixingVolume = this.interpolatedIdealGradientProfile.getAt(dTimeOfSolventComposition);
+				}
+				
+				// Figure out the volume of solvent B in the mixer
+				double dSolventBInMixer = dMixerComposition * this.interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);//m_dMixingVolume;
+								
+				// Now push out a step's worth of volume from the mixer
+				dSolventBInMixer -= (flowRate * dTimeStep) * dMixerComposition;
+				
+				// dSolventBInMixer could be negative if the volume pushed out of the mixer is greater than the total volume of the mixer
+				if (dSolventBInMixer < 0)
+					dSolventBInMixer = 0;
+				
+				// Now add a step's worth of new volume from the pump
+				// First, find which two data points we are between
+				// Find the last data point that isn't greater than our current time
+				
+				if ((flowRate * dTimeStep) < this.interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
+					dSolventBInMixer += (flowRate * dTimeStep) * dIncomingSolventCompositionToMixingVolume;
+				else
+				{
+					// The amount of solvent entering the mixing chamber is larger than the mixing chamber. Just set the solvent composition in the mixer to that of the mobile phase.
+					dSolventBInMixer = this.interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) * dIncomingSolventCompositionToMixingVolume;
+				}
+				
+				// Calculate the new solvent composition in the mixing volume
+				if ((flowRate * dTimeStep) < this.interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
+					dMixerComposition = dSolventBInMixer / this.interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);
+				else
+					dMixerComposition = dIncomingSolventCompositionToMixingVolume;
+				
+				// Enter new values into the output array
+				simpleGradientArray[i][0] = dTime - ((interpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) - interpolatedMixingVolume.getAt(0)) / this.flowRate);
+				simpleGradientArray[i][1] = dMixerComposition;
+			}
+			interpolatedSimpleGradient = new LinearInterpolationFunction(simpleGradientArray);
+			//long n2 = System.currentTimeMillis();
+			//totalTime += (n2-n1);
 		}
-		
-		interpolatedSimpleGradient = new LinearInterpolationFunction(simpleGradientArray);
-	}
 	
 	private void updateGraphsWithIdealProfiles()
 	{
@@ -3455,9 +3197,10 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	    for (int i = 0; i < iNumPoints; i++)
 	    {
 	    	double dXPos = ((double)i / (double)(iNumPoints - 1)) * (plotXMax2 * 60);
-	    	eluentCompositionTimeGraph.AddDataPoint(interpolatedGradientProgramSeries, dXPos, this.interpolatedSimpleGradient.getAt(dXPos / 60) + interpolatedGradientDifferenceProfile.getAt(dXPos / 60));
+	    	double dXValueSimpleGradient = this.interpolatedSimpleGradient.getAt(dXPos / 60);
+	    	eluentCompositionTimeGraph.AddDataPoint(interpolatedGradientProgramSeries, dXPos, dXValueSimpleGradient + interpolatedGradientDifferenceProfile.getAt(dXPos / 60));
 	    	if (showSimpleGradient)
-	    		eluentCompositionTimeGraph.AddDataPoint(simpleGradientSeries, dXPos, interpolatedSimpleGradient.getAt(dXPos / 60));
+	    		eluentCompositionTimeGraph.AddDataPoint(simpleGradientSeries, dXPos, dXValueSimpleGradient);
 
 	    	dXPos = 0.9 * ((double)i / (double)(iNumPoints - 1)) + 0.05;
 	    	deadTimeEluentCompositionGraph.AddDataPoint(interpolatedFlowRateSeries, dXPos * 100, this.initialInterpolatedDeadTimeProfile.getAt(dXPos) + this.interpolatedDeadTimeDifferenceProfile.getAt(dXPos));
