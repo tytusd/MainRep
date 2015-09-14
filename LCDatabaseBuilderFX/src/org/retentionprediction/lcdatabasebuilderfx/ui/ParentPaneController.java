@@ -1,9 +1,15 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -27,6 +33,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
@@ -41,12 +48,14 @@ import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.Ba
 import org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController.MeasuredRetentionTimesControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
 
+import boswell.fxoptionpane.FXOptionPane;
 import boswell.graphcontrolfx.GraphControlFX;
 
-public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener, SolveParametersListener {
+public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener, SolveParametersListener, ClipboardOwner {
 
 	private ParentPaneControllerListener parentPaneControllerListener;
 	
+	@FXML private VBox parentRoot;
 	@FXML private AnchorPane gradientAanchor;
 	@FXML private AnchorPane gradientBanchor;
 	@FXML private AnchorPane gradientCanchor;
@@ -156,6 +165,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private TextField textHMDB;
     @FXML private ProgressBar progressBar;
     @FXML private Button buttonSolve;
+    @FXML private Button copyToClipboard;
     @FXML private Label labelVariance;
     @FXML private TableView<StandardCompound> tableRetentionTimes;
     @FXML private TextField textFormula;
@@ -378,12 +388,13 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     }
 
     @FXML void onSolveForRetentionParameters(ActionEvent event) {
+    	copyToClipboard.setDisable(true);
     	solveParametersTask = new SolveParametersTask();
     	solveParametersTask.setBackCalculateController(this.backcalculateController);
     	solveParametersTask.setProgramList(programList);
     	solveParametersTask.setGraphControl(retentionSolverTimeGraph);
     	solveParametersTask.setSolveParametersListener(this);
-    	
+    	solveParametersTask.setCopyToClipboardButton(copyToClipboard);
     	labelIteration.textProperty().bind(solveParametersTask.getIterationProperty());
 		labelTimeElapsed.textProperty().bind(solveParametersTask.getTimeElapsedProperty());
 		labelVariance.textProperty().bind(solveParametersTask.getVarianceProperty());
@@ -396,7 +407,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     	
     	Thread thread = new Thread(solveParametersTask);
     	thread.start();
-    	buttonSolve.setDisable(true);
+    	
     }
     
     @FXML void actionPerformValidation(ActionEvent event){
@@ -1168,4 +1179,42 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		
 	}
 
+	
+	@FXML public void copyProfilesToClipboard(){
+		buttonSolve.setDisable(true);
+		String eol = System.getProperty("line.separator");
+		StringBuffer outString = new StringBuffer(eol);
+		if(solveParametersTask != null){
+			outString.append(solveParametersTask.copyProfileToClipboard());
+			outString.append(eol);
+		}
+		
+		for(int i = 0; i < this.backcalculateController.length; i++){
+			char gradient = (char)(i+1+64);
+			outString.append("Gradient "+ gradient);
+			outString.append(eol);
+			outString.append(measuredRetentionTimesController[i].copyProfileToClipboard());
+			outString.append(backcalculateController[i].copyProfileToClipboard());
+		}
+		
+		StringSelection stringSelection = new StringSelection(outString.toString());
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, this);
+        Platform.runLater(new Runnable(){
+
+			@Override
+			public void run() {
+				String strMessage = "Information from all the gradients has been copied to the clipboard including final fit. You can now paste it in any text editor.";
+    			FXOptionPane.showMessageDialog(parentRoot.getScene().getWindow() , strMessage, "Check Retention Times", FXOptionPane.INFORMATION_MESSAGE);
+			}
+        	
+        });
+        buttonSolve.setDisable(false);
+	}
+	
+	@Override
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// TODO Auto-generated method stub
+		
+	}
 }

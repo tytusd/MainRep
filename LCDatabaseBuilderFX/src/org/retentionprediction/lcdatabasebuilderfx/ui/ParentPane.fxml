@@ -9,7 +9,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1399.0" prefWidth="2192.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.ParentPaneController">
+<VBox fx:id="parentRoot" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1399.0" prefWidth="2192.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.retentionprediction.lcdatabasebuilderfx.ui.ParentPaneController">
    <children>
       <MenuBar>
          <menus>
@@ -381,6 +381,7 @@
                                                                </rowConstraints>
                                                             </GridPane>
                                                             <Button fx:id="buttonSolve" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onSolveForRetentionParameters" text="Solve for retention parameters" />
+                                                            <Button fx:id="copyToClipboard" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#copyProfilesToClipboard" text="Copy data to clipboard" />
                                                          </children>
                                                       </VBox>
                                                    </children>

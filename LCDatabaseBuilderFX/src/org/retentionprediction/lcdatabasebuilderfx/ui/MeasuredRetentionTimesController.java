@@ -1,6 +1,11 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -500,6 +505,31 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		}
 		setGradientProgramInConventionalForm();
 		tableViewGradientProgram.setEditable(false);
+	}
+
+	public String copyProfileToClipboard() {
+    	// Make a string that can be pasted into Excel
+    	String outString = "";
+    	String eol = System.getProperty("line.separator");
+    	// First create the heading
+    	// Programmed conditions
+    	outString += "Programmed (initial) experimental conditions" + eol;
+    	int selectedStationaryPhaseIndex = comboStationaryPhase.getSelectionModel().getSelectedIndex() > -1 ? comboStationaryPhase.getSelectionModel().getSelectedIndex() : 0;
+    	outString += "Stationary phase:\t" + Globals.StationaryPhaseArray[selectedStationaryPhaseIndex] + eol;
+    	outString += "Column inner diameter:\t" + textFieldInnerDiameter.getText() + "\tmm" + eol;
+    	outString += "Column length:\t" + textFieldColumnLength.getText() + "\tmm" + eol;
+    	outString += "Flow rate:\t" + textFieldFlowRate.getText() + "\tmL/min" + eol;
+    	outString += "Instrument dead time:\t" + textFieldInstrumentDeadTime.getText() + "\tmin" + eol;
+    	outString += "Gradient program:" + eol;
+    	outString += "Time (min)\tEluent composition (%B)" + eol;
+    	double[][] gradientProgram = getGradientProgram();
+    	for (int i = 0; i < gradientProgram.length; i++)
+    	{
+    		outString += gradientProgram[i][0] + "\t" + gradientProgram[i][1] + eol;
+    	}
+    	outString += eol;
+        
+		return outString;
 	}
 
 }

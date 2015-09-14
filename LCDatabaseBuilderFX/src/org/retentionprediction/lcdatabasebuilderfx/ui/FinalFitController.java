@@ -1,17 +1,16 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
-import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
-import org.retentionprediction.lcdatabasebuilderfx.ui.InjectionSaveData.BackCalculateSaveData;
-import org.retentionprediction.lcdatabasebuilderfx.ui.InjectionSaveData.MeasuredRetentionTimeSaveData;
-import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
-
-import boswell.graphcontrolfx.GraphControlFX;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -31,10 +30,18 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
 
-public class FinalFitController implements Initializable, SolveParametersListener{
+import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
+import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
+import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
+
+import boswell.fxoptionpane.FXOptionPane;
+import boswell.graphcontrolfx.GraphControlFX;
+
+public class FinalFitController implements Initializable, SolveParametersListener, ClipboardOwner{
 
 		public interface FinalFitControllerListener{
 			public void onPreviousStepPressed(BackcalculateController thisController);
@@ -45,6 +52,8 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	
 	 	@FXML private AnchorPane anchorPaneRetentionSolver;
 	    
+	 	@FXML VBox finalFitRoot;
+	 	
 	    @FXML private Label labelATwo;
 	    @FXML private Label labelAOne;
 	    @FXML private Label labelBOne;
@@ -66,6 +75,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    @FXML private Button buttonDelete;
 	    @FXML private Button buttonInsert;
 	    @FXML private Button buttonPrevious;
+	    @FXML private Button copyToClipboard;
 	    
 	    @FXML private TableColumn<StandardCompound, String> columnError;
 	    @FXML private TableColumn<StandardCompound, String> columnProgram;
@@ -89,6 +99,10 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    private FinalFitControllerListener finalFitControllerListener;
 	
 	    private BackcalculateController backcalculateController;
+	
+	    private double instrumentDeadTime = 0;
+
+		private MeasuredRetentionTimesController measuredRetentionTimeController;
 	    
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -245,6 +259,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	}
 	
 	@FXML public void onSolveForRetentionParameters(ActionEvent event) {
+		copyToClipboard.setDisable(true);
 		solveParametersTask = new SolveParametersTask();
 		BackcalculateController[] controller = new BackcalculateController[1];
 		controller[0] = this.backcalculateController;
@@ -253,6 +268,8 @@ public class FinalFitController implements Initializable, SolveParametersListene
     	solveParametersTask.setGraphControl(retentionSolverTimeGraph);
     	solveParametersTask.setSolveParametersListener(this);
     	solveParametersTask.setInjectionMode(true);
+    	solveParametersTask.setInstrumentDeadTime(instrumentDeadTime);
+    	solveParametersTask.setCopyToClipboardButton(copyToClipboard);
     	
     	labelIteration.textProperty().bind(solveParametersTask.getIterationProperty());
 		labelTimeElapsed.textProperty().bind(solveParametersTask.getTimeElapsedProperty());
@@ -266,8 +283,6 @@ public class FinalFitController implements Initializable, SolveParametersListene
     	
     	Thread thread = new Thread(solveParametersTask);
     	thread.start();
-    	buttonSolve.setDisable(true);
-	
 	}
 	
 	@Override
@@ -421,5 +436,54 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		saveData.statusText = labelStatus.getText();
 		
 	}
+
+	public double getInstrumentDeadTime() {
+		return instrumentDeadTime;
+	}
+
+	public void setInstrumentDeadTime(double instrumentDeadTime) {
+		this.instrumentDeadTime = instrumentDeadTime;
+	}
 	
+	@FXML public void copyProfilesToClipboard(){
+		buttonSolve.setDisable(true);
+		String eol = System.getProperty("line.separator");
+		StringBuffer outString = new StringBuffer(eol);
+		if(solveParametersTask != null){
+			outString.append(solveParametersTask.copyProfileToClipboard());
+			outString.append(eol);
+		}
+		
+		outString.append("Gradient A");
+		outString.append(eol);
+		outString.append(measuredRetentionTimeController.copyProfileToClipboard());
+		outString.append(backcalculateController.copyProfileToClipboard());
+		
+		
+		StringSelection stringSelection = new StringSelection(outString.toString());
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, this);
+        Platform.runLater(new Runnable(){
+
+			@Override
+			public void run() {
+				String strMessage = "Information from all the gradients has been copied to the clipboard including final fit. You can now paste it in any text editor. The values are tab seperated. It will work best with Microsoft Excel or a similar tool.";
+    			FXOptionPane.showMessageDialog(finalFitRoot.getScene().getWindow() , strMessage, "Check Retention Times", FXOptionPane.INFORMATION_MESSAGE);
+			}
+        	
+        });
+        buttonSolve.setDisable(false);
+	}
+
+	public void setMeasuredRetentionTimesController(
+			MeasuredRetentionTimesController measuredRetentionTimesController) {
+		this.measuredRetentionTimeController = measuredRetentionTimesController;
+		
+	}
+
+	@Override
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1,5 +1,8 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -619,19 +622,24 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 		double dCurVal = 0;
 		double dk = 0;
 		double dt0 = 0;
-		for (double t = injectionTime; t <= (Double) standardsList.get(standardsList.size() - 1).getMeasuredRetentionTime() * 1.5; t += dtstep)
-		{
-//			if(dIntegral < 0.001 && dIntegral != 0.0){
-//				break;
-//			}
+		
+		double root1 = ((-1)*b1 + Math.sqrt(b1*b1 - 4*b2))/(2*b2);
+		double root2 = ((-1)*b1 - Math.sqrt(b1*b1 - 4*b2))/(2*b2);
+		double slopeAtZero = (a1 - a0*b1);
+		double slopeAtFive = ((1 + b1*0.05 + b2*0.05*0.05)*(a1 + 2*a2*0.05) - (a0 + a1*0.05 + a2*0.05*0.05)*(b1 + 2*b2*0.05))/((1 + b1*0.05 + b2*0.05*0.05)*(1 + b1*0.05 + b2*0.05*0.05));
+		
+		boolean skipLoop = true;
+		if((root1 < -0.1 || root1 > 1.1) && (root2 < -0.1 || root2 > 1.1) && slopeAtFive > slopeAtZero && slopeAtFive < 0 && slopeAtZero < 0){
+			skipLoop = false;
+		}
+		//Check for slope here 0,5
+		
+		for (double t = injectionTime; t <= (Double) standardsList.get(standardsList.size() - 1).getMeasuredRetentionTime() * 1.5; t += dtstep){
+		
+			if(skipLoop){
+				break;
+			}
  			dPhiC = (interpolatedSimpleGradient.getAt(dTotalTime - dIntegral) + interpolatedGradientDifferenceProfile.getAt(dTotalTime - dIntegral)) / 100;
- 			
- 			double root1 = ((-1)*b1 + Math.sqrt(b1*b1 - 4*b2))/2*b2;
- 			double root2 = ((-1)*b1 - Math.sqrt(b1*b1 - 4*b2))/2*b2;
- 			
- 			if(root1 < 10 || root1 > 110 || root2 < 10 || root2 > 110){
- 				continue;
- 			}
  			
  			double padeNumerator = (a0 + a1*dPhiC + a2*dPhiC*dPhiC);
  			double padeDenominator = (1 + b1*dPhiC + b2*dPhiC*dPhiC);
@@ -639,17 +647,16 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
  			if(padeDenominator == 0){
  				break;
  			}
- 			if(dPhiC <= 5){
-	 			double slope = (padeDenominator*(a1 + 2*a2*dPhiC) - padeNumerator*(b1 + 2*b2*dPhiC))/(padeDenominator*padeDenominator);
-	 			if(slope > 0){
-	 				break;
-	 			}
- 			}
+ 			
 			double logk = padeNumerator/padeDenominator; //Pade's approximate
-			if(logk < -3){
-				logk = -3;
+			if(logk > 10){
+				logk = 10;
+			}
+			else if(logk < -10){
+				logk = -10;
 			}
 			dk = Math.pow(10, logk);
+
 			dCurVal = dtstep / dk;
 			dt0 = (initialInterpolatedDeadTimeProfile.getAt(dPhiC) + interpolatedDeadTimeDifferenceProfile.getAt(dPhiC)) / 60;
 			dXMovement = dCurVal / dt0;
@@ -3489,6 +3496,59 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 			}
 			
 		}
+	}
+	
+	public String copyProfileToClipboard(){
+		String outString = "";
+		String eol = System.getProperty("line.separator");
+    	
+    	// Standards, experimental, calculated, and error
+    	outString += "Retention times of standards" + eol;
+    	outString += "Standard\tExperimental retention time (min)\tProjected retention time (min)\tDifference (min)" + eol;
+    	for (int i = 0; i < standardsList.size(); i++)
+    	{
+    		StandardCompound standard = standardsList.get(i);
+    		outString += standard.getName() + "\t" + standard.getMeasuredRetentionTime() + "\t" + standard.getPredictedRetentionTime() + "\t" + standard.getError() + eol;
+    	}
+    	outString += eol;
+    	
+    	// System suitability check results
+    	outString += "System suitability check" + eol;
+    	outString += "Standard\tm/z\tExperimental retention time (min)\tProjected retention time (min)\tError (min)" + eol;
+    	
+    	ObservableList<StandardCompound> list = stepFourPaneController.getTestCompoundList();
+    	for (int i = 0; i < list.size(); i++)
+    	{
+    		StandardCompound compound = list.get(i);
+    		outString += compound.getName() + "\t" + compound.getMz() + "\t" + compound.getMeasuredRetentionTime() + "\t" + compound.getPredictedRetentionTime() + "\t" + compound.getError() + eol;
+    	}
+    	outString += eol;
+    	outString += "Your overall prediction error:" + "\t" + stepFourPaneController.overallErrorLabelProperty().get() + eol;
+    	outString += "Expected error for a new column:" + "\t" + stepFourPaneController.mostLikelyErrorLabelProperty().get() + eol;    	
+    	outString += "Your column's rating:" + "\t" + stepFourPaneController.columnRatingLabelProperty().get() + eol;
+    	outString += eol;
+
+    	outString += "Number of iterations:\t" + stepThreePaneController.iterationLabelProperty().get() + eol;
+    	outString += "Variance (\u03a3\u00b2):\t" + stepThreePaneController.varianceLabelProperty().get() + "\tmin\u00b2" + eol;
+    	outString += "Time elapsed (min):\t" + stepThreePaneController.timeElapsedLabelProperty().get() + eol;
+    	outString += eol;
+    	
+    	outString += "Back-calculated gradient profile\t\t\tBack-calculated dead time profile" + eol;
+    	outString += "Time (min)\tEluent composition (%B)\t\tEluent Composition (%B)\tDead time (s)" + eol;
+    	
+    	int iNumPoints = 1000;
+    	for (int i = 0; i < iNumPoints; i++)
+    	{
+    		double dCurrentTime = this.plotXMax2 * ((double)i / ((double)iNumPoints - 1));
+    		double dSolventComposition = this.interpolatedSimpleGradient.getAt(dCurrentTime) + this.interpolatedGradientDifferenceProfile.getAt(dCurrentTime);
+
+    		double dCurrentSolventComposition = 0.9 * ((double)i / ((double)iNumPoints - 1)) + 0.05;
+    		double dDeadTime = (this.initialInterpolatedDeadTimeProfile.getAt(dCurrentSolventComposition) + this.interpolatedDeadTimeDifferenceProfile.getAt(dCurrentSolventComposition));
+    		
+    		outString += Float.toString((float)dCurrentTime) + "\t" + Float.toString((float)dSolventComposition) + "\t\t" + Float.toString((float)dCurrentSolventComposition) + "\t" + Float.toString((float)dDeadTime) + eol;
+    	}
+    	outString += eol;
+    	return outString;
 	}
 
 }

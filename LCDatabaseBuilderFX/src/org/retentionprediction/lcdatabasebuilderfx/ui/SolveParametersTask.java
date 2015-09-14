@@ -11,6 +11,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.scene.control.Button;
 import javafx.scene.paint.Color;
 
 import org.apache.commons.math3.analysis.ParametricUnivariateFunction;
@@ -45,6 +46,8 @@ public class SolveParametersTask extends Task{
 	private SimpleStringProperty BOneProperty = new SimpleStringProperty("");
 	private SimpleStringProperty BTwoProperty = new SimpleStringProperty("");
 	
+	private Button copyToClipboard;
+	
 	private boolean updateVarianceReady = true;
 	private boolean updateIterationReady = true;
 	private boolean updateTimeElapsedReady = true;
@@ -60,6 +63,9 @@ public class SolveParametersTask extends Task{
 	private GraphControlFX retentionSolverTimeGraph;
 	private int measuredRetentionTimesSeries = 0;
 	private int predictedRetentionTimesSeries = 0;
+	private double instrumentDeadTime = 0;
+	
+	private double[] measuredRetentionTimes;
 	
 	private boolean isInjectionMode = false;
 	
@@ -85,13 +91,13 @@ public class SolveParametersTask extends Task{
 			rand[i] = new Random();
 		}
 		
-		double[] measuredRetentionTimes = new double[programList.size()];
+		measuredRetentionTimes = new double[programList.size()];
 		for(int i = 0; i < programList.size(); i++){
-			measuredRetentionTimes[i]  = programList.get(i).getMeasuredRetentionTime();
+			measuredRetentionTimes[i]  = programList.get(i).getMeasuredRetentionTime() - instrumentDeadTime;
 		}
 		
 		if(isInjectionMode){
-			maxIterations = 200;
+			maxIterations = 2000;
 		}
 		
 		while(iteration < maxIterations){
@@ -118,10 +124,10 @@ public class SolveParametersTask extends Task{
 					int pos = 0;
 					for (int i = 0; i < programList.size(); i++)
 					{
-						if (programList.get(i).getMeasuredRetentionTime() > 0)
+						if (measuredRetentionTimes[i] > 0)
 						{
-							previousError += Math.pow(programList.get(i).getMeasuredRetentionTime() - previous.getValue()[pos], 2);
-							currentError += Math.pow(programList.get(i).getMeasuredRetentionTime() - current.getValue()[pos], 2);
+							previousError += Math.pow(measuredRetentionTimes[i] - previous.getValue()[pos], 2);
+							currentError += Math.pow(measuredRetentionTimes[i] - current.getValue()[pos], 2);
 							pos++;
 						}
 					}
@@ -138,8 +144,8 @@ public class SolveParametersTask extends Task{
 			CurveFitter<ParametricUnivariateFunction> fitter = new CurveFitter<ParametricUnivariateFunction>(lmOptimizer);
 			for (int i = 0; i < programList.size(); i++)
 			{
-				if (programList.get(i).getMeasuredRetentionTime() > 0)
-					fitter.addObservedPoint(i, programList.get(i).getMeasuredRetentionTime());
+				if (measuredRetentionTimes[i] > 0)
+					fitter.addObservedPoint(i, measuredRetentionTimes[i]);
 			}
 			double[] bestFit = new double[5];
 			
@@ -159,52 +165,7 @@ public class SolveParametersTask extends Task{
 			double newError = calcVarianceForAllPrograms(bestFit[0], bestFit[1], bestFit[2], bestFit[3], bestFit[4]);
 			
 			if (newError < bestVariance)
-			{
-				//Slope at phi  = 0.1
-				double padeNumerator = (bestFit[0] + bestFit[1]*0.1 + bestFit[2]*0.1*0.1);
-	 			double padeDenominator = (1 + bestFit[3]*0.1 + bestFit[4]*0.1*0.1);
-	 			
-	 			if(padeDenominator == 0){
-	 				continue;
-	 			}
-				double slope1 = (padeDenominator*(bestFit[1] + 2*bestFit[2]*0.1) - padeNumerator*(bestFit[3] + 2*bestFit[4]*0.1))/(padeDenominator*padeDenominator);
-				
-				//Slope at phi  = 5
-				padeNumerator = (bestFit[0] + bestFit[1]*5 + bestFit[2]*5*5);
-	 			padeDenominator = (1 + bestFit[3]*5 + bestFit[4]*5*5);
-	 			
-	 			if(padeDenominator == 0){
-	 				continue;
-	 			}
-				double slope2 = (padeDenominator*(bestFit[1] + 2*bestFit[2]*5) - padeNumerator*(bestFit[3] + 2*bestFit[4]*5))/(padeDenominator*padeDenominator);
-	 			
-				//Slope at 0.1 and at 5 should be negative because they are decreasing. Also, slope at 0.1 should be less than the slope at 5.
-				if(slope1 > slope2 || slope1 > 0 || slope2 > 0){
-	 				continue;
-	 			}
-	 			
-	 			boolean skipThisIteration = false;
-	 			
-	 			//Now check if every 0.2 of phi between 0 and 5 is negative. if it isn't, then we do not have valid coefficients for Pade.
-	 			for(double phi = 0.0001; phi <= 5.0001; phi = phi + 0.2 ){
-	 				//Slope at phi  = 0.1
-					padeNumerator = (bestFit[0] + bestFit[1]*phi + bestFit[2]*phi*phi);
-		 			padeDenominator = (1 + bestFit[3]*phi + bestFit[4]*phi*phi);
-		 			
-		 			if(padeDenominator == 0){
-		 				continue;
-		 			}
-					double slope = (padeDenominator*(bestFit[1] + 2*bestFit[2]*phi) - padeNumerator*(bestFit[3] + 2*bestFit[4]*phi))/(padeDenominator*padeDenominator);
-					if(slope > 0){
-						skipThisIteration = true;
-						break;
-					}
-	 			}
-	 			
-	 			if(skipThisIteration){
-	 				continue;
-	 			}
-				
+			{	
 				bestVariance = newError;
 				bestParameters = bestFit;
 				
@@ -243,24 +204,23 @@ public class SolveParametersTask extends Task{
         		updateProgress(100, 100);
         		updateMessage("Optimization complete!");
     	}
+    	copyToClipboard.setDisable(false);
     }
 	
     private void updateGraphs(double a0, double a1, double a2, double b1, double b2){
 		retentionSolverTimeGraph.RemoveSeries(measuredRetentionTimesSeries);
 		retentionSolverTimeGraph.RemoveAllSeries();
 		measuredRetentionTimesSeries = retentionSolverTimeGraph.AddSeries("Measured Retention Times Series", Color.RED, 1, false, false);
-		for(double i = 0.01; i < 99; i = i + 0.5){
+		for(double i = 0; i < 1.0; i = i + 0.01){
 			double padeNumerator = (a0 + a1*i + a2*i*i);
  			double padeDenominator = (1 + b1*i + b2*i*i);
  			if(padeDenominator == 0){
  				continue;
  			}
  			double logk = padeNumerator/padeDenominator;
- 			if(logk < -3){
- 				logk = -3;
- 			}
  			
-			retentionSolverTimeGraph.AddDataPoint(measuredRetentionTimesSeries, i, logk);
+ 			
+			retentionSolverTimeGraph.AddDataPoint(measuredRetentionTimesSeries, i*100.0, logk);
 		}
 		retentionSolverTimeGraph.AutoScaleToSeries(measuredRetentionTimesSeries);
 		retentionSolverTimeGraph.autoScaleY();
@@ -273,13 +233,13 @@ public class SolveParametersTask extends Task{
 		int count = 0;
 		for (int i = 0; i < programList.size(); i++)
 		{
-			if (programList.get(i).getMeasuredRetentionTime() > 0)
+			if (measuredRetentionTimes[i] > 0)
 			{
 				double injectionTime = programList.get(i).getInjectionTime();
 				if(isInjectionMode){
-					totalError += Math.pow(programList.get(i).getMeasuredRetentionTime() - backcalculateController[0].predictRetentionFromLogKPhiRelationship(a0, a1, a2, b1, b2, injectionTime).dPredictedRetentionTime, 2);
+					totalError += Math.pow(measuredRetentionTimes[i] - backcalculateController[0].predictRetentionFromLogKPhiRelationship(a0, a1, a2, b1, b2, injectionTime).dPredictedRetentionTime, 2);
 				}
-				else totalError += Math.pow(programList.get(i).getMeasuredRetentionTime() - backcalculateController[i].predictRetentionFromLogKPhiRelationship(a0, a1, a2, b1, b2, injectionTime).dPredictedRetentionTime, 2);
+				else totalError += Math.pow(measuredRetentionTimes[i] - backcalculateController[i].predictRetentionFromLogKPhiRelationship(a0, a1, a2, b1, b2, injectionTime).dPredictedRetentionTime, 2);
 				count++;
 			}
 		}
@@ -562,7 +522,7 @@ public class SolveParametersTask extends Task{
 		final ObservableList<StandardCompound> currentStandardsList = FXCollections.observableArrayList();
 		for (int i = 0; i < programList.size(); i++)
 		{
-			StandardCompound newStandardCompound = new StandardCompound(programList.get(i).getUse(), programList.get(i).getName(), programList.get(i).getMz(), programList.get(i).getMeasuredRetentionTime(), programList.get(i).getPredictedRetentionTime(), programList.get(i).getIndex());
+			StandardCompound newStandardCompound = new StandardCompound(programList.get(i).getUse(), programList.get(i).getName(), programList.get(i).getMz(), programList.get(i).getMeasuredRetentionTime(), programList.get(i).getPredictedRetentionTime()+instrumentDeadTime, programList.get(i).getIndex());
 			currentStandardsList.add(newStandardCompound);
 		}
 
@@ -588,6 +548,47 @@ public class SolveParametersTask extends Task{
 
 	public void setInjectionMode(boolean isInjectionMode) {
 		this.isInjectionMode = isInjectionMode;
+	}
+
+	public double getInstrumentDeadTime() {
+		return instrumentDeadTime;
+	}
+
+	public void setInstrumentDeadTime(double instrumentDeadTime) {
+		this.instrumentDeadTime = instrumentDeadTime;
+	}
+
+	public String copyProfileToClipboard() {
+		String outString = "";
+		String eol = System.getProperty("line.separator");
+		outString += "Pade's approximant coefficients for log K vs Phi relationship:" + eol;
+		outString += "a0:\t"+ getAZeroProperty().get() + eol;
+		outString += "a1:\t"+ getAOneProperty().get() + eol;
+		outString += "a2:\t"+ getATwoProperty().get() + eol;
+		outString += "b1:\t"+ getBOneProperty().get() + eol;
+		outString += "b2:\t"+ getBTwoProperty().get() + eol;
+		outString += "Variance:\t"+ getVarianceProperty().get() + eol;
+		outString += "Time Elapsed:\t"+ getTimeElapsedProperty().get() + eol;
+		
+		if(isInjectionMode){
+			outString += "Injection #\t Experimental Retention Time(min)\t Calculated Retention Time(min)\t Error(min)" + eol;
+			for(StandardCompound s : programList){
+				outString += s.getIndex() + "\t" + s.getMeasuredRetentionTime() + "\t" + s.getPredictedRetentionTime() + "\t" + s.getError() + eol;
+			}
+		}
+		else{
+			outString += "Gradient\t Experimental Retention Time(min)\t Calculated Retention Time(min)\t Error(min)" + eol;
+			for(StandardCompound s : programList){
+				char gradientName = (char)(s.getIndex() + 65);
+				outString += "Gradient "+ gradientName + ":\t" + s.getMeasuredRetentionTime() + "\t" + s.getPredictedRetentionTime() + "\t" + s.getError() + eol;
+			}
+		}
+		
+		return outString;
+	}
+
+	public void setCopyToClipboardButton(Button copyToClipboard) {
+		this.copyToClipboard = copyToClipboard;
 	}
 	
 }

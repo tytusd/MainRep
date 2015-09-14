@@ -71,6 +71,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 			finalFitController = loader.getController();
 			finalFitController.setFinalFitControllerListener(this);
 			finalFitController.setBackcalculateController(backcalculateController);
+			finalFitController.setMeasuredRetentionTimesController(measuredRetentionTimesController);
 		} 
 		catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -142,6 +143,7 @@ public class InjectionParentPaneController implements Initializable, MeasuredRet
 				gradientAanchor.setContent(finalFitPane);
 			}
 			this.iCurrentStep++;
+			finalFitController.setInstrumentDeadTime(backcalculateController.getInstrumentDeadTime());
 		}
 		
 	}
