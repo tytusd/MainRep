@@ -32,6 +32,9 @@ public class StandardCompound implements Serializable
 	private DoubleProperty error;
 	private IntegerProperty index;
 	private DoubleProperty injectionTime;
+	private StringProperty solverStatus;
+	private StringProperty notes;
+	
 	
 	// This string binding produces the correct value for the predicted retention time
 	private StringBinding predictedRetentionTimeStringBinding;
@@ -62,6 +65,8 @@ public class StandardCompound implements Serializable
 		this.error = new SimpleDoubleProperty();
 		this.index = new SimpleIntegerProperty();
 		this.injectionTime = new SimpleDoubleProperty();
+		this.solverStatus = new SimpleStringProperty();
+		this.notes = new SimpleStringProperty();
 		
 		this.use.set(use);
 		this.name.set(name);
@@ -71,6 +76,8 @@ public class StandardCompound implements Serializable
 		this.error.bind(this.measuredRetentionTime.subtract(this.predictedRetentionTime));
 		this.index.set(index);
 		this.injectionTime.set(0.0);
+		this.solverStatus.set("Not started");
+		this.notes.set("");
 		
 		// This string binding produces the correct value for the predicted retention time
 		this.predictedRetentionTimeStringBinding = new StringBinding(){
@@ -238,6 +245,30 @@ public class StandardCompound implements Serializable
 	    return name;
 	}
 
+	public String getNotes(){
+		return notes.get();
+	}
+	
+	public void setNotes(String notes){
+		this.notes.set(notes);
+	}
+	
+	public StringProperty notesProperty(){
+		return notes;
+	}
+	
+	public String getSolverStatus(){
+		return solverStatus.get();
+	}
+	
+	public void setSolverStatus(String solverStatus){
+		this.solverStatus.set(solverStatus);
+	}
+	
+	public StringProperty solverStatusProperty(){
+		return solverStatus;
+	}
+	
 	public String getMz()
 	{
 		return mz.get();

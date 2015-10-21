@@ -34,9 +34,24 @@ import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
+import org.retentionprediction.lcdatabasebuilderfx.business.InterpolationFunction;
+import org.retentionprediction.lcdatabasebuilderfx.business.LinearInterpolationFunction;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import boswell.fxoptionpane.FXOptionPane;
 import boswell.graphcontrolfx.GraphControlFX;
@@ -69,13 +84,16 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    @FXML private TableView<StandardCompound> tableCompoundList;
 	    
 	    @FXML private ProgressBar progressBar;
-
+	    
 	    @FXML private Button buttonSolve;
 	    @FXML private Button buttonAdd;
 	    @FXML private Button buttonDelete;
 	    @FXML private Button buttonInsert;
 	    @FXML private Button buttonPrevious;
 	    @FXML private Button copyToClipboard;
+	    @FXML private Button importCompoundsButton;
+	    @FXML private Button exportDataButton;
+	    @FXML private Button runBatchSolverButton;
 	    
 	    @FXML private TableColumn<StandardCompound, String> columnError;
 	    @FXML private TableColumn<StandardCompound, String> columnProgram;
@@ -86,7 +104,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    @FXML private TableColumn<StandardCompound, Boolean> columnUse;
 	    @FXML private TableColumn<StandardCompound, Double> columnRetentionTime;
 	    @FXML private TableColumn<StandardCompound, Double> columnInjectionTime;
-	    
+
 	    @FXML private TitledPane paneSolveForParameters;
 
 	    private GraphControlFX retentionSolverTimeGraph;
@@ -95,12 +113,14 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    private SolveParametersTask solveParametersTask;
 	    private ObservableList<StandardCompound> compoundsList;
 	    private ObservableList<StandardCompound> compoundsRetentionList;
-	    
+	    private ObservableList<StandardCompound> importedCompoundsList;
 	    private FinalFitControllerListener finalFitControllerListener;
 	
 	    private BackcalculateController backcalculateController;
 	
 	    private double instrumentDeadTime = 0;
+	    
+	    
 
 		private MeasuredRetentionTimesController measuredRetentionTimeController;
 	    
@@ -110,10 +130,11 @@ public class FinalFitController implements Initializable, SolveParametersListene
 			retentionSolverTimeGraph = new GraphControlFX();
 			retentionSolverTimeGraph.setControlsEnabled(false);
 			retentionSolverTimeGraph.setYAxisTitle("log K");
-			retentionSolverTimeGraph.setYAxisBaseUnit("", "");
+			retentionSolverTimeGraph.setYAxisBaseUnit("units", "units");
 			retentionSolverTimeGraph.setYAxisScientificNotation(true);
 			retentionSolverTimeGraph.setYAxisRangeIndicatorsVisible(true);
 			retentionSolverTimeGraph.setAutoScaleY(true);
+			retentionSolverTimeGraph.setYAxisRangeIndicatorsVisible(false);
 			
 			retentionSolverTimeGraph.setXAxisType(false);
 			retentionSolverTimeGraph.setXAxisRangeIndicatorsVisible(false);
@@ -446,6 +467,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	}
 	
 	@FXML public void copyProfilesToClipboard(){
+		//createXml();
 		buttonSolve.setDisable(true);
 		String eol = System.getProperty("line.separator");
 		StringBuffer outString = new StringBuffer(eol);
@@ -481,6 +503,102 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		
 	}
 
+	public void createXml(){
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = null;
+		try {
+			builder = factory.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		}
+		
+		Document doc = builder.newDocument();
+		
+		//Add root tag - xml
+		Element root = doc.createElement("xml");
+		doc.appendChild(root);
+		
+		//Add mode tag
+		Element mode = doc.createElement("mode");
+		mode.setNodeValue("Injection");
+		root.appendChild(mode);
+		
+		//Add profiles tag
+		Element profiles = doc.createElement("profiles");
+		root.appendChild(profiles);
+		
+		//Create first profile - Simple Gradient
+		String nodeValue = getInterpolatedSimpleGradient(backcalculateController);
+		Element profile1 = doc.createElement("profile");
+		profile1.setAttribute("type", "Simple Gradient");
+		profile1.appendChild(doc.createTextNode(nodeValue));
+		profiles.appendChild(profile1);
+		
+		//Create first profile - Simple Gradient
+		nodeValue = getInterpolatedDeadTime(backcalculateController);
+		Element profile2 = doc.createElement("profile");
+		profile2.setAttribute("type", "Dead Time");
+		profile2.appendChild(doc.createTextNode(nodeValue));
+		profiles.appendChild(profile2);
+		
+		//Add Compound here
+		
+		
+		//Write the contents into a XML file
+		// write the content into xml file
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = null;
+		try {
+			transformer = transformerFactory.newTransformer();
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		DOMSource source = new DOMSource(doc);
+		StreamResult result = new StreamResult(System.out);
+		try {
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.transform(source, result);
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public String getInterpolatedSimpleGradient(BackcalculateController controller){
+		LinearInterpolationFunction gradientFunction = controller.interpolatedSimpleGradient;
+		LinearInterpolationFunction gradientDifferenceFunction = controller.interpolatedGradientDifferenceProfile;
+		
+		StringBuilder sb = new StringBuilder("");
+		ObservableList<StandardCompound> list = controller.getStandardsList();
+		double max = list.get(list.size()-1).getMeasuredRetentionTime() * 1.5;
+		double step = max / 1000;
+		
+		for(double t = 0; t < max; t += step){
+			double value = (gradientFunction.getAt(t) + gradientDifferenceFunction.getAt(t))/100;
+			sb.append(value + ",");
+		}
+		sb.setLength(sb.length()-1);
+		return sb.toString();
+	}
+	
+	public String getInterpolatedDeadTime(BackcalculateController controller){
+		InterpolationFunction deadTimeFunction = controller.initialInterpolatedDeadTimeProfile;
+		InterpolationFunction deadTimeDifferenceFunction = controller.interpolatedDeadTimeDifferenceProfile;
+		
+		StringBuilder sb = new StringBuilder("");
+		ObservableList<StandardCompound> list = controller.getStandardsList();
+		double max = list.get(list.size()-1).getMeasuredRetentionTime() * 1.5;
+		double step = max / 1000;
+		
+		for(double t = 0; t < max; t += step){
+			double value = (deadTimeFunction.getAt(t) + deadTimeDifferenceFunction.getAt(t))/60;
+			sb.append(value + ",");
+		}
+		sb.setLength(sb.length()-1);
+		return sb.toString();
+	}
+	
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
 		// TODO Auto-generated method stub

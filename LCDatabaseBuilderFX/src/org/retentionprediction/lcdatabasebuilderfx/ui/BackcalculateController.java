@@ -3049,6 +3049,10 @@ public class BackcalculateController implements Initializable, StepFourPaneContr
 	}
 	
 
+	public ObservableList<StandardCompound> getStandardsList() {
+		return standardsList;
+	}
+
 	public double getInstrumentDeadTime() {
 		return instrumentDeadTime;
 	}

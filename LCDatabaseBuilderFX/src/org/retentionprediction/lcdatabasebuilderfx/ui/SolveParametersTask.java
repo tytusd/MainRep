@@ -3,7 +3,7 @@ package org.retentionprediction.lcdatabasebuilderfx.ui;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javafx.application.Platform;
@@ -18,12 +18,11 @@ import org.apache.commons.math3.analysis.ParametricUnivariateFunction;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.fitting.CurveFitter;
-import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.optim.ConvergenceChecker;
 import org.apache.commons.math3.optim.PointVectorValuePair;
+import org.apache.commons.math3.optim.nonlinear.vector.jacobian.LevenbergMarquardtOptimizer;
 import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
-import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.PredictedRetentionObject;
 
 import boswell.graphcontrolfx.GraphControlFX;
 
@@ -83,7 +82,7 @@ public class SolveParametersTask extends Task{
 		long time = System.currentTimeMillis();
 		updateProgress(-1, 0);
 		updateMessage("Please wait, optimization in progress...");
-		int iteration = 0, maxIterations = 1000;
+		int iteration = 0, maxIterations = 5000, noChangeCount = 0;
 		bestVariance = 100;
 		
 		Random[] rand = new Random[5];
@@ -97,20 +96,45 @@ public class SolveParametersTask extends Task{
 		}
 		
 		if(isInjectionMode){
-			maxIterations = 2000;
+			maxIterations = 1000;
 		}
 		
 		while(iteration < maxIterations){
-			iteration++;
-			updateIteration(iteration+"");
-			
 			double[] params = new double[rand.length];
 			for(int i = 0; i < params.length; i++){
 				params[i] = 10 - 20*rand[i].nextDouble();
 			}
 			
+			boolean isGoodGuess = false;
 			
-			//double variance = calcVarianceForAllPrograms(params[0], params[1], params[2], params[3], params[4]);
+			ArrayList<Double> predRetTime = new ArrayList<Double>(8);
+			for (int i = 0; i < programList.size(); i++)
+			{
+				double injectionTime = programList.get(i).getInjectionTime();
+				double predictedRetTime;
+				if(isInjectionMode){
+					predictedRetTime = backcalculateController[0].predictRetentionFromLogKPhiRelationship(params[0], params[1], params[2], params[3], params[4],injectionTime).dPredictedRetentionTime;
+				}
+				else{
+					predictedRetTime = backcalculateController[i].predictRetentionFromLogKPhiRelationship(params[0], params[1], params[2], params[3], params[4],injectionTime).dPredictedRetentionTime;
+				}
+				predRetTime.add(measuredRetentionTimes[i] - predictedRetTime);
+			}
+			
+			double signum = Math.signum(predRetTime.get(0));
+			for(int k = 1; k < predRetTime.size(); k++){
+				if(Math.signum(predRetTime.get(k)) != signum){
+					isGoodGuess = true;
+					break;
+				}
+			}
+			
+			if(!isGoodGuess){
+				continue;
+			}
+			
+			iteration++;
+			updateIteration(iteration+"");
 			
 			// Each cycle is one iteration for each particle
 			ConvergenceChecker<PointVectorValuePair> convergenceChecker = new ConvergenceChecker<PointVectorValuePair>()
@@ -176,6 +200,7 @@ public class SolveParametersTask extends Task{
 				this.updateBOne(bestFit[3]);
 				this.updateBTwo(bestFit[4]);
 				updateGraphs(bestFit[0], bestFit[1], bestFit[2], bestFit[3], bestFit[4]);
+				
 				for (int i = 0; i < programList.size(); i++)
 				{
 					double injectionTime = programList.get(i).getInjectionTime();
@@ -189,8 +214,18 @@ public class SolveParametersTask extends Task{
 					}
 					programList.get(i).setPredictedRetentionTime(predictedRetTime);
 				}
+				noChangeCount = 0;
 				this.updateTable();
 			}
+			else
+			{
+				noChangeCount++;
+			}
+			
+			if(noChangeCount == 200){
+				break;
+			}
+			
 			updateTimeElapsed(time);
 		}
 		return null;
@@ -263,14 +298,35 @@ public class SolveParametersTask extends Task{
 			double[] gradient = new double[5];
 			double injectionTime = 0.0;
 			if(isInjectionMode){
-				programList.get((int)x).getInjectionTime();
+				injectionTime = programList.get((int)x).getInjectionTime();
 				x = 0;
 			}
-			gradient[0] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0] + 1, parameters[1], parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime - backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0] - 1, parameters[1], parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
-			gradient[1] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1] + 1, parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime - backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1] - 1, parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
-			gradient[2] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2] + 1, parameters[3], parameters[4], injectionTime).dPredictedRetentionTime - backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2] - 1, parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
-			gradient[3] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3] + 1, parameters[4], injectionTime).dPredictedRetentionTime - backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3] - 1, parameters[4], injectionTime).dPredictedRetentionTime;
-			gradient[4] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4] + 1, injectionTime).dPredictedRetentionTime - backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4] - 1, injectionTime).dPredictedRetentionTime;
+			double[] values = new double[10];
+			values[0] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0] + 0.001, parameters[1], parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime; 
+			values[1] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0] - 0.001, parameters[1], parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
+			values[2] =  backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1] + 0.001, parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime; 
+			values[3] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1] - 0.001, parameters[2], parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
+			values[4] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2] + 0.001, parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
+			values[5] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2] - 0.001, parameters[3], parameters[4], injectionTime).dPredictedRetentionTime;
+			values[6] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3] + 0.001, parameters[4], injectionTime).dPredictedRetentionTime; 
+			values[7] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3] - 0.001, parameters[4], injectionTime).dPredictedRetentionTime;
+			values[8] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4] + 0.001, injectionTime).dPredictedRetentionTime;
+			values[9] = backcalculateController[(int)x].predictRetentionFromLogKPhiRelationship(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4] - 0.001, injectionTime).dPredictedRetentionTime;;
+			
+			for(int i = 0; i < values.length; i++){
+				if(values[i] == -1){
+					values[i] = 999; 
+				}
+			}
+			
+			gradient[0] = values[0] - values[1];
+			gradient[1] = values[2] - values[3];
+			gradient[2] = values[4] - values[5];
+			gradient[3] = values[6] - values[7];
+			gradient[4] = values[8] - values[9];
+			for(int i = 0; i < gradient.length; i++){
+				gradient[i] *= 2000;
+			}
 			return gradient;
 		}
     	

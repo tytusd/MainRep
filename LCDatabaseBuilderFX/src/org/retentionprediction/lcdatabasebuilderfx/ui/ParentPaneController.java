@@ -250,11 +250,12 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			
 			retentionSolverTimeGraph = new GraphControlFX();
 			retentionSolverTimeGraph.setControlsEnabled(false);
-			retentionSolverTimeGraph.setYAxisTitle("log K");
-			retentionSolverTimeGraph.setYAxisBaseUnit("", "");
+			retentionSolverTimeGraph.setYAxisTitle("log k");
+			retentionSolverTimeGraph.setYAxisBaseUnit("units", "units");
 			retentionSolverTimeGraph.setYAxisScientificNotation(true);
 			retentionSolverTimeGraph.setYAxisRangeIndicatorsVisible(true);
 			retentionSolverTimeGraph.setAutoScaleY(true);
+			retentionSolverTimeGraph.setYAxisRangeIndicatorsVisible(false);
 			
 			retentionSolverTimeGraph.setXAxisType(false);
 			retentionSolverTimeGraph.setXAxisRangeIndicatorsVisible(false);

@@ -70,7 +70,7 @@
                                     <Label text="Choose your stationary phase:" GridPane.columnSpan="2147483647" />
                                     <ComboBox fx:id="comboStationaryPhase" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Eclipse Plus C18" GridPane.columnSpan="3" GridPane.rowIndex="1" />
                                     <Label text="Column length:" GridPane.rowIndex="2" />
-                                    <TextField fx:id="textFieldColumnLength" onAction="#actionPerformValidation" prefWidth="50.0" text="100" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <TextField fx:id="textFieldColumnLength" onAction="#actionPerformValidation" prefWidth="50.0" text="150" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                                     <Label fx:id="labelColumnLength" text="mm" GridPane.columnIndex="2" GridPane.rowIndex="2" />
                                     <Label text="Inner diameter:" GridPane.rowIndex="3" />
                                     <TextField fx:id="textFieldInnerDiameter" onAction="#actionPerformValidation" prefWidth="50.0" text="2.1" GridPane.columnIndex="1" GridPane.rowIndex="3" />
@@ -83,7 +83,7 @@
                                     <TextField fx:id="textFieldFlowRate" onAction="#actionPerformValidation" prefWidth="50.0" text="0.4" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                     <Label fx:id="labelFlowRateUnits" text="mL/min" GridPane.columnIndex="2" GridPane.rowIndex="4" />
                                     <Label text="Instrument dead time:" GridPane.rowIndex="5" />
-                                    <TextField fx:id="textFieldInstrumentDeadTime" onAction="#actionPerformValidation" prefWidth="40.0" text="0.125" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                    <TextField fx:id="textFieldInstrumentDeadTime" onAction="#actionPerformValidation" prefWidth="40.0" text="0.188" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                                     <Label fx:id="labelInstrumentDeadTime" text="min" GridPane.columnIndex="2" GridPane.rowIndex="5" />
                                  </children>
                                  <columnConstraints>
