@@ -22,6 +22,7 @@ public class Utilities {
 	public static void parseCSV(String fileName, ArrayList<IsocraticCompound> compounds)
 	{
 		File file = new File(fileName);
+		System.out.println(fileName);
 		compounds.clear();
 		try 
 		{

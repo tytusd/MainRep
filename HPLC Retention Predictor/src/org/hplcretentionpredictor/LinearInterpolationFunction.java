@@ -50,13 +50,13 @@ class LinearInterpolationFunction
 			return extrapolateAfter(x);
 		
 		// Find the first number that is greater than or equal to x
-		i = 0;
-		while (x > dDataArray[i][0])
-		{
-			i++;
-			//if (i >= dDataArray.length)
-				//break;
-		}
+		i = binarySearch(x);
+//		while (x > dDataArray[i][0])
+//		{
+//			i++;
+//			//if (i >= dDataArray.length)
+//				//break;
+//		}
 		
 		//i could be equal to dataarray.length
 		
@@ -84,6 +84,33 @@ class LinearInterpolationFunction
 
 		//return y;
 	}	
+	
+	/**
+	 * binarySearch takes the value x which is provided in getAt method. This method is built only for getAt method. 
+	 * @param x
+	 * @return
+	 */
+	public int binarySearch(double x){
+		int low = 0;
+		int high = dDataArray.length-1;
+		
+		while(high - low > 1){
+			int mid = (low+high)/2;
+			if(x < dDataArray[mid][0]){
+				high = mid;
+			}
+			else if(x > dDataArray[mid][0]){
+				low = mid;
+			}
+			else{
+				return mid;
+			}
+		}
+		if(x <= dDataArray[low][0]){
+			return low;
+		}
+		else return high;
+	}
 	
 	public double extrapolateBefore(double x)
 	{

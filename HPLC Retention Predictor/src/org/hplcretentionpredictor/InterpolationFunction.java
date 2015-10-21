@@ -216,14 +216,7 @@ class InterpolationFunction
 			return lifTwoPoint.getAt(x);
 		}
 		
-		int i = 0;
-		while (x > dRanges[i])
-		{
-			i++;
-			if (i >= dRanges.length)
-				break;
-				
-		}
+		int i = binarySearch(x);
 		
 		double y = dInterpolationParameters[i][0] + dInterpolationParameters[i][1]*x + dInterpolationParameters[i][2]*Math.pow(x,2) + dInterpolationParameters[i][3]*Math.pow(x,3);
 		return y;
@@ -241,6 +234,30 @@ class InterpolationFunction
 			A[i][q] = A[k][q];
 			A[k][q] = temp;
 		}
+	}
+	
+	public int binarySearch(double x){
+		int low = 0;
+		int high = dRanges.length-1;
+		if(x > dRanges[high]){
+			return high+1;
+		}
+		while(high - low > 1){
+			int mid = (low+high)/2;
+			if(x < dRanges[mid]){
+				high = mid;
+			}
+			else if(x > dRanges[mid]){
+				low = mid;
+			}
+			else{
+				return mid;
+			}
+		}
+		if(x <= dRanges[low]){
+			return low;
+		}
+		else return high;
 	}
 
 	// divide row i by A[i][j]

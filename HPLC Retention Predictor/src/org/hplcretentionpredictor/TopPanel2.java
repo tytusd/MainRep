@@ -83,6 +83,7 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 	private JLabel jlblStatus2 = null;
 	public JButton jbtnPredict = null;
 	public JButton jbtnUpdateIsocraticDatabase = null;
+	public JButton jbtnImportData = null;
 	public JScrollPane jScrollPane2 = null;
 	public JTable jtablePredictions = null;
 	private JLabel jLabel2 = null;
@@ -717,6 +718,8 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 			this.jProgressBar2.setLocation((jpanelStep6.getWidth() / 2) - (jProgressBar2.getWidth() / 2), jpanelStep6.getHeight() - 15 - jbtnPredict.getHeight() - jProgressBar2.getHeight() - 12);
 			this.jbtnPredict.setLocation(jProgressBar2.getX(), jpanelStep6.getHeight() - 15 - jbtnPredict.getHeight());
 			this.jbtnUpdateIsocraticDatabase.setLocation(jProgressBar2.getX()+jProgressBar2.getWidth()-jbtnUpdateIsocraticDatabase.getWidth(), jpanelStep6.getHeight() - 15 - jbtnPredict.getHeight());
+			this.jbtnImportData.setLocation(jProgressBar.getX() + jbtnPredict.getWidth() + (jProgressBar.getWidth() - jbtnPredict.getWidth() - jbtnImportData.getWidth() - jbtnUpdateIsocraticDatabase.getWidth())/2, jpanelStep6.getHeight() - 15 - jbtnPredict.getHeight());
+			
 			this.jlblStatus2.setLocation(jProgressBar2.getX(), jProgressBar2.getY() - 4 - jlblStatus2.getHeight());
 			this.jScrollPane2.setSize(jpanelStep6.getWidth() - 8 - 8, jlblStatus2.getY() - 6 - jScrollPane2.getY());
 			this.jlblPercent.setLocation(jScrollPane2.getX() + jScrollPane2.getWidth() - jlblPercent.getWidth(), jlblPercent.getY());
@@ -788,6 +791,7 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 			jpanelStep6.add(jlblStatus2, null);
 			jpanelStep6.add(getJbtnPredict(), null);
 			jpanelStep6.add(getJbtnUpdateIsocraticDatabase(), null);
+			jpanelStep6.add(getJbtnImportData(),null);
 			jpanelStep6.add(getJScrollPane1(), null);
 			jpanelStep6.add(jlblToleranceWindow, null);
 			jpanelStep6.add(getJtxtWindowConfidence(), null);
@@ -818,18 +822,28 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 	private JButton getJbtnPredict() {
 		if (jbtnPredict == null) {
 			jbtnPredict = new JButton();
-			jbtnPredict.setBounds(new Rectangle(128, 520, 160, 36));
-			jbtnPredict.setText("Predict Retention Times");
+			jbtnPredict.setBounds(new Rectangle(128, 520, 120, 36));
+			jbtnPredict.setText("Predict tR");
 			jbtnPredict.setActionCommand("Predict");
 		}
 		return jbtnPredict;
 	}
 	
+	private JButton getJbtnImportData() {
+		if (jbtnImportData == null) {
+			jbtnImportData = new JButton();
+			jbtnImportData.setBounds(new Rectangle(128, 520, 120, 36));
+			jbtnImportData.setText("Import Data");
+			jbtnImportData.setActionCommand("Import Data");
+		}
+		return jbtnImportData;
+	}
+	
 	private JButton getJbtnUpdateIsocraticDatabase() {
 		if (jbtnUpdateIsocraticDatabase == null) {
 			jbtnUpdateIsocraticDatabase = new JButton();
-			jbtnUpdateIsocraticDatabase.setBounds(new Rectangle(0, 520, 160, 36));
-			jbtnUpdateIsocraticDatabase.setText("Update Database");
+			jbtnUpdateIsocraticDatabase.setBounds(new Rectangle(0, 520, 120, 36));
+			jbtnUpdateIsocraticDatabase.setText("Update Db");
 			jbtnUpdateIsocraticDatabase.setActionCommand("Update Database");
 		}
 		return jbtnUpdateIsocraticDatabase;

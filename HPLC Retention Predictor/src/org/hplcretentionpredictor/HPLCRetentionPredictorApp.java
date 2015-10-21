@@ -23,7 +23,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -31,33 +30,39 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Vector;
+import java.util.prefs.Preferences;
 
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.SwingWorker;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
+import org.apache.commons.math3.special.Erf;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import boswell.graphcontrol.AutoScaleEvent;
 import boswell.graphcontrol.AutoScaleListener;
 import boswell.peakfinderlc.PeakFinderSettingsDialog;
-
-import org.hplcretentionpredictor.IsocraticCompound;
 
 class PredictedRetentionObject
 {
@@ -166,6 +171,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	public TaskUpdateDatabase taskUpdateDb = null;
 
 	public String path = System.getProperty("java.io.tmpdir");
+
+	private long totalTime;
 	
     // Start the app
     public static void main(String[] args) 
@@ -246,6 +253,29 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 		String helpHS = "org/hplcretentionpredictor/help/RetentionPredictorHelp.hs";
 		ClassLoader cl = TopPanel.class.getClassLoader();
 		path =	path.replaceAll("%20", " "); 
+		if(path.charAt(path.length()-1) != '/' && path.charAt(path.length()-1) != '\\'){
+			System.out.println(path);
+			path += "/";
+			System.out.println(path);
+		}
+		if(!(new File(path+fileName).exists())){
+			try{
+				InputStream reader = this.getClass().getResourceAsStream("/"+fileName); 
+				FileOutputStream write = new FileOutputStream(path+fileName);
+				byte[] buffer = new byte[4096];
+				int n = 0;
+				while(-1 != (n = reader.read(buffer))){
+					write.write(buffer, 0, n);
+				}
+				write.close();
+				reader.close();
+				System.out.println("Database transferred to temp folder");
+			}
+			catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+		
 /*		try {
 			URL hsURL = HelpSet.findHelpSet(cl, helpHS);
 			GlobalsDan.hsMainHelpSet = new HelpSet(null, hsURL);
@@ -345,6 +375,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
         contentPane2.jbtnPreviousStep.addActionListener(this);
         contentPane2.jbtnPredict.addActionListener(this);
         contentPane2.jbtnUpdateIsocraticDatabase.addActionListener(this);
+        contentPane2.jbtnImportData.addActionListener(this);
         contentPane2.jbtnHelp.addActionListener(this);
         contentPane2.jtxtWindowConfidence.addFocusListener(this);
         contentPane2.jtxtWindowConfidence.addKeyListener(this);
@@ -1242,7 +1273,166 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    	updateDialog.setVisible(true);
 	    	
 	    }
+	    else if(strActionCommand == "Import Data"){
+	    	importXmlData();
+	    }
 	}
+    
+    public void importXmlData(){
+    	Preferences prefs = Preferences.userNodeForPackage(this.getClass());
+    	JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Open XML Data File");
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("XML (.xml)", "xml");
+		fileChooser.addChoosableFileFilter(filter);
+		fileChooser.setFileFilter(filter);
+			
+		// Set default directory
+		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
+		if (lastOutputDir != "")
+		{
+			File lastDir = new File(lastOutputDir);
+			if (lastDir.exists())
+				fileChooser.setCurrentDirectory(lastDir.getParentFile());
+		}
+		
+		int result = fileChooser.showOpenDialog(this);
+		if(result == JFileChooser.APPROVE_OPTION){
+			File selectedFile = fileChooser.getSelectedFile();
+			if(selectedFile != null){
+				//TODO: Parse the XML file here
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder = null;
+				Document doc = null;
+				try {
+					builder = factory.newDocumentBuilder();
+				} catch (ParserConfigurationException e) {
+					e.printStackTrace();
+				}
+				try {
+					doc = builder.parse(selectedFile);
+					doc.getDocumentElement().normalize();
+				} catch (SAXException | IOException e) {
+					e.printStackTrace();
+				}
+				
+				String mode = getXmlNodeValue(doc.getElementsByTagName("mode"), "mode");
+				String compoundName = "";
+				double[] simpleGradient;
+				double[] deadTime;
+				double[] injectionTimes;
+				double[] padeCoefficients = null;
+				double[] retentionTimes;
+				
+				/*
+				//Parse profiles here
+				NodeList profiles = doc.getElementsByTagName("profile");
+				for(int i = 0; i < profiles.getLength(); i++){
+					Node n = profiles.item(i);
+					String type = n.getAttributes().getNamedItem("type").getNodeValue();
+					if(type.equals("Simple Gradient")){
+						String value = n.getTextContent();
+						String[] values = value.split(",");
+						simpleGradient = convertToDoubles(values);
+					}
+					else if(type.equals("Dead Time")){
+						String value = n.getTextContent();
+						String[] values = value.split(",");
+						deadTime = convertToDoubles(values);
+					}
+				}
+				*/
+				
+				
+				
+				//Parse injection times here
+				NodeList injections = doc.getElementsByTagName("injectiontimes");
+				if(injections.getLength() > 0){
+					Node n = injections.item(0);
+					String value = n.getTextContent();
+					String[] values = value.split(",");
+					injectionTimes = convertToDoubles(values);
+				}
+				
+				//Parse retention times here
+				NodeList retentions = doc.getElementsByTagName("retentiontimes");
+				if(retentions.getLength() > 0){
+					Node n = retentions.item(0);
+					String value = n.getTextContent();
+					String[] values = value.split(",");
+					retentionTimes = convertToDoubles(values);
+				}
+				
+				//Parse compound information here
+				NodeList compounds = doc.getElementsByTagName("compound");
+				if(compounds.getLength() > 0){
+					Node n = compounds.item(0);
+					if(n.hasAttributes()){
+						Node nameNode = n.getAttributes().getNamedItem("name");
+						if(nameNode != null){
+							compoundName = nameNode.getNodeValue();
+						}
+					}
+					NodeList pade = n.getChildNodes();
+					for(int i = 0; i < pade.getLength(); i++){
+						Node padeNode = pade.item(i);
+						if(padeNode.getNodeName().equals("padecoefficients")){
+							String value = padeNode.getTextContent();
+							String[] values = value.split(",");
+							padeCoefficients = convertToDoubles(values);
+						}
+					}
+				}
+				
+				otherCompounds.clear();
+				IsocraticCompound compound = new IsocraticCompound();
+				for(int i = 0; i < 20; i++){
+					double phi = i*0.05;
+					double logK = (padeCoefficients[0] + padeCoefficients[1]*phi + padeCoefficients[2]*phi*phi)/(1 + padeCoefficients[3]*phi + padeCoefficients[4]*phi*phi);
+					compound.getConcentrationList().add(phi);
+					compound.getLogKList().add(logK);
+				}
+				compound.setId(compoundName);
+				otherCompounds.add(compound);
+				
+				// Fill in the table with the solutes that weren't selected
+		    	contentPane2.tmPredictionModel.getDataVector().clear();
+		    	
+		    	//Add compounds to the prediction table
+		    	for (int i = 0; i < otherCompounds.size(); i++)
+		    	{
+		    		Object[] newRow = {otherCompounds.get(i).getId(), null};
+	    			contentPane2.tmPredictionModel.addRow(newRow);
+		    	}
+
+				
+			}
+		}
+		
+		contentPane2.jProgressBar2.setIndeterminate(false);
+		contentPane2.jProgressBar2.setStringPainted(true);
+		contentPane2.jProgressBar2.setString("");
+		contentPane2.jbtnPredict.setActionCommand("Predict");
+		contentPane2.jbtnPredict.setText("Predict dB");
+		contentPane2.jbtnPredict.setEnabled(true);
+    }
+    
+    public double[] convertToDoubles(String[] values){
+    	double[] result = new double[values.length];
+    	for(int i = 0; i < values.length; i++){
+    		result[i] = Double.parseDouble(values[i]);
+    	}
+    	return result;
+    }
+    
+    
+    public String getXmlNodeValue(NodeList list, String name){
+    	for(int i = 0; i < list.getLength(); i++){
+    		if(list.item(i).equals(name)){
+    			return list.item(i).getTextContent();
+    		}
+    	}
+    	return "";
+    }
     
     public void copyProfilesToClipboard()
     {
@@ -2022,12 +2212,15 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 			try 
 			{
 				urlStream = new URL(fileURL).openStream();
+				System.out.println("URL stream opened");
 				updateDialog.jLblStatus.setText("Connected to the web. Checking for updates ...");
 				if(isocratic_database_file_temp.exists()){
 					isocratic_database_file = isocratic_database_file_temp;		//If it exists in temp, then we dont care about the one in jar
 				}
 				fileStream = new FileInputStream(isocratic_database_file);
+				System.out.println("File stream opened");
 				diff = Utilities.areDifferent(urlStream, fileStream);
+				System.out.println("Diff is "+diff);
 			} 
 			catch (FileNotFoundException e) 
 			{
@@ -2258,102 +2451,107 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 			contentPane2.jlblMedianError.setText(formatter1.format(dMedianError * 60));
 		}*/	
 	}
-	
-    public double calcRetentionError(double dtstep, int iNumCompoundsToInclude, boolean bUseSimpleGradient)
-    {
-    	double dRetentionError = 0;
-		double dt0;
-		double dIntegral;
-		double dtRFinal;
-		double dD;
-		double dTotalTime;
-		double dTotalDeadTime;
-		double dXPosition;
-		double[] dLastXPosition = {0,0};
-		double[] dLastko = {0,0};
-		double dXMovement = 0;
-		double dPhiC = 0;
-		double dCurVal = 0;
-		boolean bIsEluted;
 
-		for (int iCompound = 0; iCompound < iNumCompoundsToInclude; iCompound++)
-		{
-			dIntegral = 0;
-			dtRFinal = 0;
-			dD = 0;
-			dTotalTime = 0;
-			dTotalDeadTime = 0;
-			dXPosition = 0;
-			dLastXPosition[0] = 0;
-			dLastXPosition[1] = 0;
-			dLastko[0] = 0;
-			dLastko[1] = 0;
-			bIsEluted = false;
-			
-			for (double t = 0; t <= (Double) m_vectCalCompounds.get(m_vectCalCompounds.size() - 1)[1] * 1.5; t += dtstep)
+
+    
+	   public double calcRetentionError(double dtstep, int iNumCompoundsToInclude, boolean bUseSimpleGradient)
+	    {
+		  long n1 = System.currentTimeMillis();
+	    	double dRetentionError = 0;
+			double dt0;
+			double dIntegral;
+			double dtRFinal;
+			double dD;
+			double dTotalTime;
+			double dTotalDeadTime;
+			double dXPosition;
+			double[] dLastXPosition = {0,0};
+			double[] dLastko = {0,0};
+			double dXMovement = 0;
+			double dPhiC = 0;
+			double dCurVal = 0;
+			boolean bIsEluted;
+
+			for (int iCompound = 0; iCompound < iNumCompoundsToInclude; iCompound++)
 			{
-				if (bUseSimpleGradient)
-					dPhiC = m_InterpolatedSimpleGradient.getAt(dTotalTime - dIntegral) / 100;
-				else
-					dPhiC = (this.m_InterpolatedSimpleGradient.getAt(dTotalTime - dIntegral) + m_InterpolatedGradientDifferenceProfile.getAt(dTotalTime - dIntegral)) / 100;
+				dIntegral = 0;
+				dtRFinal = 0;
+				dD = 0;
+				dTotalTime = 0;
+				dTotalDeadTime = 0;
+				dXPosition = 0;
+				dLastXPosition[0] = 0;
+				dLastXPosition[1] = 0;
+				dLastko[0] = 0;
+				dLastko[1] = 0;
+				bIsEluted = false;
+				
+				for (double t = 0; t <= (Double) m_vectCalCompounds.get(m_vectCalCompounds.size() - 1)[1] * 1.5; t += dtstep)
+				{
+					if (bUseSimpleGradient)
+						dPhiC = m_InterpolatedSimpleGradient.getAt(dTotalTime - dIntegral) / 100;
+					else
+						dPhiC = (m_InterpolatedSimpleGradient.getAt(dTotalTime - dIntegral) + m_InterpolatedGradientDifferenceProfile.getAt(dTotalTime - dIntegral)) / 100;
 
-				dCurVal = dtstep / (Math.pow(10, m_StandardIsocraticDataInterpolated[iCompound].getAt(dPhiC)));
-				dt0 = (this.m_InitialInterpolatedDeadTimeProfile.getAt(dPhiC) + this.m_InterpolatedDeadTimeDifferenceProfile.getAt(dPhiC)) / 60;
-				dXMovement = dCurVal / dt0;
+					dCurVal = dtstep / (Math.pow(10, m_StandardIsocraticDataInterpolated[iCompound].getAt(dPhiC)));
+					dt0 = (m_InitialInterpolatedDeadTimeProfile.getAt(dPhiC) + m_InterpolatedDeadTimeDifferenceProfile.getAt(dPhiC)) / 60;
+					dXMovement = dCurVal / dt0;
+					
+					if (dXPosition >= 1)
+					{
+						// ((1 - lastx)/(x - lastx)) gives fraction of the last step that should be considered
+						// multiply that by (dTotalDeadTime - dLastXPosition[1]) to get the fraction of time in the last step that should be considered.
+						// add that to dLastXPosition[1] to get the total dead time
+						// dD is the total dead time at time of elution
+						dD = ((1 - dLastXPosition[0])/(dXPosition - dLastXPosition[0])) * (dTotalDeadTime - dLastXPosition[1]) + dLastXPosition[1]; 
+					}
+					else
+					{
+						dLastXPosition[0] = dXPosition;
+						dLastXPosition[1] = dTotalDeadTime;
+					}
+					
+					dTotalDeadTime += dXMovement * dt0;
+					
+					if (dXPosition >= 1)
+					{
+						dtRFinal = ((dD - dLastko[0])/(dIntegral - dLastko[0]))*(dTotalTime - dLastko[1]) + dLastko[1];
+					}
+					else
+					{
+						dLastko[0] = dIntegral;
+						dLastko[1] = dTotalTime;
+					}
+					
+					dTotalTime += dtstep + dCurVal;
+					dIntegral += dCurVal;
+					
+					if (dXPosition > 1 && bIsEluted == false)
+					{
+						bIsEluted = true;
+						break;
+					}
+					
+					dXPosition += dXMovement;
+				}
 				
-				if (dXPosition >= 1)
+				if (bIsEluted)
 				{
-					// ((1 - lastx)/(x - lastx)) gives fraction of the last step that should be considered
-					// multiply that by (dTotalDeadTime - dLastXPosition[1]) to get the fraction of time in the last step that should be considered.
-					// add that to dLastXPosition[1] to get the total dead time
-					// dD is the total dead time at time of elution
-					dD = ((1 - dLastXPosition[0])/(dXPosition - dLastXPosition[0])) * (dTotalDeadTime - dLastXPosition[1]) + dLastXPosition[1]; 
+					dRetentionError += Math.pow(dtRFinal - (Double)m_vectCalCompounds.get(iCompound)[1], 2);
+					m_vectCalCompounds.get(iCompound)[2] = dtRFinal;
 				}
 				else
 				{
-					dLastXPosition[0] = dXPosition;
-					dLastXPosition[1] = dTotalDeadTime;
+					dRetentionError += Math.pow((Double)m_vectCalCompounds.get(iCompound)[1], 2);
+					m_vectCalCompounds.get(iCompound)[2] = (double)-1.0;
 				}
-				
-				dTotalDeadTime += dXMovement * dt0;
-				
-				if (dXPosition >= 1)
-				{
-					dtRFinal = ((dD - dLastko[0])/(dIntegral - dLastko[0]))*(dTotalTime - dLastko[1]) + dLastko[1];
-				}
-				else
-				{
-					dLastko[0] = dIntegral;
-					dLastko[1] = dTotalTime;
-				}
-				
-				dTotalTime += dtstep + dCurVal;
-				dIntegral += dCurVal;
-				
-				if (dXPosition > 1 && bIsEluted == false)
-				{
-					bIsEluted = true;
-					break;
-				}
-				
-				dXPosition += dXMovement;
 			}
 			
-			if (bIsEluted)
-			{
-				dRetentionError += Math.pow(dtRFinal - (Double)m_vectCalCompounds.get(iCompound)[1], 2);
-				m_vectCalCompounds.get(iCompound)[2] = dtRFinal;
-			}
-			else
-			{
-				dRetentionError += Math.pow((Double)m_vectCalCompounds.get(iCompound)[1], 2);
-				m_vectCalCompounds.get(iCompound)[2] = (double)-1.0;
-			}
-		}
-		
-    	return dRetentionError;
-    }
-
+			long n2 = System.currentTimeMillis();
+			totalTime += (n2-n1);
+			System.out.println((n2-n1));
+	    	return dRetentionError;
+	    }
 
     public void updateTime(long starttime)
     {
@@ -4081,6 +4279,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 			}
 			
 		}
+		System.out.println(totalTime);
 	}
 
 	public void calculateSimpleDeadTime()
@@ -4098,145 +4297,82 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	}
 	
 	// New version handles change in mixing/nonmixing volume as a function of solvent composition
-	public void calculateSimpleGradient()
-	{
-		int iNumPoints = 10000;
-		// Create an array for the simple gradient
-		m_dSimpleGradientArray = new double[iNumPoints][2];
+			public void calculateSimpleGradient()
+			{
+				//long n1 = System.currentTimeMillis();
+				int iNumPoints = 1000;
+				// Create an array for the simple gradient
+				m_dSimpleGradientArray = new double[iNumPoints][2];
+						
+				// Initialize the solvent mixer composition to that of the initial solvent composition
+				double dMixerComposition = ((Double) contentPane.tmGradientProgram.getValueAt(0, 1)).doubleValue();
+				//double dFinalTime = (((m_dMixingVolume * 3 + m_dNonMixingVolume) / 1000) / m_dFlowRate) + ((Double) contentPane.jxpanelGradientOptions.tmGradientProgram.getValueAt(iGradientTableLength - 1, 0)).doubleValue();
+				double dFinalTime = this.m_dPlotXMax2; // in min
+				double dTimeStep = dFinalTime / (iNumPoints - 1);
 				
-		// Initialize the solvent mixer composition to that of the initial solvent composition
-		double dMixerComposition = ((Double) contentPane.tmGradientProgram.getValueAt(0, 1)).doubleValue();
-		//double dFinalTime = (((m_dMixingVolume * 3 + m_dNonMixingVolume) / 1000) / m_dFlowRate) + ((Double) contentPane.jxpanelGradientOptions.tmGradientProgram.getValueAt(iGradientTableLength - 1, 0)).doubleValue();
-		double dFinalTime = this.m_dPlotXMax2; // in min
-		double dTimeStep = dFinalTime / (iNumPoints - 1);
-		
-		// Start at time 0
-		double dTime = 0;
-		
-		// Enter new values into the output array
-		m_dSimpleGradientArray[0][0] = dTime;
-		m_dSimpleGradientArray[0][1] = dMixerComposition;
-		
-		for (int i = 0; i < iNumPoints; i++)
-		{
-			// Find the current time
-			dTime = i * dTimeStep;
-			
-			// Find the solvent composition coming into the nonmixing volume
-			double dIncomingSolventCompositionToNonMixingVolume = this.m_InterpolatedIdealGradientProfile.getAt(dTime);
+				// Start at time 0
+				double dTime = 0;
+				
+				// Enter new values into the output array
+				m_dSimpleGradientArray[0][0] = dTime;
+				m_dSimpleGradientArray[0][1] = dMixerComposition;
+				
+				for (int i = 0; i < iNumPoints; i++)
+				{
+					// Find the current time
+					dTime = i * dTimeStep;
+					
+					// Find the solvent composition coming into the nonmixing volume
+					double dIncomingSolventCompositionToNonMixingVolume = this.m_InterpolatedIdealGradientProfile.getAt(dTime);
 
-			// Now find the solvent composition coming into the mixing volume
-			double dIncomingSolventCompositionToMixingVolume = 0;
-			if (dTime < this.m_InterpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / this.m_dFlowRate)
-			{
-				dIncomingSolventCompositionToMixingVolume = this.m_InterpolatedIdealGradientProfile.getAt(0);
-			}
-			else
-			{
-				double dTimeOfSolventComposition = dTime - (this.m_InterpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / this.m_dFlowRate);
-				dIncomingSolventCompositionToMixingVolume = this.m_InterpolatedIdealGradientProfile.getAt(dTimeOfSolventComposition);
-			}
-			
-			// Figure out the volume of solvent B in the mixer
-			double dSolventBInMixer = dMixerComposition * this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);//m_dMixingVolume;
-							
-			// Now push out a step's worth of volume from the mixer
-			dSolventBInMixer -= (m_dFlowRate * dTimeStep) * dMixerComposition;
-			
-			// dSolventBInMixer could be negative if the volume pushed out of the mixer is greater than the total volume of the mixer
-			if (dSolventBInMixer < 0)
-				dSolventBInMixer = 0;
-			
-			// Now add a step's worth of new volume from the pump
-			// First, find which two data points we are between
-			// Find the last data point that isn't greater than our current time
-			
-			if ((m_dFlowRate * dTimeStep) < this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
-				dSolventBInMixer += (m_dFlowRate * dTimeStep) * dIncomingSolventCompositionToMixingVolume;
-			else
-			{
-				// The amount of solvent entering the mixing chamber is larger than the mixing chamber. Just set the solvent composition in the mixer to that of the mobile phase.
-				dSolventBInMixer = this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) * dIncomingSolventCompositionToMixingVolume;
-			}
-			
-			// Calculate the new solvent composition in the mixing volume
-			if ((m_dFlowRate * dTimeStep) < this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
-				dMixerComposition = dSolventBInMixer / this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);
-			else
-				dMixerComposition = dIncomingSolventCompositionToMixingVolume;
-			
-			// Enter new values into the output array
-			m_dSimpleGradientArray[i][0] = dTime - ((m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) - m_InterpolatedMixingVolume.getAt(0)) / this.m_dFlowRate);
-			m_dSimpleGradientArray[i][1] = dMixerComposition;
-		}
-		
-		m_InterpolatedSimpleGradient = new LinearInterpolationFunction(m_dSimpleGradientArray);
-	}
-	
-/*	public void calculateSimpleGradient()
-	{
-		int iNumPoints = 10000;
-		// Create an array for the simple gradient
-		m_dSimpleGradientArray = new double[iNumPoints][2];
+					// Now find the solvent composition coming into the mixing volume
+					double dIncomingSolventCompositionToMixingVolume = 0;
+					if (dTime < this.m_InterpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / this.m_dFlowRate)
+					{
+						dIncomingSolventCompositionToMixingVolume = this.m_InterpolatedIdealGradientProfile.getAt(0);
+					}
+					else
+					{
+						double dTimeOfSolventComposition = dTime - (this.m_InterpolatedNonMixingVolume.getAt(dIncomingSolventCompositionToNonMixingVolume) / this.m_dFlowRate);
+						dIncomingSolventCompositionToMixingVolume = this.m_InterpolatedIdealGradientProfile.getAt(dTimeOfSolventComposition);
+					}
+					
+					// Figure out the volume of solvent B in the mixer
+					double dSolventBInMixer = dMixerComposition * this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);//m_dMixingVolume;
+									
+					// Now push out a step's worth of volume from the mixer
+					dSolventBInMixer -= (m_dFlowRate * dTimeStep) * dMixerComposition;
+					
+					// dSolventBInMixer could be negative if the volume pushed out of the mixer is greater than the total volume of the mixer
+					if (dSolventBInMixer < 0)
+						dSolventBInMixer = 0;
+					
+					// Now add a step's worth of new volume from the pump
+					// First, find which two data points we are between
+					// Find the last data point that isn't greater than our current time
+					
+					if ((m_dFlowRate * dTimeStep) < this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
+						dSolventBInMixer += (m_dFlowRate * dTimeStep) * dIncomingSolventCompositionToMixingVolume;
+					else
+					{
+						// The amount of solvent entering the mixing chamber is larger than the mixing chamber. Just set the solvent composition in the mixer to that of the mobile phase.
+						dSolventBInMixer = this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) * dIncomingSolventCompositionToMixingVolume;
+					}
+					
+					// Calculate the new solvent composition in the mixing volume
+					if ((m_dFlowRate * dTimeStep) < this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume))
+						dMixerComposition = dSolventBInMixer / this.m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume);
+					else
+						dMixerComposition = dIncomingSolventCompositionToMixingVolume;
+					
+					// Enter new values into the output array
+					m_dSimpleGradientArray[i][0] = dTime - ((m_InterpolatedMixingVolume.getAt(dIncomingSolventCompositionToMixingVolume) - m_InterpolatedMixingVolume.getAt(0)) / this.m_dFlowRate);
+					m_dSimpleGradientArray[i][1] = dMixerComposition;
+				}
+				m_InterpolatedSimpleGradient = new LinearInterpolationFunction(m_dSimpleGradientArray);
 				
-		// Initialize the solvent mixer composition to that of the initial solvent composition
-		double dMixerComposition = ((Double) contentPane.tmGradientProgram.getValueAt(0, 1)).doubleValue();
-		//double dFinalTime = (((m_dMixingVolume * 3 + m_dNonMixingVolume) / 1000) / m_dFlowRate) + ((Double) contentPane.jxpanelGradientOptions.tmGradientProgram.getValueAt(iGradientTableLength - 1, 0)).doubleValue();
-		double dFinalTime = this.m_dPlotXMax2; // in min
-		double dTimeStep = dFinalTime / (iNumPoints - 1);
-		
-		// Start at time 0
-		double dTime = 0;
-		double dTotalSolventVolumeMoved = 0;
-		double dNonMixingDelayTime = 0;
-		
-		for (int i = 0; i < iNumPoints; i++)
-		{
-			dTime = i * dTimeStep;
-			
-			m_dSimpleGradientArray[i][0] = dTime;
-			m_dSimpleGradientArray[i][1] = dMixerComposition;
-			
-			double dSolventBInMixer = dMixerComposition * m_dMixingVolume;
-							
-			// Now push out a step's worth of volume from the mixer
-			dSolventBInMixer -= (m_dFlowRate * dTimeStep) * dMixerComposition;
-			
-			// dSolventBInMixer could be negative if the volume pushed out of the mixer is greater than the total volume of the mixer
-			if (dSolventBInMixer < 0)
-				dSolventBInMixer = 0;
-			
-			// Now add a step's worth of new volume from the pump
-			// First, find which two data points we are between
-			// Find the last data point that isn't greater than our current time
-			double dIncomingSolventComposition = 0;
-			
-			dIncomingSolventComposition = this.m_InterpolatedIdealGradientProfile.getAt(dTime - dNonMixingDelayTime);
-			
-			// Add to the total amount of solvent moved.
-			dTotalSolventVolumeMoved += dTimeStep * m_dFlowRate;
-			
-			if (dTotalSolventVolumeMoved <= m_dNonMixingVolume)
-				dNonMixingDelayTime += dTimeStep;
-			
-			if ((m_dFlowRate * dTimeStep) < m_dMixingVolume)
-				dSolventBInMixer += (m_dFlowRate * dTimeStep) * dIncomingSolventComposition;
-			else
-			{
-				// The amount of solvent entering the mixing chamber is larger than the mixing chamber. Just set the solvent composition in the mixer to that of the mobile phase.
-				dSolventBInMixer = m_dMixingVolume * dIncomingSolventComposition;
 			}
-			
-			// Calculate the new solvent composition in the mixing volume
-			if ((m_dFlowRate * dTimeStep) < m_dMixingVolume)
-				dMixerComposition = dSolventBInMixer / m_dMixingVolume;
-			else
-				dMixerComposition = dIncomingSolventComposition;
-		}
-		
-		m_InterpolatedSimpleGradient = new LinearInterpolationFunction(m_dSimpleGradientArray);
-	}*/
-	
+
  	@Override
 	public void lostOwnership(Clipboard arg0, Transferable arg1) 
  	{
