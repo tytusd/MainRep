@@ -2206,8 +2206,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 			double dColumnRating = dStandardDeviation / d75Limit;
 			double dYellowRating = d95Limit / d75Limit;
 			
-			contentPane2.jlblStandardDeviation.setText("± " + Float.toString((float)GlobalsDan.roundToSignificantFigures(dStandardDeviation, 2)) + " min (" + Float.toString((float)GlobalsDan.roundToSignificantFigures(dStandardDeviation * 60, 2)) + " sec)");
-			contentPane2.jlblExpectedStandardDeviation.setText("± " + Float.toString((float)GlobalsDan.roundToSignificantFigures(dExpectedStandardDeviation, 2)) + " min (" + Float.toString((float)GlobalsDan.roundToSignificantFigures(dExpectedStandardDeviation * 60, 2)) + " sec)");
+			contentPane2.jlblStandardDeviation.setText("ï¿½ " + Float.toString((float)GlobalsDan.roundToSignificantFigures(dStandardDeviation, 2)) + " min (" + Float.toString((float)GlobalsDan.roundToSignificantFigures(dStandardDeviation * 60, 2)) + " sec)");
+			contentPane2.jlblExpectedStandardDeviation.setText("ï¿½ " + Float.toString((float)GlobalsDan.roundToSignificantFigures(dExpectedStandardDeviation, 2)) + " min (" + Float.toString((float)GlobalsDan.roundToSignificantFigures(dExpectedStandardDeviation * 60, 2)) + " sec)");
 			contentPane2.jlblColumnRating.setText(Float.toString((float)GlobalsDan.roundToSignificantFigures(dColumnRating, 2)));
 			
 			Color clrGreen = new Color(0, 161, 75);
@@ -3975,7 +3975,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 						contentPane2.jlblPhase.setText("II");
 						
 						bBackCalculateSimpleGradientProfile = true;
-						bBackCalculateDeadTimeProfileOffset = true;
+						bBackCalculateDeadTimeProfileOffset = true; //turn off all things with deadtimeprofile flag
 						iNumCompoundsToUseForDeadTimeOffset = m_vectCalCompounds.size();
 						bBackCalculateGradientProfile = false;
 						bBackCalculateDeadTimeProfile = false;
@@ -3998,7 +3998,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 						bBackCalculateDeadTimeProfileOffset = false;
 						iNumCompoundsToUseForDeadTimeOffset = m_vectCalCompounds.size();
 						bBackCalculateGradientProfile = true;
-						bBackCalculateDeadTimeProfile = true;
+						bBackCalculateDeadTimeProfile = true; //
 						dGradientProfileAngleWeight = 1000d;
 						dDeadTimeProfileAngleWeight = 100;
 				    	m_dtstep = m_dPlotXMax2 * 0.01;
