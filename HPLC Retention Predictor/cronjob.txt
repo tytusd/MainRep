@@ -1,0 +1,1 @@
+0 21 * * * python /home2/hplcsimu/public_html/retentionprediction/hplc/database/updatechecker.py
