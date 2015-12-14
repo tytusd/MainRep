@@ -1,15 +1,16 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.ClipboardOwner;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
+import java.io.File;
+import java.math.RoundingMode;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
 
-import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -33,25 +34,42 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
 import org.retentionprediction.lcdatabasebuilderfx.business.UIComponents;
+import org.retentionprediction.lcdatabasebuilderfx.business.Utilities;
 import org.retentionprediction.lcdatabasebuilderfx.ui.BackcalculateController.BackCalculateControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.MeasuredRetentionTimesController.MeasuredRetentionTimesControllerListener;
 import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
+import org.w3c.dom.Comment;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import boswell.fxoptionpane.FXOptionPane;
 import boswell.graphcontrolfx.GraphControlFX;
 
-public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener, SolveParametersListener, ClipboardOwner {
+public class ParentPaneController implements Initializable, MeasuredRetentionTimesControllerListener, BackCalculateControllerListener, SolveParametersListener {
 
 	private ParentPaneControllerListener parentPaneControllerListener;
 	
@@ -102,6 +120,8 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private Label labelGradientGStatus;
     @FXML private Label labelGradientHStatus;
 
+    @FXML private Label labelOverallStatus;
+    
     @FXML private Label enterTimesALabel;
     @FXML private Label enterTimesBLabel;
     @FXML private Label enterTimesCLabel;
@@ -139,7 +159,10 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private Label checkSystemSuitabilityGLabel;
     @FXML private Label checkSystemSuitabilityHLabel;
     
-    @FXML private TextField textNISTID;
+    @FXML private StackPane progressGraphPane;
+    @FXML private StackPane progressPane;
+    
+    @FXML private TextField textInchiKey;
     @FXML private TableColumn<StandardCompound, String> columnMeasuredRetentionTime;
     @FXML private ProgressBar progressOverall;
 
@@ -149,7 +172,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	@FXML private Label labelBOne;
 	@FXML private Label labelBTwo;
     
-    @FXML private TextField textCAS;
+    @FXML private TextField textInchi;
     @FXML private Label labelTimeElapsed;
     @FXML private TableColumn<StandardCompound, String> columnError;
     @FXML private Label finalFitLabel;
@@ -162,13 +185,14 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     @FXML private TextField textCompoundName;
     @FXML private TextField textPubChemID;
 
-    @FXML private TextField textHMDB;
+    @FXML private TextField textSmiles;
     @FXML private ProgressBar progressBar;
     @FXML private Button buttonSolve;
-    @FXML private Button copyToClipboard;
+    @FXML private Button exportToXml;
     @FXML private Label labelVariance;
     @FXML private TableView<StandardCompound> tableRetentionTimes;
     @FXML private TextField textFormula;
+    @FXML private TextField textIupacName;
     @FXML private TabPane tabPane;
     @FXML private Tab finalfittab;
     @FXML private Pane drawPane;
@@ -179,13 +203,16 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     private MeasuredRetentionTimesController[] measuredRetentionTimesController = new MeasuredRetentionTimesController[8];
     private int[] iCurrentStep = new int[8];
     private ObservableList<StandardCompound> programList = FXCollections.observableArrayList();
-    private boolean finalFitComplete = false;
     private SolveParametersTask solveParametersTask;
 
     private final double rem = javafx.scene.text.Font.getDefault().getSize();
-    
+    private Preferences  prefs = Preferences.userNodeForPackage(this.getClass());
 	private GraphControlFX retentionSolverTimeGraph;
     
+	private boolean[] isDeadTimeRemoved = new boolean[8];
+	private String[]  textRetentionTimes = {"0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0"};
+	private DecimalFormat df = new DecimalFormat("#.####");
+	
     public interface ParentPaneControllerListener {
 
     	public void onNew();
@@ -215,6 +242,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 				measuredRetentionTimesController[i] = fxmlLoader.getController();
 				measuredRetentionTimesController[i].setMeasuredRetentionTimesControllerListener(this);
 				measuredRetentionTimesController[i].setIndex(i);
+				measuredRetentionTimesController[i].setGradientProgramInConventionalForm(Globals.dGradientPrograms[i]);
 			}
 			gradientAtab.setContent(measuredRetentionTimes[0]);
 			gradientBtab.setContent(measuredRetentionTimes[1]);
@@ -273,8 +301,29 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			retentionSolverTimeGraph.widthProperty().bind(anchorPaneRetentionSolver.widthProperty().subtract(rem));
 			retentionSolverTimeGraph.heightProperty().bind(anchorPaneRetentionSolver.heightProperty().subtract(rem));
 
+			df.setRoundingMode(RoundingMode.CEILING);
 			
+			setupTextRetentionTimesListener(textRetentionTimeA, 0);
+			setupTextRetentionTimesListener(textRetentionTimeB, 1);
+			setupTextRetentionTimesListener(textRetentionTimeC, 2);
+			setupTextRetentionTimesListener(textRetentionTimeD, 3);
+			setupTextRetentionTimesListener(textRetentionTimeE, 4);
+			setupTextRetentionTimesListener(textRetentionTimeF, 5);
+			setupTextRetentionTimesListener(textRetentionTimeG, 6);
+			setupTextRetentionTimesListener(textRetentionTimeH, 7);
+			
+			for(int i = 0; i < 8; i++){
+				setupStationaryPhaseVariableListener(measuredRetentionTimesController[i].getTextFieldColumnLength(), i, "columnLength");
+				setupStationaryPhaseVariableListener(measuredRetentionTimesController[i].getTextFieldFlowRate(), i, "flowRate");
+				setupStationaryPhaseVariableListener(measuredRetentionTimesController[i].getTextFieldInnerDiameter(), i, "innerDiameter");
+				setupStationaryPhaseVariableListener(measuredRetentionTimesController[i].getTextFieldInstrumentDeadTime(), i, "instrumentDeadTime");
+			}
+
+	    	solveParametersTask = new SolveParametersTask();
 			performValidations();
+			
+			
+			
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -338,8 +387,69 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	    }
 	    
 	    tableRetentionTimes.setItems(programList);
+	    exportToXml.setDisable(true);
 	}
+    
+    /**
+     * This function takes in a TextField type object and its index as a gradient out of 8 gradients.
+     * It automatically removes instrument dead time from the retention time. 
+     * Once the field loses focus, that is done. If the field was clicked on without any changes, compare 
+     * with the last stored values for retention times and see if nothing has changed, then don't remove dead time again. 
+     * @param field
+     * @param index
+     */
+    public void setupTextRetentionTimesListener(TextField field, int index){
+    	field.focusedProperty().addListener(new ChangeListener<Boolean>()
+    			{
+    			    @Override
+    			    public void changed(ObservableValue<? extends Boolean> arg0, Boolean oldPropertyValue, Boolean newPropertyValue)
+    			    {
+    			    	if(!field.getText().trim().equals("")){
+	    			    	double value = Double.parseDouble(field.getText());
+	    			    	isDeadTimeRemoved[index] = value == Double.parseDouble(textRetentionTimes[index]);
+	    			        if (oldPropertyValue && !isDeadTimeRemoved[index] )
+	    			        {
+	    			        	double newValue = value - measuredRetentionTimesController[index].getInstrumentDeadTime();
+	    			        	String newValueStr = df.format(newValue); 
+	    			        	field.setText(newValueStr);
+	    			        	textRetentionTimes[index] = newValueStr;
+	    			        	isDeadTimeRemoved[index] = true;
+	    			        	value = Double.parseDouble(newValueStr);
+	    			        }
+	    			        programList.get(index).setMeasuredRetentionTime(value);
+	    			        
+    			    	}
+    			    }
+    			});
+    }
+    
+    public void setupStationaryPhaseVariableListener(TextField field, int index, String variableName){
+    	field.focusedProperty().addListener(new ChangeListener<Boolean>(){
 
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable,
+					Boolean oldValue, Boolean newValue) {
+				double value = Double.parseDouble(field.getText());
+				for(int i = 0; i < 8; i++){
+					if(variableName.equals("columnLength")){
+						measuredRetentionTimesController[i].setColumnLength(value);
+					}
+					else if(variableName.equals("instrumentDeadTime")){
+						measuredRetentionTimesController[i].setInstrumentDeadTime(value);
+					}
+					else if(variableName.equals("innerDiameter")){
+						measuredRetentionTimesController[i].setInnerDiameter(value);
+					}
+					else if(variableName.equals("flowRate")){
+						measuredRetentionTimesController[i].setFlowRate(value);
+					}
+					measuredRetentionTimesController[i].setTextFieldsByStationaryPhaseVars();
+				}
+			}
+    		
+    	});
+    }
+    
     @FXML void onNewAction(ActionEvent event) {
     	this.parentPaneControllerListener.onNew();
     }
@@ -389,13 +499,12 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
     }
 
     @FXML void onSolveForRetentionParameters(ActionEvent event) {
-    	copyToClipboard.setDisable(true);
-    	solveParametersTask = new SolveParametersTask();
+    	exportToXml.setDisable(true);
     	solveParametersTask.setBackCalculateController(this.backcalculateController);
     	solveParametersTask.setProgramList(programList);
     	solveParametersTask.setGraphControl(retentionSolverTimeGraph);
     	solveParametersTask.setSolveParametersListener(this);
-    	solveParametersTask.setCopyToClipboardButton(copyToClipboard);
+    	solveParametersTask.setCopyToClipboardButton(exportToXml);
     	labelIteration.textProperty().bind(solveParametersTask.getIterationProperty());
 		labelTimeElapsed.textProperty().bind(solveParametersTask.getTimeElapsedProperty());
 		labelVariance.textProperty().bind(solveParametersTask.getVarianceProperty());
@@ -405,9 +514,13 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		labelBOne.textProperty().bind(solveParametersTask.getBOneProperty());
 		labelBTwo.textProperty().bind(solveParametersTask.getBTwoProperty());
 		labelStatus.textProperty().bind(solveParametersTask.messageProperty());
-    	
+    	progressBar.progressProperty().bind(solveParametersTask.getProgressBarProperty());
     	Thread thread = new Thread(solveParametersTask);
     	thread.start();
+    	
+    }
+    
+    @FXML void toggleProgressGraph(ActionEvent event) {
     	
     }
     
@@ -472,6 +585,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			if (thisController == this.backcalculateController[i])
 			{
 				backcalculateController[i].switchToStep4();
+				backcalculateController[i].autoFillMeasuredValuesInSystemSuitability(Globals.systemSuitabilityMeasuredValues[i]);
 				this.iCurrentStep[i]++;
 				updateRoadMap();
 				break;
@@ -632,7 +746,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		boolean bIsAcceptableToSolveForParameters = true;
 		for (int i = 0; i < backcalculateController.length; i++)
 		{
-			if (backcalculateController[i].getStatus() == backcalculateController[i].INCOMPLETE)
+			if (backcalculateController[i].isBackcalculateDone() == false)
 				bIsAcceptableToSolveForParameters = false;
 		}
 		
@@ -648,24 +762,36 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		statusForFinalFitByLabel(labelGradientGStatus, 6);
 		statusForFinalFitByLabel(labelGradientHStatus, 7);
 		
-		 //TODO: remove the below forloop.
-	    for(int i = 0; i < Globals.finalFitExpected.length; i++){
-	    	programList.get(i).setMeasuredRetentionTime(Globals.finalFitExpected[i]);
-	    }
-		textRetentionTimeA.setText(Globals.finalFitExpected[0]+"");
-		textRetentionTimeB.setText(Globals.finalFitExpected[1]+"");
-		textRetentionTimeC.setText(Globals.finalFitExpected[2]+"");
-		textRetentionTimeD.setText(Globals.finalFitExpected[3]+"");
-		textRetentionTimeE.setText(Globals.finalFitExpected[4]+"");
-		textRetentionTimeF.setText(Globals.finalFitExpected[5]+"");
-		textRetentionTimeG.setText(Globals.finalFitExpected[6]+"");
-		textRetentionTimeH.setText(Globals.finalFitExpected[7]+"");
+		int backCalculationDoneCount = 0;
+		int systemSuitabilityCheckDoneCount = 0;
+		
+		for(int i = 0; i < 8; i++){
+			if(backcalculateController[i].isBackcalculateDone()){
+				backCalculationDoneCount++;
+			}
+			if(backcalculateController[i].getStatus() != backcalculateController[i].INCOMPLETE){
+				systemSuitabilityCheckDoneCount++;
+			}
+		}
+		
+		labelOverallStatus.setText(backCalculationDoneCount + " Gradients Backcalculated\n" + systemSuitabilityCheckDoneCount + " System Suitability Check completed\n");
+		if(backCalculationDoneCount == 8){
+			labelOverallStatus.setTextFill(Color.GREEN);
+		}
+		else{
+			labelOverallStatus.setTextFill(Color.RED);
+		}
 	}
 	
 	public void statusForFinalFitByLabel(Label label, int index){
 		if (backcalculateController[index].getStatus() == backcalculateController[index].INCOMPLETE)
 		{
-			label.setText("Incomplete");
+			if(backcalculateController[index].isBackcalculateDone()){
+				label.setText("Backcalculation done.");	
+			}
+			else{
+				label.setText("Backcalculation not done.");
+			}
 			label.setTextFill(Color.BLACK);
 		}
 		else if (backcalculateController[index].getStatus() == backcalculateController[index].PASSED)
@@ -781,7 +907,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		}
 		
 		iCurrentStep = saveData.iCurrentStep;
-		finalFitComplete = saveData.finalFitComplete;
+		solveParametersTask.setSolverDone(saveData.finalFitComplete);
 		programList = saveData.programList;
 		labelAZero.textProperty().unbind();
 		labelAZero.setText(saveData.labelAZeroText);
@@ -804,9 +930,10 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		textCompoundName.setText(saveData.compoundName);
 		textFormula.setText(saveData.formula);
 		textPubChemID.setText(saveData.pubChemID);
-		textCAS.setText(saveData.cAS);
-		textNISTID.setText(saveData.nISTID);
-		textHMDB.setText(saveData.hMDB);
+		textInchi.setText(saveData.inchi);
+		textInchiKey.setText(saveData.inchiKey);
+		textSmiles.setText(saveData.smiles);
+		textIupacName.setText(saveData.iupacName);
 		textRetentionTimeA.setText(saveData.retentionTimeA);
 		textRetentionTimeB.setText(saveData.retentionTimeB);
 		textRetentionTimeC.setText(saveData.retentionTimeC);
@@ -815,6 +942,30 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		textRetentionTimeF.setText(saveData.retentionTimeF);
 		textRetentionTimeG.setText(saveData.retentionTimeG);
 		textRetentionTimeH.setText(saveData.retentionTimeH);
+		textRetentionTimes[0] = saveData.retentionTimeA;
+		textRetentionTimes[1] = saveData.retentionTimeB;
+		textRetentionTimes[2] = saveData.retentionTimeC;
+		textRetentionTimes[3] = saveData.retentionTimeD;
+		textRetentionTimes[4] = saveData.retentionTimeE;
+		textRetentionTimes[5] = saveData.retentionTimeF;
+		textRetentionTimes[6] = saveData.retentionTimeG;
+		textRetentionTimes[7] = saveData.retentionTimeH;
+
+		solveParametersTask.setBackCalculateController(this.backcalculateController);
+    	solveParametersTask.setProgramList(programList);
+    	solveParametersTask.setGraphControl(retentionSolverTimeGraph);
+    	solveParametersTask.setSolveParametersListener(this);
+    	solveParametersTask.setCopyToClipboardButton(exportToXml);
+		
+		if(solveParametersTask.isSolverDone()){
+			exportToXml.setDisable(false);
+			double a0 = Double.parseDouble(labelAZero.getText());
+			double a1 = Double.parseDouble(labelAOne.getText());
+			double a2 = Double.parseDouble(labelATwo.getText());
+			double b1 = Double.parseDouble(labelBOne.getText());
+			double b2 = Double.parseDouble(labelBTwo.getText());
+			solveParametersTask.updateGraphs(a0, a1, a2, b1, b2);
+		}
 		
 		// Set the visible pane in the tab
 		for (int i = 0; i < this.backcalculateController.length; i++)
@@ -866,6 +1017,8 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		this.updateRoadMap();
 		this.updateFinalFitProgress();
 		
+		//TODO: Add performvalidationscheck here
+		
 	}
 	
 	public void writeSaveData(SaveData saveData) {
@@ -886,7 +1039,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		}
 		
 		saveData.iCurrentStep = iCurrentStep;
-		saveData.finalFitComplete = finalFitComplete;
+		saveData.finalFitComplete = solveParametersTask.isSolverDone();
 		saveData.programList = programList;
 		saveData.labelAZeroText = labelAZero.getText();
 		saveData.labelAOneText = labelAOne.getText();
@@ -900,9 +1053,10 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		saveData.compoundName = textCompoundName.getText();
 		saveData.formula = textFormula.getText();
 		saveData.pubChemID = textPubChemID.getText();
-		saveData.cAS = textCAS.getText();
-		saveData.nISTID = textNISTID.getText();
-		saveData.hMDB = textHMDB.getText();
+		saveData.iupacName = textIupacName.getText();
+		saveData.inchi = textInchi.getText();
+		saveData.inchiKey = textInchiKey.getText();
+		saveData.smiles = textSmiles.getText();
 		saveData.retentionTimeA = textRetentionTimeA.getText();
 		saveData.retentionTimeB = textRetentionTimeB.getText();
 		saveData.retentionTimeC = textRetentionTimeC.getText();
@@ -934,6 +1088,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	
 	private void updateRoadMap()
 	{
+		
 		if (gradientAtab.isSelected())
 		{
 			selectSelectedRoadMapItem(0, iCurrentStep[0], false);
@@ -971,6 +1126,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 			selectSelectedRoadMapItem(0, 0, true);
 		}
 		
+		
 		int sum = 0;
 		for (int i = 0; i < iCurrentStep.length; i++)
 		{
@@ -979,7 +1135,7 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 		
 		double progress = (double)sum / (2 * 6 + 1);
 		
-		if (finalFitComplete)
+		if (solveParametersTask != null && solveParametersTask.isSolverDone())
 			progress = 1;
 		
 		progressOverall.setProgress(progress);
@@ -1181,41 +1337,355 @@ public class ParentPaneController implements Initializable, MeasuredRetentionTim
 	}
 
 	
-	@FXML public void copyProfilesToClipboard(){
-		buttonSolve.setDisable(true);
-		String eol = System.getProperty("line.separator");
-		StringBuffer outString = new StringBuffer(eol);
+	@FXML public void exportToXml(){
+		Map<String,String> solvermap = null;
 		if(solveParametersTask != null){
-			outString.append(solveParametersTask.copyProfileToClipboard());
-			outString.append(eol);
+			solvermap = solveParametersTask.exportToXml();
 		}
 		
-		for(int i = 0; i < this.backcalculateController.length; i++){
-			char gradient = (char)(i+1+64);
-			outString.append("Gradient "+ gradient);
-			outString.append(eol);
-			outString.append(measuredRetentionTimesController[i].copyProfileToClipboard());
-			outString.append(backcalculateController[i].copyProfileToClipboard());
+		List<HashMap<String,String>> measuredControllerMaps = new ArrayList<HashMap<String,String>>(8);
+		List<HashMap<String,String>> backcalculateControllerMaps = new ArrayList<HashMap<String,String>>(8);
+		List<HashMap<String,String>> systemSuitabilityMaps = new ArrayList<HashMap<String,String>>(8);
+		
+		for(int i = 0; i < 8; i++){
+			measuredControllerMaps.add(i, (HashMap<String, String>) measuredRetentionTimesController[i].exportToXml());
+			backcalculateControllerMaps.add(i, (HashMap<String, String>) backcalculateController[i].exportStandardsToXml());
+			systemSuitabilityMaps.add(i, (HashMap<String, String>) backcalculateController[i].exportSystemSuitabilityInfoToXml());
 		}
 		
-		StringSelection stringSelection = new StringSelection(outString.toString());
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(stringSelection, this);
-        Platform.runLater(new Runnable(){
-
-			@Override
-			public void run() {
-				String strMessage = "Information from all the gradients has been copied to the clipboard including final fit. You can now paste it in any text editor.";
-    			FXOptionPane.showMessageDialog(parentRoot.getScene().getWindow() , strMessage, "Check Retention Times", FXOptionPane.INFORMATION_MESSAGE);
-			}
-        	
-        });
-        buttonSolve.setDisable(false);
+		
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Specify your local database folder");
+		chooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("LCXML file (*.lcxml)", "*.lcxml"));
+		// Set default directory
+		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
+		if (lastOutputDir != "")
+		{
+			File lastDir = new File(lastOutputDir);
+			if (lastDir.exists())
+				chooser.setInitialDirectory(lastDir.getParentFile());
+		}
+		Stage stage = new Stage();
+		File outputFile = chooser.showSaveDialog(stage);
+		if(outputFile != null){
+			
+			if (!outputFile.getName().endsWith(".lcxml"))
+				outputFile = new File(outputFile.getAbsolutePath() + ".lcxml");
+			
+			createXml(measuredControllerMaps,backcalculateControllerMaps,systemSuitabilityMaps,solvermap,outputFile);
+			prefs.put("LAST_OUTPUT_DIR", outputFile.getAbsolutePath());
+		}
 	}
 	
-	@Override
-	public void lostOwnership(Clipboard clipboard, Transferable contents) {
-		// TODO Auto-generated method stub
+	public void createXml(List<HashMap<String, String>> measuredControllerMaps, List<HashMap<String, String>> backcalculateControllerMaps, List<HashMap<String, String>> systemSuitabilityMaps, Map<String, String> solvermap, File outputFile){
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = null;
+		try {
+			builder = factory.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		}
 		
+		Document doc = builder.newDocument();
+		
+		//Add root tag - xml
+		Element root = doc.createElement("xml");
+		doc.appendChild(root);
+		
+		//Add units comment
+		String comment = "\n\tFollowing are the units for variables used throughout the XML: \n\t Time: minute\n\t Solvent Composition: percentage\n\t Column Inner Diameter: mm\n\t Flow Rate: mL\\minute\n\t Column Length: mm\n\t";
+		Comment commentNode = doc.createComment(comment);
+		root.appendChild(commentNode);
+		
+		//Add version
+		Element version = doc.createElement("version");
+		version.setTextContent("1.0");
+		root.appendChild(version);
+		
+		//Add mode tag
+		Element mode = doc.createElement("mode");
+		mode.setTextContent("Eight Gradients");
+		root.appendChild(mode);
+		
+		//Add compound
+		Element compoundName = doc.createElement("compound");
+		compoundName.setTextContent(textCompoundName.getText());
+		root.appendChild(compoundName);
+		
+		Element iupac = doc.createElement("IUPAC-name");
+		iupac.setTextContent(textIupacName.getText());
+		root.appendChild(iupac);
+		
+		Element formula = doc.createElement("molecular-formula");
+		formula.setTextContent(textFormula.getText());
+		root.appendChild(formula);
+		
+		Element smiles = doc.createElement("smiles");
+		smiles.setTextContent(textSmiles.getText());
+		root.appendChild(smiles);
+		
+		Element pubchem = doc.createElement("PubChem-Id");
+		pubchem.setTextContent(textPubChemID.getText());
+		root.appendChild(pubchem);
+		
+		Element inchi = doc.createElement("inchi");
+		inchi.setTextContent(textInchi.getText());
+		root.appendChild(inchi);
+		
+		Element inchiKey = doc.createElement("inchi-key");
+		inchiKey.setTextContent(textInchiKey.getText());
+		root.appendChild(inchiKey);
+	
+		Element gradients = doc.createElement("gradients");
+		root.appendChild(gradients);
+		
+		for(int k = 0; k < 8; k++){
+			char gradientChar = (char)(k+1+64);
+			Element gradient = doc.createElement("gradient");
+			gradient.setAttribute("name", String.valueOf(gradientChar));
+			gradients.appendChild(gradient);
+			
+			Map<String,String> currentMeasuredControllerMap = measuredControllerMaps.get(k);
+			Map<String,String> currentBackcalculateControllerMap = backcalculateControllerMaps.get(k);
+			
+			String[] times = currentMeasuredControllerMap.get("GradientTimes").split("\\$");
+			String[] solventCompositions = currentMeasuredControllerMap.get("GradientSolventCompositions").split("\\$");
+			
+			Element time = doc.createElement("times");
+			Element solventComp = doc.createElement("solvent-compositions");
+			String timeStr = "";
+			String solventCompStr = "";
+			for(int i = 0; i < times.length; i++){
+				timeStr += times[i] + ",";
+				solventCompStr += solventCompositions[i] +",";
+			}
+			timeStr = timeStr.substring(0, timeStr.length()-1);
+			solventCompStr = solventCompStr.substring(0, solventCompStr.length()-1);
+			time.setTextContent(timeStr);
+			solventComp.setTextContent(solventCompStr);
+			gradient.appendChild(time);
+			gradient.appendChild(solventComp);
+			
+			Element stationaryPhase = doc.createElement("stationary-phase");
+			stationaryPhase.setTextContent(currentMeasuredControllerMap.get("StationaryPhase"));
+			gradient.appendChild(stationaryPhase);
+			
+			Element innerDiameter = doc.createElement("column-inner-diameter");
+			innerDiameter.setTextContent(currentMeasuredControllerMap.get("ColumnInnerDiameter"));
+			gradient.appendChild(innerDiameter);
+			
+			Element columnLength = doc.createElement("column-length");
+			columnLength.setTextContent(currentMeasuredControllerMap.get("ColumnLength"));
+			gradient.appendChild(columnLength);
+			
+			Element instrumentDeadTime = doc.createElement("instrument-dead-time");
+			instrumentDeadTime.setTextContent(currentMeasuredControllerMap.get("InstrumentDeadTime"));
+			gradient.appendChild(instrumentDeadTime);
+			
+			Element flowRate = doc.createElement("flow-rate");
+			flowRate.setTextContent(currentMeasuredControllerMap.get("FlowRate"));
+			gradient.appendChild(flowRate);
+			
+			//Add Standards information
+			Element backcalculateInfo = doc.createElement("backcalculate-information");
+			gradient.appendChild(backcalculateInfo);
+			
+			Element variance = doc.createElement("variance");
+			variance.setTextContent(currentBackcalculateControllerMap.get("Variance"));
+			backcalculateInfo.appendChild(variance);
+			
+			Element iterations = doc.createElement("iterations");
+			iterations.setTextContent(currentBackcalculateControllerMap.get("Iterations"));
+			backcalculateInfo.appendChild(iterations);
+			
+			Element timeElapsed = doc.createElement("time-elapsed");
+			timeElapsed.setTextContent(currentBackcalculateControllerMap.get("TimeElapsed"));
+			backcalculateInfo.appendChild(timeElapsed);
+			
+			Element standards = doc.createElement("standard-compounds");
+			backcalculateInfo.appendChild(standards);
+			
+			String[] compoundNames = currentBackcalculateControllerMap.get("CompoundNames").split("\\$");
+			String[] predictedRetentionTimes = currentBackcalculateControllerMap.get("PredictedRetentionTimes").split("\\$");
+			String[] measuredRetentionTimes = currentBackcalculateControllerMap.get("MeasuredRetentionTimes").split("\\$");
+			String[] retentionErrors = currentBackcalculateControllerMap.get("Errors").split("\\$");
+			String[] mzs = currentBackcalculateControllerMap.get("MzRatios").split("\\$");
+			
+			for(int i = 0; i < compoundNames.length; i++){
+				Element standard = doc.createElement("standard-compound");
+				standard.setAttribute("name", compoundNames[i]);
+				standards.appendChild(standard);
+			
+				Element mz = doc.createElement("mz-ratio");
+				mz.setTextContent(mzs[i]);
+				standard.appendChild(mz);
+				
+				Element measuredRetTime = doc.createElement("measured-retention-time");
+				measuredRetTime.setTextContent(measuredRetentionTimes[i]);
+				standard.appendChild(measuredRetTime);
+				
+				Element predictedRetTime = doc.createElement("predicted-retention-time");
+				predictedRetTime.setTextContent(predictedRetentionTimes[i]);
+				standard.appendChild(predictedRetTime);
+				
+				Element error = doc.createElement("retention-error");
+				error.setTextContent(retentionErrors[i]);
+				standard.appendChild(error);
+			}
+			
+			//Add profiles tag
+			Element profiles = doc.createElement("profiles");
+			backcalculateInfo.appendChild(profiles);
+			
+			//Create first profile - Simple Gradient
+			String nodeValue = Utilities.getInterpolatedSimpleGradient(backcalculateController[k]);
+			Element profile1 = doc.createElement("profile");
+			profile1.setAttribute("type", "Back-calculated Gradient");
+			profile1.appendChild(doc.createTextNode(nodeValue));
+			profiles.appendChild(profile1);
+			
+			//Create first profile - Simple Gradient
+			nodeValue = Utilities.getInterpolatedDeadTime(backcalculateController[k]);
+			Element profile2 = doc.createElement("profile");
+			profile2.setAttribute("type", "Dead Time");
+			profile2.appendChild(doc.createTextNode(nodeValue));
+			profiles.appendChild(profile2);
+			
+			//Add system suitability check information
+			Element systemSuitabilityCheck = doc.createElement("system-suitability-check");
+			gradient.appendChild(systemSuitabilityCheck);
+			
+			Map<String,String> currentSystemSuitabilityMap = systemSuitabilityMaps.get(k);
+			
+			Element predictedError = doc.createElement("predicted-error");
+			predictedError.setTextContent(currentSystemSuitabilityMap.get("PredictedError"));
+			systemSuitabilityCheck.appendChild(predictedError);
+			
+			Element expectedError = doc.createElement("expected-error");
+			expectedError.setTextContent(currentSystemSuitabilityMap.get("ExpectedError"));
+			systemSuitabilityCheck.appendChild(expectedError);
+			
+			Element columnRating = doc.createElement("column-rating");
+			columnRating.setTextContent(currentSystemSuitabilityMap.get("ColumnRating"));
+			systemSuitabilityCheck.appendChild(columnRating);
+			
+			standards = doc.createElement("standard-compounds");
+			systemSuitabilityCheck.appendChild(standards);
+			
+			compoundNames = currentSystemSuitabilityMap.get("CompoundNames").split("\\$");
+			mzs = currentSystemSuitabilityMap.get("MzRatios").split("\\$");
+			predictedRetentionTimes = currentSystemSuitabilityMap.get("PredictedRetentionTimes").split("\\$");
+			measuredRetentionTimes = currentSystemSuitabilityMap.get("MeasuredRetentionTimes").split("\\$");
+			retentionErrors = currentSystemSuitabilityMap.get("Errors").split("\\$");
+			
+			for(int i = 0; i < compoundNames.length; i++){
+				Element standard = doc.createElement("standard-compound");
+				standard.setAttribute("name", compoundNames[i]);
+				standards.appendChild(standard);
+			
+				Element mz = doc.createElement("mz-ratio");
+				mz.setTextContent(mzs[i]);
+				standard.appendChild(mz);
+				
+				Element measuredRetTime = doc.createElement("measured-retention-time");
+				measuredRetTime.setTextContent(measuredRetentionTimes[i]);
+				standard.appendChild(measuredRetTime);
+				
+				Element predictedRetTime = doc.createElement("predicted-retention-time");
+				predictedRetTime.setTextContent(predictedRetentionTimes[i]);
+				standard.appendChild(predictedRetTime);
+				
+				Element error = doc.createElement("retention-error");
+				error.setTextContent(retentionErrors[i]);
+				standard.appendChild(error);
+			}
+			
+		}
+		
+		//Add solver information
+		if(solveParametersTask != null){
+			Element solvedRelationship = doc.createElement("logk-information");
+			root.appendChild(solvedRelationship);
+			
+			Element padeCoefficients = doc.createElement("pade-coefficients");
+			solvedRelationship.appendChild(padeCoefficients);
+			
+			Element a0 = doc.createElement("a0");
+			a0.setTextContent(solvermap.get("a0"));
+			padeCoefficients.appendChild(a0);
+			
+			Element a1 = doc.createElement("a1");
+			a1.setTextContent(solvermap.get("a1"));
+			padeCoefficients.appendChild(a1);
+			
+			Element a2 = doc.createElement("a2");
+			a2.setTextContent(solvermap.get("a2"));
+			padeCoefficients.appendChild(a2);
+			
+			Element b1 = doc.createElement("b1");
+			b1.setTextContent(solvermap.get("b1"));
+			padeCoefficients.appendChild(b1);
+			
+			Element b2 = doc.createElement("b2");
+			b2.setTextContent(solvermap.get("b2"));
+			padeCoefficients.appendChild(b2);
+			
+			Element variance = doc.createElement("variance");
+			variance.setTextContent(solvermap.get("Variance"));
+			solvedRelationship.appendChild(variance);
+			
+			Element timeElapsed = doc.createElement("time-elapsed");
+			timeElapsed.setTextContent(solvermap.get("TimeElapsed"));
+			solvedRelationship.appendChild(timeElapsed);
+			
+			Element standards = doc.createElement("standard-compounds");
+			solvedRelationship.appendChild(standards);
+			
+			Element standard = doc.createElement("standard-compound");
+			standards.appendChild(standard);
+			
+			String[] measuredRetTimes = solvermap.get("ExperimentalRetentionTimes").split("\\$");
+			String[] predictedRetentionTimes = solvermap.get("CalculatedRetentionTimes").split("\\$");
+			String[] retentionErrors = solvermap.get("Errors").split("\\$");
+			
+			for(int i = 0; i < measuredRetTimes.length; i++){
+				Element gradient = doc.createElement("gradient");
+				char gradientChar = (char)(i+1+64);
+				gradient.setAttribute("number", String.valueOf(gradientChar));
+				standard.appendChild(gradient);
+				
+				Element measuredTime = doc.createElement("measured-retention-time");
+				measuredTime.setTextContent(measuredRetTimes[i]);
+				gradient.appendChild(measuredTime);
+				
+				Element predictedTime = doc.createElement("predicted-retention-time");
+				predictedTime.setTextContent(predictedRetentionTimes[i]);
+				gradient.appendChild(predictedTime);
+				
+				Element error = doc.createElement("retention-error");
+				error.setTextContent(retentionErrors[i]);
+				gradient.appendChild(error);
+			}
+		
+		}
+		
+		//Write the contents into a XML file
+		// write the content into xml file
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = null;
+		try {
+			transformer = transformerFactory.newTransformer();
+		} catch (TransformerConfigurationException e) {
+			e.printStackTrace();
+		}
+		DOMSource source = new DOMSource(doc);
+		StreamResult result = new StreamResult(outputFile);
+		try {
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+			transformer.transform(source, result);
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
 	}
 }

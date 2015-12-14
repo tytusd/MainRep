@@ -4,9 +4,13 @@ package org.retentionprediction.lcdatabasebuilderfx.ui;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -44,6 +48,7 @@ public class SolveParametersTask extends Task{
 	private SimpleStringProperty ATwoProperty = new SimpleStringProperty("");
 	private SimpleStringProperty BOneProperty = new SimpleStringProperty("");
 	private SimpleStringProperty BTwoProperty = new SimpleStringProperty("");
+	private DoubleProperty progressBarProperty = new SimpleDoubleProperty(-1.0);
 	
 	private Button copyToClipboard;
 	
@@ -67,6 +72,7 @@ public class SolveParametersTask extends Task{
 	private double[] measuredRetentionTimes;
 	
 	private boolean isInjectionMode = false;
+	private boolean isSolverDone = false;
 	
 	public SolveParametersListener getSolveParametersListener() {
 		return solveParametersListener;
@@ -82,6 +88,7 @@ public class SolveParametersTask extends Task{
 		long time = System.currentTimeMillis();
 		updateProgress(-1, 0);
 		updateMessage("Please wait, optimization in progress...");
+		
 		int iteration = 0, maxIterations = 5000, noChangeCount = 0;
 		bestVariance = 100;
 		
@@ -236,13 +243,22 @@ public class SolveParametersTask extends Task{
     {
     	if (!this.isCancelled())
     	{
-        		updateProgress(100, 100);
-        		updateMessage("Optimization complete!");
+    		Platform.runLater(new Runnable(){
+
+				@Override
+				public void run() {
+					progressBarProperty.set(1);
+				}
+    			
+    		});
+    		updateProgress(100, 100);
+        	updateMessage("Optimization complete!");
+        	isSolverDone = true;
     	}
     	copyToClipboard.setDisable(false);
     }
 	
-    private void updateGraphs(double a0, double a1, double a2, double b1, double b2){
+    public void updateGraphs(double a0, double a1, double a2, double b1, double b2){
 		retentionSolverTimeGraph.RemoveSeries(measuredRetentionTimesSeries);
 		retentionSolverTimeGraph.RemoveAllSeries();
 		measuredRetentionTimesSeries = retentionSolverTimeGraph.AddSeries("Measured Retention Times Series", Color.RED, 1, false, false);
@@ -381,6 +397,14 @@ public class SolveParametersTask extends Task{
 
 	public void setBTwoProperty(SimpleStringProperty bTwoProperty) {
 		BTwoProperty = bTwoProperty;
+	}
+	
+	public void setProgressBarProperty(DoubleProperty property){
+		this.progressBarProperty = property;
+	}
+	
+	public DoubleProperty getProgressBarProperty(){
+		return this.progressBarProperty;
 	}
 
 	private void updateAZero(final double aZero)
@@ -643,8 +667,75 @@ public class SolveParametersTask extends Task{
 		return outString;
 	}
 
+	public Map<String,String> exportToXml() {
+		Map<String,String> map = new HashMap<String,String>();
+		map.put("a0",getAZeroProperty().get());
+		map.put("a1", getAOneProperty().get());
+		map.put("a2", getATwoProperty().get());
+		map.put("b1",getBOneProperty().get());
+		map.put("b2", getBTwoProperty().get());
+		map.put("Variance", getVarianceProperty().get());
+		map.put("TimeElapsed", getTimeElapsedProperty().get());
+		
+		if(isInjectionMode){
+			StringBuilder injectionTime = new StringBuilder();
+			StringBuilder expRetTime = new StringBuilder();
+			StringBuilder calcRetTime = new StringBuilder();
+			StringBuilder error = new StringBuilder();
+			
+			for(StandardCompound s : programList){
+				injectionTime.append(s.getInjectionTime()+"$");
+				expRetTime.append(s.getMeasuredRetentionTime()+"$");
+				calcRetTime.append(s.getPredictedRetentionTime()+"$");
+				error.append(s.getError()+"$");
+			}
+			injectionTime.setLength(injectionTime.length()-1);
+			expRetTime.setLength(expRetTime.length()-1);
+			calcRetTime.setLength(calcRetTime.length()-1);
+			error.setLength(error.length()-1);
+			map.put("InjectionTimes", injectionTime.toString());
+			map.put("ExperimentalRetentionTimes", expRetTime.toString());
+			map.put("CalculatedRetentionTimes", calcRetTime.toString());
+			map.put("Errors", error.toString());
+		}
+		else{
+			StringBuilder gradients = new StringBuilder();
+			StringBuilder expRetTime = new StringBuilder();
+			StringBuilder calcRetTime = new StringBuilder();
+			StringBuilder error = new StringBuilder();
+			
+			for(StandardCompound s : programList){
+				char gradientName = (char)(s.getIndex() + 65);
+				String gradient = "Gradient"+gradientName;
+				gradients.append(gradient+"$");
+				expRetTime.append(s.getMeasuredRetentionTime()+"$");
+				calcRetTime.append(s.getPredictedRetentionTime()+"$");
+				error.append(s.getError()+"$");
+			}
+			gradients.setLength(gradients.length()-1);
+			expRetTime.setLength(expRetTime.length()-1);
+			calcRetTime.setLength(calcRetTime.length()-1);
+			error.setLength(error.length()-1);
+			map.put("GradientNames", gradients.toString());
+			map.put("ExperimentalRetentionTimes", expRetTime.toString());
+			map.put("CalculatedRetentionTimes", calcRetTime.toString());
+			map.put("Errors", error.toString());
+			
+		}
+		
+		return map;
+	}
+	
 	public void setCopyToClipboardButton(Button copyToClipboard) {
 		this.copyToClipboard = copyToClipboard;
 	}
-	
+
+	public boolean isSolverDone() {
+		return isSolverDone;
+	}
+
+	public void setSolverDone(boolean isSolverDone) {
+		this.isSolverDone = isSolverDone;
+	}
+
 }

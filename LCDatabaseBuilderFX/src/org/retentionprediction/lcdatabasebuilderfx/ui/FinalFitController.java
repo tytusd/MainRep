@@ -1,16 +1,16 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
-import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
 
-import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -22,15 +22,19 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.converter.DoubleStringConverter;
 
@@ -46,14 +50,13 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.retentionprediction.lcdatabasebuilderfx.business.Globals;
-import org.retentionprediction.lcdatabasebuilderfx.business.InterpolationFunction;
-import org.retentionprediction.lcdatabasebuilderfx.business.LinearInterpolationFunction;
 import org.retentionprediction.lcdatabasebuilderfx.business.StandardCompound;
+import org.retentionprediction.lcdatabasebuilderfx.business.Utilities;
 import org.retentionprediction.lcdatabasebuilderfx.ui.SolveParametersTask.SolveParametersListener;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import boswell.fxoptionpane.FXOptionPane;
 import boswell.graphcontrolfx.GraphControlFX;
 
 public class FinalFitController implements Initializable, SolveParametersListener, ClipboardOwner{
@@ -90,10 +93,18 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    @FXML private Button buttonDelete;
 	    @FXML private Button buttonInsert;
 	    @FXML private Button buttonPrevious;
-	    @FXML private Button copyToClipboard;
+	    @FXML private Button exportToXml;
 	    @FXML private Button importCompoundsButton;
 	    @FXML private Button exportDataButton;
 	    @FXML private Button runBatchSolverButton;
+
+	    @FXML private TextField textInchi;
+	    @FXML private TextField textChemicalFormula; 
+	    @FXML private TextField textIupacName;
+	    @FXML private TextField textPubChemId;
+	    @FXML private TextField textCompoundName;
+	    @FXML private TextField textInchiKey;
+	    @FXML private TextField textSmiles;
 	    
 	    @FXML private TableColumn<StandardCompound, String> columnError;
 	    @FXML private TableColumn<StandardCompound, String> columnProgram;
@@ -109,7 +120,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 
 	    private GraphControlFX retentionSolverTimeGraph;
 	    private final double rem = javafx.scene.text.Font.getDefault().getSize();
-	    
+	    private Preferences  prefs = Preferences.userNodeForPackage(this.getClass());
 	    private SolveParametersTask solveParametersTask;
 	    private ObservableList<StandardCompound> compoundsList;
 	    private ObservableList<StandardCompound> compoundsRetentionList;
@@ -123,6 +134,8 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	    
 
 		private MeasuredRetentionTimesController measuredRetentionTimeController;
+
+		private String[] padeCoefficients;
 	    
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -247,7 +260,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		catch(Exception e){
 			
 		}
-		
+		exportToXml.setDisable(true);
 	}
 	
 	public void setFinalFitControllerListener(FinalFitControllerListener finalFitControllerListener){
@@ -280,7 +293,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 	}
 	
 	@FXML public void onSolveForRetentionParameters(ActionEvent event) {
-		copyToClipboard.setDisable(true);
+		exportToXml.setDisable(true);
 		solveParametersTask = new SolveParametersTask();
 		BackcalculateController[] controller = new BackcalculateController[1];
 		controller[0] = this.backcalculateController;
@@ -290,7 +303,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
     	solveParametersTask.setSolveParametersListener(this);
     	solveParametersTask.setInjectionMode(true);
     	solveParametersTask.setInstrumentDeadTime(instrumentDeadTime);
-    	solveParametersTask.setCopyToClipboardButton(copyToClipboard);
+    	solveParametersTask.setCopyToClipboardButton(exportToXml);
     	
     	labelIteration.textProperty().bind(solveParametersTask.getIterationProperty());
 		labelTimeElapsed.textProperty().bind(solveParametersTask.getTimeElapsedProperty());
@@ -301,6 +314,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		labelBOne.textProperty().bind(solveParametersTask.getBOneProperty());
 		labelBTwo.textProperty().bind(solveParametersTask.getBTwoProperty());
 		labelStatus.textProperty().bind(solveParametersTask.messageProperty());
+		progressBar.progressProperty().bind(solveParametersTask.getProgressBarProperty());
     	
     	Thread thread = new Thread(solveParametersTask);
     	thread.start();
@@ -466,35 +480,37 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		this.instrumentDeadTime = instrumentDeadTime;
 	}
 	
-	@FXML public void copyProfilesToClipboard(){
-		//createXml();
-		buttonSolve.setDisable(true);
-		String eol = System.getProperty("line.separator");
-		StringBuffer outString = new StringBuffer(eol);
+	@FXML public void exportToXml(){
+		Map<String,String> solvermap = null;
 		if(solveParametersTask != null){
-			outString.append(solveParametersTask.copyProfileToClipboard());
-			outString.append(eol);
+			solvermap = solveParametersTask.exportToXml();
 		}
-		
-		outString.append("Gradient A");
-		outString.append(eol);
-		outString.append(measuredRetentionTimeController.copyProfileToClipboard());
-		outString.append(backcalculateController.copyProfileToClipboard());
-		
-		
-		StringSelection stringSelection = new StringSelection(outString.toString());
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(stringSelection, this);
-        Platform.runLater(new Runnable(){
 
-			@Override
-			public void run() {
-				String strMessage = "Information from all the gradients has been copied to the clipboard including final fit. You can now paste it in any text editor. The values are tab seperated. It will work best with Microsoft Excel or a similar tool.";
-    			FXOptionPane.showMessageDialog(finalFitRoot.getScene().getWindow() , strMessage, "Check Retention Times", FXOptionPane.INFORMATION_MESSAGE);
-			}
-        	
-        });
-        buttonSolve.setDisable(false);
+		Map<String,String> measuredControllerMap = measuredRetentionTimeController.exportToXml();
+		Map<String,String> backcalculateControllerMap = backcalculateController.exportStandardsToXml();
+		Map<String,String> systemSuitabilityMap = backcalculateController.exportSystemSuitabilityInfoToXml();
+		
+		FileChooser chooser = new FileChooser();
+		chooser.setTitle("Specify your local database folder");
+		chooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("LCXML file (*.lcxml)", "*.lcxml"));
+		// Set default directory
+		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
+		if (lastOutputDir != "")
+		{
+			File lastDir = new File(lastOutputDir);
+			if (lastDir.exists())
+				chooser.setInitialDirectory(lastDir.getParentFile());
+		}
+		Stage stage = new Stage();
+		File outputFile = chooser.showSaveDialog(stage);
+		if(outputFile != null){
+			
+			if (!outputFile.getName().endsWith(".lcxml"))
+				outputFile = new File(outputFile.getAbsolutePath() + ".lcxml");
+			
+			createXml(measuredControllerMap,backcalculateControllerMap,systemSuitabilityMap,solvermap,outputFile);
+			prefs.put("LAST_OUTPUT_DIR", outputFile.getAbsolutePath());
+		}
 	}
 
 	public void setMeasuredRetentionTimesController(
@@ -503,7 +519,7 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		
 	}
 
-	public void createXml(){
+	public void createXml(Map<String, String> measuredControllerMap, Map<String, String> backcalculateControllerMap, Map<String, String> systemSuitabilityMap, Map<String, String> solvermap, File outputFile){
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = null;
 		try {
@@ -518,30 +534,283 @@ public class FinalFitController implements Initializable, SolveParametersListene
 		Element root = doc.createElement("xml");
 		doc.appendChild(root);
 		
+		//Add units comment
+		String comment = "\n\tFollowing are the units for variables used throughout the XML: \n\t Time: minute\n\t Solvent Composition: percentage\n\t Column Inner Diameter: mm\n\t Flow Rate: mL\\minute\n\t Column Length: mm\n\t";
+		Comment commentNode = doc.createComment(comment);
+		root.appendChild(commentNode);
+		
+		//Add version
+		Element version = doc.createElement("version");
+		version.setTextContent("1.0");
+		root.appendChild(version);
+		
 		//Add mode tag
 		Element mode = doc.createElement("mode");
-		mode.setNodeValue("Injection");
+		mode.setTextContent("Injection");
 		root.appendChild(mode);
+		
+		//Add compound
+		Element compoundName = doc.createElement("compound");
+		compoundName.setTextContent(textCompoundName.getText());
+		root.appendChild(compoundName);
+		
+		Element iupac = doc.createElement("IUPAC-name");
+		iupac.setTextContent(textIupacName.getText());
+		root.appendChild(iupac);
+		
+		Element formula = doc.createElement("molecular-formula");
+		formula.setTextContent(textChemicalFormula.getText());
+		root.appendChild(formula);
+		
+		Element smiles = doc.createElement("smiles");
+		smiles.setTextContent(textSmiles.getText());
+		root.appendChild(smiles);
+		
+		Element pubchem = doc.createElement("PubChem-Id");
+		pubchem.setTextContent(textPubChemId.getText());
+		root.appendChild(pubchem);
+		
+		Element inchi = doc.createElement("inchi");
+		inchi.setTextContent(textInchi.getText());
+		root.appendChild(inchi);
+		
+		Element inchiKey = doc.createElement("inchi-key");
+		inchiKey.setTextContent(textInchiKey.getText());
+		root.appendChild(inchiKey);
+		
+		//Add metadata - Here you add all the information from measured retention times controller - first step of the program
+		Element metadata = doc.createElement("metadata");
+		root.appendChild(metadata);
+		
+		Element stationaryPhase = doc.createElement("stationary-phase");
+		stationaryPhase.setTextContent(measuredControllerMap.get("StationaryPhase"));
+		metadata.appendChild(stationaryPhase);
+		
+		Element innerDiameter = doc.createElement("column-inner-diameter");
+		innerDiameter.setTextContent(measuredControllerMap.get("ColumnInnerDiameter"));
+		metadata.appendChild(innerDiameter);
+		
+		Element columnLength = doc.createElement("column-length");
+		columnLength.setTextContent(measuredControllerMap.get("ColumnLength"));
+		metadata.appendChild(columnLength);
+		
+		Element instrumentDeadTime = doc.createElement("instrument-dead-time");
+		instrumentDeadTime.setTextContent(measuredControllerMap.get("InstrumentDeadTime"));
+		metadata.appendChild(instrumentDeadTime);
+		
+		Element flowRate = doc.createElement("flow-rate");
+		flowRate.setTextContent(measuredControllerMap.get("FlowRate"));
+		metadata.appendChild(flowRate);
+		
+		Element gradients = doc.createElement("gradients");
+		metadata.appendChild(gradients);
+		
+		Element gradient = doc.createElement("gradient");
+		gradients.appendChild(gradient);
+		
+		String[] times = measuredControllerMap.get("GradientTimes").split("\\$");
+		String[] solventCompositions = measuredControllerMap.get("GradientSolventCompositions").split("\\$");
+		
+		Element initialTime = doc.createElement("initial-time");
+		initialTime.setTextContent(times[0]);
+		gradient.appendChild(initialTime);
+		
+		Element initialComposition = doc.createElement("initial-solvent-composition");
+		initialComposition.setTextContent(solventCompositions[0]);
+		gradient.appendChild(initialComposition);
+		
+		Element finalTime = doc.createElement("final-time");
+		finalTime.setTextContent(times[1]);
+		gradient.appendChild(finalTime);
+		
+		Element finalComposition = doc.createElement("final-solvent-composition");
+		finalComposition.setTextContent(solventCompositions[1]);
+		gradient.appendChild(finalComposition);
+		
+		
+		//Add Standards information
+		Element backcalculateInfo = doc.createElement("backcalculate-information");
+		root.appendChild(backcalculateInfo);
+		
+		Element variance = doc.createElement("variance");
+		variance.setTextContent(backcalculateControllerMap.get("Variance"));
+		backcalculateInfo.appendChild(variance);
+		
+		Element iterations = doc.createElement("iterations");
+		iterations.setTextContent(backcalculateControllerMap.get("Iterations"));
+		backcalculateInfo.appendChild(iterations);
+		
+		Element timeElapsed = doc.createElement("time-elapsed");
+		timeElapsed.setTextContent(backcalculateControllerMap.get("TimeElapsed"));
+		backcalculateInfo.appendChild(timeElapsed);
+		
+		Element standards = doc.createElement("standard-compounds");
+		backcalculateInfo.appendChild(standards);
+		
+		String[] compoundNames = backcalculateControllerMap.get("CompoundNames").split("\\$");
+		String[] predictedRetentionTimes = backcalculateControllerMap.get("PredictedRetentionTimes").split("\\$");
+		String[] measuredRetentionTimes = backcalculateControllerMap.get("MeasuredRetentionTimes").split("\\$");
+		String[] retentionErrors = backcalculateControllerMap.get("Errors").split("\\$");
+		String[] mzs = backcalculateControllerMap.get("MzRatios").split("\\$");
+		
+		for(int i = 0; i < compoundNames.length; i++){
+			Element standard = doc.createElement("standard-compound");
+			standard.setAttribute("name", compoundNames[i]);
+			standards.appendChild(standard);
+		
+			Element mz = doc.createElement("mz-ratio");
+			mz.setTextContent(mzs[i]);
+			standard.appendChild(mz);
+			
+			Element measuredRetTime = doc.createElement("measured-retention-time");
+			measuredRetTime.setTextContent(measuredRetentionTimes[i]);
+			standard.appendChild(measuredRetTime);
+			
+			Element predictedRetTime = doc.createElement("predicted-retention-time");
+			predictedRetTime.setTextContent(predictedRetentionTimes[i]);
+			standard.appendChild(predictedRetTime);
+			
+			Element error = doc.createElement("retention-error");
+			error.setTextContent(retentionErrors[i]);
+			standard.appendChild(error);
+		}
+		
+		//Add system suitability check information
+		Element systemSuitabilityCheck = doc.createElement("system-suitability-check");
+		root.appendChild(systemSuitabilityCheck);
+		
+		Element predictedError = doc.createElement("predicted-error");
+		predictedError.setTextContent(systemSuitabilityMap.get("PredictedError"));
+		systemSuitabilityCheck.appendChild(predictedError);
+		
+		Element expectedError = doc.createElement("expected-error");
+		expectedError.setTextContent(systemSuitabilityMap.get("ExpectedError"));
+		systemSuitabilityCheck.appendChild(expectedError);
+		
+		Element columnRating = doc.createElement("column-rating");
+		columnRating.setTextContent(systemSuitabilityMap.get("ColumnRating"));
+		systemSuitabilityCheck.appendChild(columnRating);
+		
+		standards = doc.createElement("standard-compounds");
+		systemSuitabilityCheck.appendChild(standards);
+		
+		compoundNames = systemSuitabilityMap.get("CompoundNames").split("\\$");
+		mzs = systemSuitabilityMap.get("MzRatios").split("\\$");
+		predictedRetentionTimes = systemSuitabilityMap.get("PredictedRetentionTimes").split("\\$");
+		measuredRetentionTimes = systemSuitabilityMap.get("MeasuredRetentionTimes").split("\\$");
+		retentionErrors = systemSuitabilityMap.get("Errors").split("\\$");
+		
+		for(int i = 0; i < compoundNames.length; i++){
+			Element standard = doc.createElement("standard-compound");
+			standard.setAttribute("name", compoundNames[i]);
+			standards.appendChild(standard);
+		
+			Element mz = doc.createElement("mz-ratio");
+			mz.setTextContent(mzs[i]);
+			standard.appendChild(mz);
+			
+			Element measuredRetTime = doc.createElement("measured-retention-time");
+			measuredRetTime.setTextContent(measuredRetentionTimes[i]);
+			standard.appendChild(measuredRetTime);
+			
+			Element predictedRetTime = doc.createElement("predicted-retention-time");
+			predictedRetTime.setTextContent(predictedRetentionTimes[i]);
+			standard.appendChild(predictedRetTime);
+			
+			Element error = doc.createElement("retention-error");
+			error.setTextContent(retentionErrors[i]);
+			standard.appendChild(error);
+		}
+		
+		//Add solver information
+		if(solveParametersTask != null){
+			Element solvedRelationship = doc.createElement("logk-information");
+			root.appendChild(solvedRelationship);
+			
+			Element padeCoefficients = doc.createElement("pade-coefficients");
+			solvedRelationship.appendChild(padeCoefficients);
+			
+			Element a0 = doc.createElement("a0");
+			a0.setTextContent(solvermap.get("a0"));
+			padeCoefficients.appendChild(a0);
+			
+			Element a1 = doc.createElement("a1");
+			a1.setTextContent(solvermap.get("a1"));
+			padeCoefficients.appendChild(a1);
+			
+			Element a2 = doc.createElement("a2");
+			a2.setTextContent(solvermap.get("a2"));
+			padeCoefficients.appendChild(a2);
+			
+			Element b1 = doc.createElement("b1");
+			b1.setTextContent(solvermap.get("b1"));
+			padeCoefficients.appendChild(b1);
+			
+			Element b2 = doc.createElement("b2");
+			b2.setTextContent(solvermap.get("b2"));
+			padeCoefficients.appendChild(b2);
+			
+			variance = doc.createElement("variance");
+			variance.setTextContent(solvermap.get("Variance"));
+			solvedRelationship.appendChild(variance);
+			
+			timeElapsed = doc.createElement("time-elapsed");
+			timeElapsed.setTextContent(solvermap.get("TimeElapsed"));
+			solvedRelationship.appendChild(timeElapsed);
+			
+			standards = doc.createElement("standard-compounds");
+			solvedRelationship.appendChild(standards);
+			
+			Element standard = doc.createElement("standard-compound");
+			standards.appendChild(standard);
+			
+			String[] injectionTimes = solvermap.get("InjectionTimes").split("\\$");
+			measuredRetentionTimes = solvermap.get("ExperimentalRetentionTimes").split("\\$");
+			predictedRetentionTimes = solvermap.get("CalculatedRetentionTimes").split("\\$");
+			retentionErrors = solvermap.get("Errors").split("\\$");
+			
+			for(int i = 0; i < injectionTimes.length; i++){
+				Element injection = doc.createElement("injection");
+				injection.setAttribute("number", String.valueOf(i+1));
+				standard.appendChild(injection);
+				
+				Element injectionTime = doc.createElement("injection-time");
+				injectionTime.setTextContent(injectionTimes[i]);
+				injection.appendChild(injectionTime);
+				
+				Element measuredTime = doc.createElement("measured-retention-time");
+				measuredTime.setTextContent(measuredRetentionTimes[i]);
+				injection.appendChild(measuredTime);
+				
+				Element predictedTime = doc.createElement("predicted-retention-time");
+				predictedTime.setTextContent(predictedRetentionTimes[i]);
+				injection.appendChild(predictedTime);
+				
+				Element error = doc.createElement("retention-error");
+				error.setTextContent(retentionErrors[i]);
+				injection.appendChild(error);
+			}
+		
+		}
 		
 		//Add profiles tag
 		Element profiles = doc.createElement("profiles");
 		root.appendChild(profiles);
 		
 		//Create first profile - Simple Gradient
-		String nodeValue = getInterpolatedSimpleGradient(backcalculateController);
+		String nodeValue = Utilities.getInterpolatedSimpleGradient(backcalculateController);
 		Element profile1 = doc.createElement("profile");
-		profile1.setAttribute("type", "Simple Gradient");
+		profile1.setAttribute("type", "Back-calculated Gradient");
 		profile1.appendChild(doc.createTextNode(nodeValue));
 		profiles.appendChild(profile1);
 		
 		//Create first profile - Simple Gradient
-		nodeValue = getInterpolatedDeadTime(backcalculateController);
+		nodeValue = Utilities.getInterpolatedDeadTime(backcalculateController);
 		Element profile2 = doc.createElement("profile");
 		profile2.setAttribute("type", "Dead Time");
 		profile2.appendChild(doc.createTextNode(nodeValue));
 		profiles.appendChild(profile2);
 		
-		//Add Compound here
 		
 		
 		//Write the contents into a XML file
@@ -555,48 +824,15 @@ public class FinalFitController implements Initializable, SolveParametersListene
 			e.printStackTrace();
 		}
 		DOMSource source = new DOMSource(doc);
-		StreamResult result = new StreamResult(System.out);
+		StreamResult result = new StreamResult(outputFile);
 		try {
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 			transformer.transform(source, result);
 		} catch (TransformerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	public String getInterpolatedSimpleGradient(BackcalculateController controller){
-		LinearInterpolationFunction gradientFunction = controller.interpolatedSimpleGradient;
-		LinearInterpolationFunction gradientDifferenceFunction = controller.interpolatedGradientDifferenceProfile;
-		
-		StringBuilder sb = new StringBuilder("");
-		ObservableList<StandardCompound> list = controller.getStandardsList();
-		double max = list.get(list.size()-1).getMeasuredRetentionTime() * 1.5;
-		double step = max / 1000;
-		
-		for(double t = 0; t < max; t += step){
-			double value = (gradientFunction.getAt(t) + gradientDifferenceFunction.getAt(t))/100;
-			sb.append(value + ",");
-		}
-		sb.setLength(sb.length()-1);
-		return sb.toString();
-	}
-	
-	public String getInterpolatedDeadTime(BackcalculateController controller){
-		InterpolationFunction deadTimeFunction = controller.initialInterpolatedDeadTimeProfile;
-		InterpolationFunction deadTimeDifferenceFunction = controller.interpolatedDeadTimeDifferenceProfile;
-		
-		StringBuilder sb = new StringBuilder("");
-		ObservableList<StandardCompound> list = controller.getStandardsList();
-		double max = list.get(list.size()-1).getMeasuredRetentionTime() * 1.5;
-		double step = max / 1000;
-		
-		for(double t = 0; t < max; t += step){
-			double value = (deadTimeFunction.getAt(t) + deadTimeDifferenceFunction.getAt(t))/60;
-			sb.append(value + ",");
-		}
-		sb.setLength(sb.length()-1);
-		return sb.toString();
 	}
 	
 	@Override

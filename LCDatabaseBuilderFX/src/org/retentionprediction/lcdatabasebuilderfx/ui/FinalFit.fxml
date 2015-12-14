@@ -26,8 +26,39 @@
 													<children>
                                                       <VBox layoutX="91.0" layoutY="98.0" spacing="12.0" style="-fx-spacing: 0.5em;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                                          <children>
+                                                <GridPane>
+                                                  <columnConstraints>
+                                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="532.0" minWidth="10.0" prefWidth="366.0" />
+                                                    <ColumnConstraints hgrow="SOMETIMES" maxWidth="706.0" minWidth="10.0" prefWidth="706.0" />
+                                                  </columnConstraints>
+                                                  <rowConstraints>
+                                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                  </rowConstraints>
+                                                   <children>
+                                                      <Label text="Compound Name :" />
+                                                      <Label text="IUPAC Name :" GridPane.rowIndex="1" />
+                                                      <Label text="Formula :" GridPane.rowIndex="2" />
+                                                      <Label text="PubChem ID :" GridPane.rowIndex="4" />
+                                                      <Label text="InChI :" GridPane.rowIndex="5" />
+                                                      <TextField fx:id="textCompoundName" GridPane.columnIndex="1" />
+                                                      <TextField fx:id="textIupacName" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                      <TextField fx:id="textChemicalFormula" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                      <TextField fx:id="textPubChemId" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                                      <TextField fx:id="textInchi" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+                                                      <Label text="InChI Key :" GridPane.rowIndex="6" />
+                                                      <TextField fx:id="textInchiKey" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                                                      <Label text="SMILES :" GridPane.rowIndex="3" />
+                                                      <TextField fx:id="textSmiles" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                   </children>
+                                                </GridPane>
 															 
-																  <TableView fx:id="tableCompoundList" editable="true" layoutX="100.0" layoutY="80.0" minHeight="500.0" minWidth="300.0">
+																  <TableView fx:id="tableCompoundList" editable="true" layoutX="100.0" layoutY="80.0" minHeight="400.0" minWidth="300.0" VBox.vgrow="ALWAYS">
 																	<columns>
 																		<TableColumn fx:id="columnNames" prefWidth="200" text="Injections" />
 																	  <TableColumn fx:id="columnUse" prefWidth="91.0" text="Use" />
@@ -52,9 +83,13 @@
                                                                   <Button fx:id="buttonInsert" mnemonicParsing="false" onAction="#onInsertAction" prefHeight="25.0" prefWidth="184.0" text="Insert" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
                                                                </children>
                                                             </GridPane>
-                                                <HBox alignment="BOTTOM_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="778.0" prefWidth="1072.0">
+                                                <HBox VBox.vgrow="ALWAYS">
                                                    <children>
-                                                      <Button fx:id="buttonPrevious" mnemonicParsing="false" onAction="#onPreviousStepPressed" text="Previous" />
+                                                      <BorderPane HBox.hgrow="ALWAYS">
+                                                         <bottom>
+                                                            <Button fx:id="buttonPrevious" mnemonicParsing="false" onAction="#onPreviousStepPressed" text="Previous" BorderPane.alignment="BOTTOM_LEFT" />
+                                                         </bottom>
+                                                      </BorderPane>
                                                    </children>
                                                 </HBox>
 															
@@ -129,7 +164,7 @@
                                                                </rowConstraints>
                                                             </GridPane>
                                                             <Button fx:id="buttonSolve" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onSolveForRetentionParameters" text="Solve for retention parameters" />
-                                                <Button fx:id="copyToClipboard" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#copyProfilesToClipboard" text="Copy data to clipboard" />
+                                                <Button fx:id="exportToXml" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#exportToXml" text="Export to local database" />
                                                          </children>
                                                       </VBox>
                                                    </children>

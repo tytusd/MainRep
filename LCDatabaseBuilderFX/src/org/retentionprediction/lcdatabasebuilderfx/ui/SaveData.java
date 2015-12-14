@@ -38,9 +38,10 @@ public class SaveData implements Serializable
 	String compoundName;
 	String formula;
 	String pubChemID;
-	String cAS;
-	String nISTID;
-	String hMDB;
+	String inchi;
+	String inchiKey;
+	String smiles;
+	String iupacName;
 	String retentionTimeA;
 	String retentionTimeB;
 	String retentionTimeC;
@@ -76,9 +77,10 @@ public class SaveData implements Serializable
 		compoundName = "";
 		formula = "";
 		pubChemID = "";
-		cAS = "";
-		nISTID = "";
-		hMDB = "";
+		inchi = "";
+		inchiKey = "";
+		smiles = "";
+		iupacName = "";
 		retentionTimeA = "";
 		retentionTimeB = "";
 		retentionTimeC = "";
@@ -123,9 +125,10 @@ public class SaveData implements Serializable
 		out.writeObject(compoundName);
 		out.writeObject(formula);
 		out.writeObject(pubChemID);
-		out.writeObject(cAS);
-		out.writeObject(nISTID);
-		out.writeObject(hMDB);
+		out.writeObject(inchi);
+		out.writeObject(inchiKey);
+		out.writeObject(smiles);
+		out.writeObject(iupacName);
 		out.writeObject(retentionTimeA);
 		out.writeObject(retentionTimeB);
 		out.writeObject(retentionTimeC);
@@ -160,9 +163,10 @@ public class SaveData implements Serializable
 			compoundName = (String)in.readObject();
 			formula = (String)in.readObject();
 			pubChemID = (String)in.readObject();
-			cAS = (String)in.readObject();
-			nISTID = (String)in.readObject();
-			hMDB = (String)in.readObject();
+			inchi = (String)in.readObject();
+			inchiKey = (String)in.readObject();
+			smiles = (String)in.readObject();
+			iupacName = (String)in.readObject();
 			retentionTimeA = (String)in.readObject();
 			retentionTimeB = (String)in.readObject();
 			retentionTimeC = (String)in.readObject();
@@ -209,6 +213,8 @@ public class SaveData implements Serializable
 	    
 	    // Step4Pane stuff - most is updated with updateTestCompoundTable()
 		ObservableList<StandardCompound> testCompoundList;
+
+		public boolean isBackcalculateDone;
 		
 		BackCalculateSaveData()
 		{
@@ -236,6 +242,7 @@ public class SaveData implements Serializable
 			labelStatusText = "Click \"Back-calculate profiles\" to begin the optimization";
 			progressBarValue = 0;
 			backCalculationButtonDisabled = false;
+			isBackcalculateDone = false;
 			
 			// Populate the table with the test compounds
 		    testCompoundList = FXCollections.observableArrayList();
@@ -270,6 +277,7 @@ public class SaveData implements Serializable
 		    out.writeObject(m_dExpectedErrorArray);
 		    out.writeInt(status);
 		    out.writeDouble(score);
+		    out.writeBoolean(isBackcalculateDone);
 		    
 		    // Step3Pane stuff
 		    out.writeObject(labelIterationText);
@@ -308,6 +316,7 @@ public class SaveData implements Serializable
 				m_dExpectedErrorArray = (double[])in.readObject();
 				status = in.readInt();
 				score = in.readDouble();
+				isBackcalculateDone = in.readBoolean();
 				
 			    // Step3Pane stuff
 				labelIterationText = (String)in.readObject();

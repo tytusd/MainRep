@@ -1,19 +1,15 @@
 package org.retentionprediction.lcdatabasebuilderfx.ui;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.net.URL;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -78,7 +74,6 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
     private MeasuredRetentionTimesControllerListener measuredRetentionTimesControllerListener;
     private ObservableList<StandardCompound> standardsList;
 
-	private double[][] gradientProgram;
     private double[][] gradientProgramInConventionalForm = {{0.0,5.0},{5.0,95.0}};
     
 	private double columnLength = 100; // in mm
@@ -197,7 +192,7 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		performValidations();
 	}
 	
-	private void performValidations()
+	public void performValidations()
 	{
 		columnLength = validatePhysicalVariables(textFieldColumnLength, 0.1, 10000);
 		innerDiameter = validatePhysicalVariables(textFieldInnerDiameter, 0.00001, 10000);
@@ -238,6 +233,18 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		return dTemp;
 	}
 	
+	/**
+	 * Sets the text fields for the stationary phase variables to the values that are stored in this class for those variables.
+	 * You would need this method if values such as columnLength,flowRate,etc are changed in the backend but the user is only seeing
+	 * values on the User Interface that he set in the first place.
+	 */
+	public void setTextFieldsByStationaryPhaseVars(){
+		textFieldColumnLength.setText(String.valueOf(columnLength));
+		textFieldFlowRate.setText(String.valueOf(flowRate));
+		textFieldInnerDiameter.setText(String.valueOf(innerDiameter));
+		textFieldInstrumentDeadTime.setText(String.valueOf(instrumentDeadTime));
+		performValidations();
+	}
 	
 	@FXML private void commitRetentionTime(TableColumn.CellEditEvent<StandardCompound,String> t)
 	{
@@ -396,6 +403,11 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		}
 	}
 	
+	public void setGradientProgramInConventionalForm(double[][] gradientProgramInConventionalForm){
+		this.gradientProgramInConventionalForm = gradientProgramInConventionalForm;
+		setGradientProgramInConventionalForm();
+	}
+	
 	public double[][] getGradientProgram() {
 		double[][] gradientProgramInConventionalForm = new double[gradientProgramList.size()][2];
 		for (int i = 0; i < gradientProgramList.size(); i++)
@@ -406,10 +418,6 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		
 		//return Globals.convertGradientProgramInConventionalFormToRegularForm(gradientProgramInConventionalForm, initialTime, initialSolventComp);
 		return gradientProgramInConventionalForm;
-	}
-	
-	public void setGradientProgram(double[][] gradientProgram) {
-		this.gradientProgram = gradientProgram;
 	}
 	
 	public MeasuredRetentionTimesControllerListener getMeasuredRetentionTimesControllerListener() {
@@ -469,6 +477,38 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
 		this.fileName = fileName;
 	}
 	
+	public TextField getTextFieldColumnLength() {
+		return textFieldColumnLength;
+	}
+
+	public void setTextFieldColumnLength(TextField textFieldColumnLength) {
+		this.textFieldColumnLength = textFieldColumnLength;
+	}
+
+	public TextField getTextFieldFlowRate() {
+		return textFieldFlowRate;
+	}
+
+	public void setTextFieldFlowRate(TextField textFieldFlowRate) {
+		this.textFieldFlowRate = textFieldFlowRate;
+	}
+
+	public TextField getTextFieldInnerDiameter() {
+		return textFieldInnerDiameter;
+	}
+
+	public void setTextFieldInnerDiameter(TextField textFieldInnerDiameter) {
+		this.textFieldInnerDiameter = textFieldInnerDiameter;
+	}
+
+	public TextField getTextFieldInstrumentDeadTime() {
+		return textFieldInstrumentDeadTime;
+	}
+
+	public void setTextFieldInstrumentDeadTime(TextField textFieldInstrumentDeadTime) {
+		this.textFieldInstrumentDeadTime = textFieldInstrumentDeadTime;
+	}
+
 	public void setProgramName(String strName)
 	{
 		strProgramName = strName;
@@ -530,6 +570,34 @@ public class MeasuredRetentionTimesController implements Initializable, ChangeLi
     	outString += eol;
         
 		return outString;
+	}
+	
+	public Map<String,String> exportToXml() {
+    	Map<String,String> map = new HashMap<String,String>();
+		int selectedStationaryPhaseIndex = comboStationaryPhase.getSelectionModel().getSelectedIndex() > -1 ? comboStationaryPhase.getSelectionModel().getSelectedIndex() : 0;
+    	map.put("StationaryPhase", Globals.StationaryPhaseArray[selectedStationaryPhaseIndex]);
+    	map.put("ColumnInnerDiameter", textFieldInnerDiameter.getText());
+    	map.put("ColumnLength", textFieldColumnLength.getText());
+    	map.put("FlowRate", textFieldFlowRate.getText());
+    	map.put("InstrumentDeadTime", textFieldInstrumentDeadTime.getText());
+    	
+    	double[][] gradientProgram = getGradientProgram();
+    	for (int i = 0; i < gradientProgram.length; i++)
+    	{
+    		if(map.containsKey("GradientTimes")){
+    			map.put("GradientTimes", map.get("GradientTimes")+"$"+gradientProgram[i][0]);
+    		}
+    		else{
+    			map.put("GradientTimes", gradientProgram[i][0]+"");
+    		}
+    		if(map.containsKey("GradientSolventCompositions")){
+    			map.put("GradientSolventCompositions", map.get("GradientSolventCompositions")+"$"+gradientProgram[i][1]);
+    		}
+    		else{
+    			map.put("GradientSolventCompositions", gradientProgram[i][1]+"");
+    		}
+    	}
+		return map;
 	}
 
 }
