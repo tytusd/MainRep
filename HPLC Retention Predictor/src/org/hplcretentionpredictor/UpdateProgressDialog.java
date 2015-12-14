@@ -23,7 +23,7 @@ public class UpdateProgressDialog extends JDialog implements ActionListener {
 	 */
 	private static final long serialVersionUID = 1L;
 	private JPanel jContentPane = null;
-	private JButton jBtnStart = null;
+	public JButton jBtnStart = null;
 	public JProgressBar jProgressBar;
 	public JButton jBtnCancel;
 	private JLabel jLblConnectingTo;
@@ -115,21 +115,22 @@ public class UpdateProgressDialog extends JDialog implements ActionListener {
     		this.jBtnCancel.setActionCommand("Close");
 		}
 		if(e.getActionCommand() == "Cancel"){
-			this.setVisible(false);
-			this.dispose();
-			File original_database = new File(HPLCRetentionPredictorApp.fileName);
-			File backup_database = new File(HPLCRetentionPredictorApp.fileName+".bak");
-			if(backup_database.exists()){
-				if(original_database.exists()){
-					original_database.delete();
-				}
-				try {
-					FileUtils.moveFile(backup_database, original_database);
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
+			taskUpdateDb.cancel(true);
+//			this.setVisible(false);
+//			this.dispose();
+//			File original_database = new File(HPLCRetentionPredictorApp.fileName);
+//			File backup_database = new File(HPLCRetentionPredictorApp.fileName+".bak");
+//			if(backup_database.exists()){
+//				if(original_database.exists()){
+//					original_database.delete();
+//				}
+//				try {
+//					FileUtils.moveFile(backup_database, original_database);
+//				} catch (IOException e1) {
+//					// TODO Auto-generated catch block
+//					e1.printStackTrace();
+//				}
+//			}
 		}
 		else if(e.getActionCommand() == "Close"){
 			this.setVisible(false);

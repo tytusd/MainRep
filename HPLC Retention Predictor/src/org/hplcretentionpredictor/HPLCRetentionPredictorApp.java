@@ -17,20 +17,21 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
+import java.util.regex.Pattern;
 
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -46,19 +47,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.math3.distribution.ChiSquaredDistribution;
 import org.apache.commons.math3.special.Erf;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import boswell.graphcontrol.AutoScaleEvent;
 import boswell.graphcontrol.AutoScaleListener;
@@ -112,8 +104,6 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     public double m_dVariance = 0;
     public boolean m_bNoFullBackcalculation = false;
     
-    public static String fileName = "isocratic_database.csv";
-    public static String fileURL = "http://www.retentionprediction.org/hplc/database/isocratic_database.csv";
     public String m_strFileName = "";
     
     public double[][] m_dIdealGradientProfileArray;
@@ -170,9 +160,12 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	public UpdateProgressDialog updateDialog = null;
 	public TaskUpdateDatabase taskUpdateDb = null;
 
-	public String path = System.getProperty("java.io.tmpdir");
-
 	private long totalTime;
+	private String path = "";
+	private String database_dir = "isocratic_database_files";
+	private String local_db_summary = "";
+	private String online_db_summary = "http://retentionprediction.org/hplc/database/crc_database.txt";
+	private String online_db_dir = "http://retentionprediction.org/hplc/database/isocraticdatabase/";
 	
     // Start the app
     public static void main(String[] args) 
@@ -252,48 +245,29 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
         // Load the JavaHelp
 		String helpHS = "org/hplcretentionpredictor/help/RetentionPredictorHelp.hs";
 		ClassLoader cl = TopPanel.class.getClassLoader();
-		path =	path.replaceAll("%20", " "); 
-		if(path.charAt(path.length()-1) != '/' && path.charAt(path.length()-1) != '\\'){
-			System.out.println(path);
-			path += "/";
-			System.out.println(path);
+		
+		String path = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+		try {
+			path = URLDecoder.decode(path, "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
 		}
-		if(!(new File(path+fileName).exists())){
-			try{
-				InputStream reader = this.getClass().getResourceAsStream("/"+fileName); 
-				FileOutputStream write = new FileOutputStream(path+fileName);
-				byte[] buffer = new byte[4096];
-				int n = 0;
-				while(-1 != (n = reader.read(buffer))){
-					write.write(buffer, 0, n);
-				}
-				write.close();
-				reader.close();
-				System.out.println("Database transferred to temp folder");
-			}
-			catch(IOException e){
-				e.printStackTrace();
-			}
+		if(path.contains("/target/classes")){
+			path = Pattern.compile("/target/classes", Pattern.LITERAL).matcher(path).replaceAll("");
 		}
 		
-/*		try {
-			URL hsURL = HelpSet.findHelpSet(cl, helpHS);
-			GlobalsDan.hsMainHelpSet = new HelpSet(null, hsURL);
-		} catch (Exception ee) {
-			System.out.println( "HelpSet " + ee.getMessage());
-			System.out.println("HelpSet "+ helpHS +" not found");
-			return;
+		if(path.charAt(path.length()-1) != '/' && path.charAt(path.length()-1) != '\\'){
+			path += "/";
 		}
-		GlobalsDan.hbMainHelpBroker = GlobalsDan.hsMainHelpSet.createHelpBroker();
-*/
+		if(path.contains(".jar")){
+			path = path + "../";
+		}
+		this.path = path;
+		local_db_summary = path + "database.lcdsv";
+		
 		//Execute a job on the event-dispatching thread; creating this applet's GUI.
         try {
-        //    SwingUtilities.invokeAndWait(new Runnable() 
-        //    {
-        //        public void run() {
-                	createGUI();
-        //        }
-        //    });
+        	createGUI();
         } catch (Exception e) { 
             System.err.println("createGUI didn't complete successfully");
             System.err.println(e.getMessage());
@@ -1011,31 +985,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    	}
 	    	else if (m_iStage == 3)
 	    	{
-	    		if((new File(path,fileName)).exists()){
-	    			Utilities.parseCSV(path+fileName, otherCompounds);
-	    		}
-	    		else{
-	    			Utilities.parseCSV("isocratic_database.csv", otherCompounds);
-	    		}
-	    		
-	    		// Fill in the table with the solutes that weren't selected
-		    	contentPane2.tmPredictionModel.getDataVector().clear();
-		    	
-		    	//Add compounds to the prediction table
-		    	for (int i = 0; i < otherCompounds.size(); i++)
-		    	{
-		    		Object[] newRow = {otherCompounds.get(i).getId(), null};
-	    			contentPane2.tmPredictionModel.addRow(newRow);
-		    	}
-		    	
-		    	contentPane2.jpanelStep4.setVisible(false);
-		    	contentPane2.jpanelStep5.setVisible(false);
-		    	contentPane2.jpanelStep6.setVisible(true);
-		    	contentPane2.jbtnNextStep.setVisible(false);
-		    	contentPane2.jbtnPredict.setEnabled(true);
-		    	contentPane2.jbtnUpdateIsocraticDatabase.setEnabled(true);
-		    	contentPane2.jProgressBar2.setString("");
-		    	contentPane2.jProgressBar2.setIndeterminate(false);
+	    		checkForLocalUpdatesAndStartUpdate();
 	    	}
 
 	    	m_iStage++;
@@ -1204,10 +1154,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    	peakFinderSettingsDialog.setFlowRate(m_dFlowRate);
 	    	peakFinderSettingsDialog.setColumnInnerDiameter(m_dColumnInnerDiameter);
 	    	peakFinderSettingsDialog.setColumnLength(m_dColumnLength);
-	    	//TODO: Fix this
-	    	//peakFinderSettingsDialog.setMixingVolumeArray(m_dMixingVolumeArray);
-	    	//TODO: Fix this
-	    	//peakFinderSettingsDialog.setNonMixingVolumeArray(m_dNonMixingVolumeArray);
+
 	    	peakFinderSettingsDialog.setInstrumentDeadTime(m_dInstrumentDeadTime);
 	    	double[][] dGradientProgram = new double[this.contentPane.tmGradientProgram.getRowCount()][2];
 	    	for (int i = 0; i < dGradientProgram.length; i++)
@@ -1278,14 +1225,65 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 	    }
 	}
     
+    public void checkForLocalUpdatesAndStartUpdate(){
+    	final File database_dir = new File(path+this.database_dir+"/");
+		final File compressedDb = new File(local_db_summary);
+		final boolean[] foundUpdates = {false};
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+		Runnable task = new Runnable(){
+
+			@Override
+			public void run() {
+				if(database_dir.exists() && compressedDb.exists()){
+					foundUpdates[0] = Utilities.checkForLocalUpdates(database_dir, compressedDb);
+				}
+			}
+			
+		};
+		executor.schedule(task, 10, TimeUnit.MILLISECONDS);
+		executor.shutdown();
+		
+		ArrayList<IsocraticCompound> list = new ArrayList<IsocraticCompound>(16);
+		if(compressedDb.exists() && (foundUpdates[0] || otherCompounds.size() == 0)){
+			list = Utilities.readDatabase(compressedDb);
+		}
+		updateOtherCompoundsList(list);
+    }
+    
+    public void updateOtherCompoundsList(List<IsocraticCompound> list){
+    	// Fill in the table with the solutes that weren't selected
+    	if(list.size() > 0){
+        	contentPane2.tmPredictionModel.getDataVector().clear();
+        	otherCompounds.clear();
+    		otherCompounds.addAll(list);
+
+    		//Add compounds to the prediction table
+        	for (int i = 0; i < otherCompounds.size(); i++)
+        	{
+        		Object[] newRow = {otherCompounds.get(i).getId(), null};
+    			contentPane2.tmPredictionModel.addRow(newRow);
+        	}
+    	}
+    	
+    	
+    	contentPane2.jpanelStep4.setVisible(false);
+    	contentPane2.jpanelStep5.setVisible(false);
+    	contentPane2.jpanelStep6.setVisible(true);
+    	contentPane2.jbtnNextStep.setVisible(false);
+    	contentPane2.jbtnPredict.setEnabled(true);
+    	contentPane2.jbtnUpdateIsocraticDatabase.setEnabled(true);
+    	contentPane2.jProgressBar2.setString("");
+    	contentPane2.jProgressBar2.setIndeterminate(false);
+    }
+    
     public void importXmlData(){
+    	long n1 = 0;
+    	ArrayList<IsocraticCompound> list = new ArrayList<IsocraticCompound>(16);
     	Preferences prefs = Preferences.userNodeForPackage(this.getClass());
     	JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Open XML Data File");
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("XML (.xml)", "xml");
-		fileChooser.addChoosableFileFilter(filter);
-		fileChooser.setFileFilter(filter);
-			
+		fileChooser.setDialogTitle("Specify local database directory/file");
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		
 		// Set default directory
 		String lastOutputDir = prefs.get("LAST_OUTPUT_DIR", "");
 		if (lastOutputDir != "")
@@ -1299,121 +1297,26 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 		if(result == JFileChooser.APPROVE_OPTION){
 			File selectedFile = fileChooser.getSelectedFile();
 			if(selectedFile != null){
-				//TODO: Parse the XML file here
-				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder builder = null;
-				Document doc = null;
-				try {
-					builder = factory.newDocumentBuilder();
-				} catch (ParserConfigurationException e) {
-					e.printStackTrace();
+				n1 = System.currentTimeMillis();
+				String path = selectedFile.getPath();
+    			String extension = FilenameUtils.getExtension(path.toLowerCase()); 
+				if(selectedFile.isFile()){
+					String[] xmlValues = Utilities.xmlFileParser(selectedFile);
+					IsocraticCompound comp = Utilities.valuesToIsocraticCompoundObj(xmlValues);
+					list.add(comp);
 				}
-				try {
-					doc = builder.parse(selectedFile);
-					doc.getDocumentElement().normalize();
-				} catch (SAXException | IOException e) {
-					e.printStackTrace();
+				else {
+					list = Utilities.parseDirectory(selectedFile, list);
 				}
-				
-				String mode = getXmlNodeValue(doc.getElementsByTagName("mode"), "mode");
-				String compoundName = "";
-				double[] simpleGradient;
-				double[] deadTime;
-				double[] injectionTimes;
-				double[] padeCoefficients = null;
-				double[] retentionTimes;
-				
-				/*
-				//Parse profiles here
-				NodeList profiles = doc.getElementsByTagName("profile");
-				for(int i = 0; i < profiles.getLength(); i++){
-					Node n = profiles.item(i);
-					String type = n.getAttributes().getNamedItem("type").getNodeValue();
-					if(type.equals("Simple Gradient")){
-						String value = n.getTextContent();
-						String[] values = value.split(",");
-						simpleGradient = convertToDoubles(values);
-					}
-					else if(type.equals("Dead Time")){
-						String value = n.getTextContent();
-						String[] values = value.split(",");
-						deadTime = convertToDoubles(values);
-					}
-				}
-				*/
-				
-				
-				
-				//Parse injection times here
-				NodeList injections = doc.getElementsByTagName("injectiontimes");
-				if(injections.getLength() > 0){
-					Node n = injections.item(0);
-					String value = n.getTextContent();
-					String[] values = value.split(",");
-					injectionTimes = convertToDoubles(values);
-				}
-				
-				//Parse retention times here
-				NodeList retentions = doc.getElementsByTagName("retentiontimes");
-				if(retentions.getLength() > 0){
-					Node n = retentions.item(0);
-					String value = n.getTextContent();
-					String[] values = value.split(",");
-					retentionTimes = convertToDoubles(values);
-				}
-				
-				//Parse compound information here
-				NodeList compounds = doc.getElementsByTagName("compound");
-				if(compounds.getLength() > 0){
-					Node n = compounds.item(0);
-					if(n.hasAttributes()){
-						Node nameNode = n.getAttributes().getNamedItem("name");
-						if(nameNode != null){
-							compoundName = nameNode.getNodeValue();
-						}
-					}
-					NodeList pade = n.getChildNodes();
-					for(int i = 0; i < pade.getLength(); i++){
-						Node padeNode = pade.item(i);
-						if(padeNode.getNodeName().equals("padecoefficients")){
-							String value = padeNode.getTextContent();
-							String[] values = value.split(",");
-							padeCoefficients = convertToDoubles(values);
-						}
-					}
-				}
-				
-				otherCompounds.clear();
-				IsocraticCompound compound = new IsocraticCompound();
-				for(int i = 0; i < 20; i++){
-					double phi = i*0.05;
-					double logK = (padeCoefficients[0] + padeCoefficients[1]*phi + padeCoefficients[2]*phi*phi)/(1 + padeCoefficients[3]*phi + padeCoefficients[4]*phi*phi);
-					compound.getConcentrationList().add(phi);
-					compound.getLogKList().add(logK);
-				}
-				compound.setId(compoundName);
-				otherCompounds.add(compound);
-				
-				// Fill in the table with the solutes that weren't selected
-		    	contentPane2.tmPredictionModel.getDataVector().clear();
-		    	
-		    	//Add compounds to the prediction table
-		    	for (int i = 0; i < otherCompounds.size(); i++)
-		    	{
-		    		Object[] newRow = {otherCompounds.get(i).getId(), null};
-	    			contentPane2.tmPredictionModel.addRow(newRow);
-		    	}
-
-				
 			}
 		}
-		
-		contentPane2.jProgressBar2.setIndeterminate(false);
+		updateOtherCompoundsList(list);
 		contentPane2.jProgressBar2.setStringPainted(true);
-		contentPane2.jProgressBar2.setString("");
 		contentPane2.jbtnPredict.setActionCommand("Predict");
 		contentPane2.jbtnPredict.setText("Predict dB");
-		contentPane2.jbtnPredict.setEnabled(true);
+		
+		long n2 = System.currentTimeMillis();
+		System.out.println((n2-n1) + "ms");
     }
     
     public double[] convertToDoubles(String[] values){
@@ -1422,16 +1325,6 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     		result[i] = Double.parseDouble(values[i]);
     	}
     	return result;
-    }
-    
-    
-    public String getXmlNodeValue(NodeList list, String name){
-    	for(int i = 0; i < list.getLength(); i++){
-    		if(list.item(i).equals(name)){
-    			return list.item(i).getTextContent();
-    		}
-    	}
-    	return "";
     }
     
     public void copyProfilesToClipboard()
@@ -1460,12 +1353,6 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     	// Calculated gradient delay
     	outString += "Gradient delay volume" + eol;
     	
-    	//TODO: Fix this:
-    	//outString += "Mixing volume:\t" + formatter3.format(this.m_dMixingVolume) + "\tmL" + eol;
-    	//TODO: Fix this:
-    	//outString += "Non-mixing volume:\t" + formatter3.format(this.m_dNonMixingVolume) + "\tmL" + eol;
-    	//TODO: Fix this:
-    	//outString += "Total gradient delay volume:\t" + formatter3.format(this.m_dMixingVolume + this.m_dNonMixingVolume) + "\tmL" + eol;
     	outString += eol;
     	
     	// Standards, experimental, calculated, and error
@@ -2199,131 +2086,54 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     
     class TaskUpdateDatabase extends SwingWorker<Void,Void>
     {
-    	
+    	boolean didAnyUpdateOccur = false;
 
 		@Override
 		protected Void doInBackground() throws Exception {
+
 			updateDialog.jProgressBar.setMinimum(0);
-			InputStream urlStream = null;
-			InputStream fileStream = null;
-			File isocratic_database_file = new File(fileName);
-			File isocratic_database_file_temp = new File(path+fileName);
-			boolean diff = false;
-			try 
-			{
-				urlStream = new URL(fileURL).openStream();
-				System.out.println("URL stream opened");
-				updateDialog.jLblStatus.setText("Connected to the web. Checking for updates ...");
-				if(isocratic_database_file_temp.exists()){
-					isocratic_database_file = isocratic_database_file_temp;		//If it exists in temp, then we dont care about the one in jar
-				}
-				fileStream = new FileInputStream(isocratic_database_file);
-				System.out.println("File stream opened");
-				diff = Utilities.areDifferent(urlStream, fileStream);
-				System.out.println("Diff is "+diff);
-			} 
-			catch (FileNotFoundException e) 
-			{
-				e.printStackTrace();
-			}
+			updateDialog.jLblStatus.setText("Checking for updates on retentionprediction.org ...");
 			
+			File localDbSummaryFile = new File(local_db_summary);
+			File localDir = new File(path+database_dir+"/");
+			List<String> filesInUpdate = Utilities.findDifferenceInLocalAndWebDb(online_db_summary, localDbSummaryFile);
 			
-			if(!diff)
-			{
-				updateDialog.jLblStatus.setText("Your database is up-to-date. No updates needed.");
-				updateDialog.jBtnCancel.setText("Close");
-				updateDialog.jBtnCancel.setActionCommand("Close");
+			if(!filesInUpdate.isEmpty()){
+				updateDialog.jLblStatus.setText("Updates found. Now initiating the updates ...");
 			}
-			else
-			{
-				updateDialog.jLblStatus.setText("Update found. Starting the update!");
-				isocratic_database_file = isocratic_database_file_temp;
-				if(!isocratic_database_file.exists()){
-					isocratic_database_file.createNewFile();
+			else{
+				updateDialog.jLblStatus.setText("No updates found. Your database is up-to-date");
+			}
+			updateDialog.jProgressBar.setMaximum(filesInUpdate.size());
+	
+			if(localDir.exists() && !filesInUpdate.isEmpty()){
+				for(int i = 0; i < filesInUpdate.size() ;i++){
+					String fileName = filesInUpdate.get(i);
+					String urlStr = online_db_dir+fileName;
+					String pathToLocalFile = localDir.getPath();
+					
+					updateDialog.jLblStatus.setText("Downloading file "+ (i+1) + " out of "+ filesInUpdate.size() + " : " + fileName );
+					
+					
+					if(pathToLocalFile.charAt(pathToLocalFile.length()-1) != '/' && pathToLocalFile.charAt(pathToLocalFile.length()-1) != '\\'){
+						pathToLocalFile += "\\";
+					}
+					
+					pathToLocalFile += fileName;
+					boolean result = Utilities.fileDownloader(urlStr, pathToLocalFile);
+					
+					if(result)
+						didAnyUpdateOccur = true;
+					updateDialog.jProgressBar.setValue((i+1));
 				}
-				File backup_database_file = new File(path+fileName+".bak");
-	    		
-	    		FileUtils.copyFile(isocratic_database_file, backup_database_file);
-	    		
-	    		updateDialog.jLblStatus.setText("Current database backup done.");
-				try 
-				{
-					URL source = new URL(fileURL);
-					InputStream input = source.openStream();
-					FileOutputStream output = new FileOutputStream(isocratic_database_file);
-					byte[] buffer = new byte[4096];
-					long fileSize = Utilities.urlFileSize(fileURL);
-					updateDialog.jLblStatus.setText("Update database size: "+ fileSize + " bytes");
-					long count = 0;
-					int n = 0;
-					boolean isUpdated = false; 
-					
-					updateDialog.jProgressBar.setMinimum(0);
-					updateDialog.jProgressBar.setMaximum((int)fileSize);
-					
-					try
-					{
-						while(-1 != (n = input.read(buffer)))
-						{
-							output.write(buffer, 0, n);
-							count += n;
-							updateDialog.jLblStatus.setText((int)((count*100)/fileSize)+"% done.");
-							updateDialog.jProgressBar.setValue((int)count);
-						}
-						isUpdated = true;
-					}
-					catch(IOException e)
-					{
-						e.printStackTrace();
-					}
-					
-					if(!isUpdated && backup_database_file.exists())
-					{
-						updateDialog.jLblStatus.setText("Update unsuccessful. Rolling back changes.");
-						if(isocratic_database_file.exists())
-						{
-							isocratic_database_file.delete();
-						}
-						FileUtils.moveFile(backup_database_file, isocratic_database_file);
-					}
-					else
-					{
-						updateDialog.jLblStatus.setText("Download complete!");
-						if(backup_database_file.exists()){
-							backup_database_file.delete();
-						}
-						
-						otherCompounds.clear();
-						//Update the prediction table
-						Utilities.parseCSV(path+fileName, otherCompounds);
-			    		// Fill in the table with the solutes that weren't selected
-				    	contentPane2.tmPredictionModel.getDataVector().clear();
-				    	
-				    	//Add compounds to the prediction table
-				    	for (int i = 0; i < otherCompounds.size(); i++)
-				    	{
-				    		Object[] newRow = {otherCompounds.get(i).getId(), null};
-			    			contentPane2.tmPredictionModel.addRow(newRow);
-				    	}
-				    	
-					}
-					
-					if(output != null)
-					{
-						output.close();
-					}
-					if(input != null)
-					{
-						input.close();
-					}
-					
-				} 
-				catch (IOException e) 
-				{
-					e.printStackTrace();
+				if(didAnyUpdateOccur){
+					checkForLocalUpdatesAndStartUpdate();
 				}
 				
 			}
+			updateDialog.jLblStatus.setText("Database update successful.");
+			updateDialog.jBtnCancel.setText("Close");
+			updateDialog.jBtnCancel.setActionCommand("Close");
 			
 			return null;
 		}
@@ -2456,8 +2266,7 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     
 	   public double calcRetentionError(double dtstep, int iNumCompoundsToInclude, boolean bUseSimpleGradient)
 	    {
-		  long n1 = System.currentTimeMillis();
-	    	double dRetentionError = 0;
+		  double dRetentionError = 0;
 			double dt0;
 			double dIntegral;
 			double dtRFinal;
@@ -2537,19 +2346,18 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 				
 				if (bIsEluted)
 				{
-					dRetentionError += Math.pow(dtRFinal - (Double)m_vectCalCompounds.get(iCompound)[1], 2);
+					double errorRoot = dtRFinal - (Double)m_vectCalCompounds.get(iCompound)[1];
+					dRetentionError += errorRoot*errorRoot;
 					m_vectCalCompounds.get(iCompound)[2] = dtRFinal;
 				}
 				else
 				{
-					dRetentionError += Math.pow((Double)m_vectCalCompounds.get(iCompound)[1], 2);
+					double errorRoot = (Double)m_vectCalCompounds.get(iCompound)[1];
+					dRetentionError += errorRoot;
 					m_vectCalCompounds.get(iCompound)[2] = (double)-1.0;
 				}
 			}
 			
-			long n2 = System.currentTimeMillis();
-			totalTime += (n2-n1);
-			System.out.println((n2-n1));
 	    	return dRetentionError;
 	    }
 
@@ -2611,7 +2419,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     		if (dNewAngle < 0)
     			dNewAngle = Math.PI + dNewAngle;
     		
-    		double dAngleError = Math.pow((Math.abs(dNewAngle - dPreviousAngle) / (Math.PI)), 2);
+    		double angleErrorRoot = (Math.abs(dNewAngle - dPreviousAngle) / (Math.PI));
+    		double dAngleError = angleErrorRoot*angleErrorRoot;
     		dTotalAngleError += dAngleError;
     	}
     	
@@ -2676,7 +2485,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     		if (dNewAngle < 0)
     			dNewAngle = Math.PI + dNewAngle;
     		
-    		double dAngleError = Math.pow((Math.abs(dNewAngle - dPreviousAngle) / (Math.PI)), 2);
+    		double angleErrorRoot = (Math.abs(dNewAngle - dPreviousAngle) / (Math.PI));
+    		double dAngleError = angleErrorRoot*angleErrorRoot;
     		dTotalAngleError += dAngleError;
     	}
     	
@@ -3984,8 +3794,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
     // Start by optimizing the entire dead time error profile.
 	public void backCalculate(Task task, boolean bDeadTimeProfileFirst)
 	{
-//		if (true)
-//			return;
+		if (true)
+			return;
 		long starttime = System.currentTimeMillis();
 		m_bNoFullBackcalculation = false;
 		
@@ -4053,12 +3863,8 @@ public class HPLCRetentionPredictorApp extends JFrame implements ActionListener,
 				else
 					str = formatter1.format(dNum);
 				
-				// TODO: Fix this
 				contentPane2.jlblMixingVolume.setText(formatter3.format(this.m_dMixingVolumeArray[0][1]) + " mL");
-				// TODO: Fix this
 				contentPane2.jlblNonMixingVolume.setText(formatter3.format(this.m_dNonMixingVolumeArray[0][1]) + " mL");
-				// TODO: Fix this
-				//contentPane2.jlblTotalGradientDelayVolume.setText(formatter3.format(this.m_dMixingVolume + this.m_dNonMixingVolume) + " mL");
 				
 				contentPane2.jlblVariance.setText(str);
 				

@@ -808,7 +808,7 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 	private JProgressBar getJProgressBar1() {
 		if (jProgressBar2 == null) {
 			jProgressBar2 = new JProgressBar();
-			jProgressBar2.setBounds(new Rectangle(40, 492, 381, 25));
+			jProgressBar2.setBounds(new Rectangle(40, 492, 400, 25));
 			jProgressBar2.setStringPainted(false);
 		}
 		return jProgressBar2;
@@ -822,8 +822,8 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 	private JButton getJbtnPredict() {
 		if (jbtnPredict == null) {
 			jbtnPredict = new JButton();
-			jbtnPredict.setBounds(new Rectangle(128, 520, 120, 36));
-			jbtnPredict.setText("Predict tR");
+			jbtnPredict.setBounds(new Rectangle(128, 520, 160, 36));
+			jbtnPredict.setText("Predict Retention Times");
 			jbtnPredict.setActionCommand("Predict");
 		}
 		return jbtnPredict;
@@ -832,7 +832,7 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 	private JButton getJbtnImportData() {
 		if (jbtnImportData == null) {
 			jbtnImportData = new JButton();
-			jbtnImportData.setBounds(new Rectangle(128, 520, 120, 36));
+			jbtnImportData.setBounds(new Rectangle(128, 520, 110, 36));
 			jbtnImportData.setText("Import Data");
 			jbtnImportData.setActionCommand("Import Data");
 		}
@@ -842,8 +842,8 @@ public class TopPanel2 extends JPanel implements TableModelListener, Scrollable,
 	private JButton getJbtnUpdateIsocraticDatabase() {
 		if (jbtnUpdateIsocraticDatabase == null) {
 			jbtnUpdateIsocraticDatabase = new JButton();
-			jbtnUpdateIsocraticDatabase.setBounds(new Rectangle(0, 520, 120, 36));
-			jbtnUpdateIsocraticDatabase.setText("Update Db");
+			jbtnUpdateIsocraticDatabase.setBounds(new Rectangle(0, 520, 130, 36));
+			jbtnUpdateIsocraticDatabase.setText("Update Database");
 			jbtnUpdateIsocraticDatabase.setActionCommand("Update Database");
 		}
 		return jbtnUpdateIsocraticDatabase;
