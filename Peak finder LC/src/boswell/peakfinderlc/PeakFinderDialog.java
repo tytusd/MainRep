@@ -596,6 +596,7 @@ public class PeakFinderDialog extends JDialog implements ActionListener, KeyList
         		double dPeakScoreWidth = Math.exp(-Math.abs((dPeakWidthHalfHeight / 60) - this.m_dPredictedPeakWidths[iIndexOfStandard]) / ErrorAt36Percent);
         		
         		double dPeakScore = Math.pow(dPeakScoreRetentionTime, 10) * Math.pow(dPeakScoreHeight, 1) * Math.pow(dPeakScoreWidth, .1);
+        		System.out.println(dPeakWidthHalfHeight+","+dPeakScoreRetentionTime+","+dPeakScoreHeight+","+ErrorAt36Percent+","+dPeakScoreWidth+","+dPeakScore);
         		// {peak time, peak intensity, peak width at half height}
         		m_peaks.add(new double[]{dPeakTime, dPeakIntensity, dPeakWidthHalfHeight, dPeakScore});
            	}
